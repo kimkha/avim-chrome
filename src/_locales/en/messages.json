@@ -1,0 +1,50 @@
+{
+	"extName" : {
+		"message" : "AVIM - Vietnamese Input Method",
+		"description" : "Extension name"
+	},
+	"extDescription" : {
+		"message" : "An input method editor (IME) for Vietnamese, best choice for Chrome.",
+		"description" : "Extension description"
+	},
+	"extAction" : {
+		"message" : "Options for AVIM",
+		"description" : "Default title of browser action"
+	},
+	"extPopupSel" : {
+		"message" : "Select an options:",
+		"description" : ""
+	},
+	"extPopupAuto" : {
+		"message" : "Both Telex and VNI",
+		"description" : ""
+	},
+	"extPopupTelex" : {
+		"message" : "Telex only",
+		"description" : ""
+	},
+	"extPopupVni" : {
+		"message" : "VNI only",
+		"description" : ""
+	},
+	"extPopupOff" : {
+		"message" : "Turn off AVIM",
+		"description" : ""
+	},
+	"extPopupTips" : {
+		"message" : "Small tips:",
+		"description" : ""
+	},
+	"extPopupTipsCtrl" : {
+		"message" : "You can turn on/off AVIM by press Ctrl twice.",
+		"description" : ""
+	},
+	"extPopupDemo" : {
+		"message" : "Fast input",
+		"description" : ""
+	},
+	"extPopupDemoCopy" : {
+		"message" : "Highlight Copy",
+		"description" : ""
+	}
+}

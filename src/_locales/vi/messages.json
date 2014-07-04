@@ -1,0 +1,50 @@
+{
+	"extName" : {
+		"message" : "AVIM - Bộ Gõ Tiếng Việt",
+		"description" : "Extension name"
+	},
+	"extDescription" : {
+		"message" : "Bộ gõ tiếng Việt dành cho Chrome, hoạt động tốt trên hầu hết các trang web hiện có.",
+		"description" : "Extension description"
+	},
+	"extAction" : {
+		"message" : "Đổi kiểu gõ AVIM",
+		"description" : "Default title of browser action"
+	},
+	"extPopupSel" : {
+		"message" : "Chọn một kiểu gõ:",
+		"description" : ""
+	},
+	"extPopupAuto" : {
+		"message" : "Kết hợp",
+		"description" : ""
+	},
+	"extPopupTelex" : {
+		"message" : "Kiểu TELEX",
+		"description" : ""
+	},
+	"extPopupVni" : {
+		"message" : "Kiểu VNI",
+		"description" : ""
+	},
+	"extPopupOff" : {
+		"message" : "Tắt AVIM",
+		"description" : ""
+	},
+	"extPopupTips" : {
+		"message" : "Mẹo nhỏ:",
+		"description" : ""
+	},
+	"extPopupTipsCtrl" : {
+		"message" : "Nhấn Ctrl 2 lần để bật/tắt nhanh.",
+		"description" : ""
+	},
+	"extPopupDemo" : {
+		"message" : "Fast input",
+		"description" : ""
+	},
+	"extPopupDemoCopy" : {
+		"message" : "Highlight Copy",
+		"description" : ""
+	}
+}

@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg:svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="60"
+   height="60"
+   viewBox="0 0 256 256"
+   id="svg1"
+   xml:space="preserve"
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="avim-icon.svg"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon16.png"
+   inkscape:export-xdpi="24"
+   inkscape:export-ydpi="24"><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1366"
+   inkscape:window-height="744"
+   id="namedview71"
+   showgrid="false"
+   inkscape:zoom="5.3333333"
+   inkscape:cx="30"
+   inkscape:cy="30"
+   inkscape:window-x="0"
+   inkscape:window-y="24"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg1"
+   inkscape:snap-grids="false" />
+  <svg:defs
+   id="defs311"><svg:linearGradient
+   x1="74.31543"
+   y1="78.248535"
+   x2="119.12988"
+   y2="78.248535"
+   id="linearGradient4008"
+   gradientUnits="userSpaceOnUse">
+          <svg:stop
+   id="stop4010"
+   style="stop-color:#7d7d99;stop-opacity:1"
+   offset="0" />
+          <svg:stop
+   id="stop4012"
+   style="stop-color:#585868;stop-opacity:1"
+   offset="1" />
+          <midPointStop
+   id="midPointStop298"
+   style="stop-color:#7D7D99"
+   offset="0" />
+          <midPointStop
+   id="midPointStop300"
+   style="stop-color:#7D7D99"
+   offset="0.5" />
+          <midPointStop
+   id="midPointStop302"
+   style="stop-color:#585868"
+   offset="1" />
+        </svg:linearGradient>
+    
+    
+  
+      <svg:linearGradient
+   x1="213.1709"
+   y1="213.1709"
+   x2="42.809952"
+   y2="42.809956"
+   id="XMLID_11_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop107"
+   style="stop-color:#ff0000;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop109"
+   style="stop-color:#ffb0b0;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop111"
+   style="stop-color:#FF0000"
+   offset="0" />
+        <midPointStop
+   id="midPointStop113"
+   style="stop-color:#FF0000"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop115"
+   style="stop-color:#FFB0B0"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="213.17871"
+   y1="213.17871"
+   x2="42.822601"
+   y2="42.822601"
+   id="XMLID_12_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop122"
+   style="stop-color:#f8310e;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop124"
+   style="stop-color:#990000;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop126"
+   style="stop-color:#F8310E"
+   offset="0" />
+        <midPointStop
+   id="midPointStop128"
+   style="stop-color:#F8310E"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop130"
+   style="stop-color:#990000"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="206.11816"
+   y1="206.11816"
+   x2="49.883472"
+   y2="49.883472"
+   id="XMLID_13_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop137"
+   style="stop-color:#585868;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop139"
+   style="stop-color:#333366;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop141"
+   style="stop-color:#585868"
+   offset="0" />
+        <midPointStop
+   id="midPointStop143"
+   style="stop-color:#585868"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop145"
+   style="stop-color:#333366"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="128.00049"
+   y1="211.93945"
+   x2="128.00049"
+   y2="44.060547"
+   id="XMLID_14_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop152"
+   style="stop-color:#666699;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop154"
+   style="stop-color:#bdbdcf;stop-opacity:1"
+   offset="0.32584301" />
+        <svg:stop
+   id="stop156"
+   style="stop-color:#ffffff;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop158"
+   style="stop-color:#666699"
+   offset="0" />
+        <midPointStop
+   id="midPointStop160"
+   style="stop-color:#666699"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop162"
+   style="stop-color:#BDBDCF"
+   offset="0.325843" />
+        <midPointStop
+   id="midPointStop164"
+   style="stop-color:#BDBDCF"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop166"
+   style="stop-color:#FFFFFF"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="128.00049"
+   y1="174.43555"
+   x2="128.00049"
+   y2="44.060547"
+   id="XMLID_15_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop173"
+   style="stop-color:#ffffff;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop175"
+   style="stop-color:#e9e9ef;stop-opacity:1"
+   offset="0.162921" />
+        <svg:stop
+   id="stop177"
+   style="stop-color:#cecedb;stop-opacity:1"
+   offset="0.73033702" />
+        <svg:stop
+   id="stop179"
+   style="stop-color:#b1b1c5;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop181"
+   style="stop-color:#FFFFFF"
+   offset="0" />
+        <midPointStop
+   id="midPointStop183"
+   style="stop-color:#FFFFFF"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop185"
+   style="stop-color:#E9E9EF"
+   offset="0.162921" />
+        <midPointStop
+   id="midPointStop187"
+   style="stop-color:#E9E9EF"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop189"
+   style="stop-color:#CECEDB"
+   offset="0.730337" />
+        <midPointStop
+   id="midPointStop191"
+   style="stop-color:#CECEDB"
+   offset="0.5" />
+        <midPointStop
+   id="midPointStop193"
+   style="stop-color:#B1B1C5"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="128.00049"
+   y1="174.43555"
+   x2="128.00049"
+   y2="44.060547"
+   id="XMLID_16_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop200"
+   style="stop-color:#ffffff;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop202"
+   style="stop-color:#fafafb;stop-opacity:1"
+   offset="0.15989269" />
+        <svg:stop
+   id="stop204"
+   style="stop-color:#ededf1;stop-opacity:1"
+   offset="0.33909991" />
+        <svg:stop
+   id="stop206"
+   style="stop-color:#d6d6df;stop-opacity:1"
+   offset="0.52763522" />
+        <svg:stop
+   id="stop208"
+   style="stop-color:#b7b7c7;stop-opacity:1"
+   offset="0.72270828" />
+        <svg:stop
+   id="stop210"
+   style="stop-color:#8f8fa7;stop-opacity:1"
+   offset="0.92086339" />
+        <svg:stop
+   id="stop212"
+   style="stop-color:#7d7d99;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop214"
+   style="stop-color:#FFFFFF"
+   offset="0" />
+        <midPointStop
+   id="midPointStop216"
+   style="stop-color:#FFFFFF"
+   offset="0.6836159" />
+        <midPointStop
+   id="midPointStop218"
+   style="stop-color:#7D7D99"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="66.087402"
+   y1="173.5293"
+   x2="66.087402"
+   y2="206.86816"
+   id="XMLID_17_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop225"
+   style="stop-color:#ffffff;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop227"
+   style="stop-color:#fafafb;stop-opacity:1"
+   offset="0.1836116" />
+        <svg:stop
+   id="stop229"
+   style="stop-color:#ededf1;stop-opacity:1"
+   offset="0.3894237" />
+        <svg:stop
+   id="stop231"
+   style="stop-color:#d6d6e0;stop-opacity:1"
+   offset="0.60593331" />
+        <svg:stop
+   id="stop233"
+   style="stop-color:#b7b7c8;stop-opacity:1"
+   offset="0.82835269" />
+        <svg:stop
+   id="stop235"
+   style="stop-color:#9a9ab1;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop237"
+   style="stop-color:#FFFFFF"
+   offset="0" />
+        <midPointStop
+   id="midPointStop239"
+   style="stop-color:#FFFFFF"
+   offset="0.6836159" />
+        <midPointStop
+   id="midPointStop241"
+   style="stop-color:#9A9AB1"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="534.42188"
+   y1="173.5293"
+   x2="534.42188"
+   y2="206.86816"
+   id="XMLID_18_"
+   gradientUnits="userSpaceOnUse"
+   gradientTransform="matrix(-1,0,0,1,724.334,0)">
+        <svg:stop
+   id="stop248"
+   style="stop-color:#ffffff;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop250"
+   style="stop-color:#fafafb;stop-opacity:1"
+   offset="0.1836116" />
+        <svg:stop
+   id="stop252"
+   style="stop-color:#ededf1;stop-opacity:1"
+   offset="0.3894237" />
+        <svg:stop
+   id="stop254"
+   style="stop-color:#d6d6e0;stop-opacity:1"
+   offset="0.60593331" />
+        <svg:stop
+   id="stop256"
+   style="stop-color:#b7b7c8;stop-opacity:1"
+   offset="0.82835269" />
+        <svg:stop
+   id="stop258"
+   style="stop-color:#9a9ab1;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop260"
+   style="stop-color:#FFFFFF"
+   offset="0" />
+        <midPointStop
+   id="midPointStop262"
+   style="stop-color:#FFFFFF"
+   offset="0.6836159" />
+        <midPointStop
+   id="midPointStop264"
+   style="stop-color:#9A9AB1"
+   offset="1" />
+      </svg:linearGradient>
+      
+      <svg:linearGradient
+   x1="128.00049"
+   y1="216.79883"
+   x2="128.00049"
+   y2="173.5986"
+   id="XMLID_19_"
+   gradientUnits="userSpaceOnUse">
+        <svg:stop
+   id="stop271"
+   style="stop-color:#b1b1c5;stop-opacity:1"
+   offset="0" />
+        <svg:stop
+   id="stop273"
+   style="stop-color:#a3a3ba;stop-opacity:1"
+   offset="0.16451059" />
+        <svg:stop
+   id="stop275"
+   style="stop-color:#7e7e9e;stop-opacity:1"
+   offset="0.4760384" />
+        <svg:stop
+   id="stop277"
+   style="stop-color:#424272;stop-opacity:1"
+   offset="0.89851779" />
+        <svg:stop
+   id="stop279"
+   style="stop-color:#333366;stop-opacity:1"
+   offset="1" />
+        <midPointStop
+   id="midPointStop281"
+   style="stop-color:#B1B1C5"
+   offset="0" />
+        <midPointStop
+   id="midPointStop283"
+   style="stop-color:#B1B1C5"
+   offset="0.564972" />
+        <midPointStop
+   id="midPointStop285"
+   style="stop-color:#333366"
+   offset="1" />
+      </svg:linearGradient>
+      
+      
+    <svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#XMLID_19_"
+   id="linearGradient3202"
+   gradientUnits="userSpaceOnUse"
+   x1="128.00049"
+   y1="216.79883"
+   x2="128.00049"
+   y2="173.5986"
+   gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)" /><svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#XMLID_18_"
+   id="linearGradient3205"
+   gradientUnits="userSpaceOnUse"
+   gradientTransform="matrix(-1.14365,0,0,1.14365,809.99737,-18.387199)"
+   x1="534.42188"
+   y1="173.5293"
+   x2="534.42188"
+   y2="206.86816" /><svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#XMLID_17_"
+   id="linearGradient3208"
+   gradientUnits="userSpaceOnUse"
+   x1="66.087402"
+   y1="173.5293"
+   x2="66.087402"
+   y2="206.86816"
+   gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)" /><svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#XMLID_16_"
+   id="linearGradient3211"
+   gradientUnits="userSpaceOnUse"
+   x1="128.00049"
+   y1="174.43555"
+   x2="128.00049"
+   y2="44.060547"
+   gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)" /><svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#XMLID_15_"
+   id="linearGradient3214"
+   gradientUnits="userSpaceOnUse"
+   x1="128.00049"
+   y1="174.43555"
+   x2="128.00049"
+   y2="44.060547"
+   gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)" /><svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#XMLID_14_"
+   id="linearGradient3217"
+   gradientUnits="userSpaceOnUse"
+   x1="128.00049"
+   y1="211.93945"
+   x2="128.00049"
+   y2="44.060547"
+   gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)" /><svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#XMLID_13_"
+   id="linearGradient3220"
+   gradientUnits="userSpaceOnUse"
+   x1="206.11816"
+   y1="206.11816"
+   x2="49.883472"
+   y2="49.883472"
+   gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)" />
+        <svg:linearGradient
+   gradientUnits="userSpaceOnUse"
+   id="XMLID_20_"
+   y2="78.248535"
+   x2="119.12988"
+   y1="78.248535"
+   x1="74.31543">
+          <svg:stop
+   offset="0"
+   style="stop-color:#7d7d99;stop-opacity:1"
+   id="stop294" />
+          <svg:stop
+   offset="1"
+   style="stop-color:#585868;stop-opacity:1"
+   id="stop296" />
+          <midPointStop
+   offset="0"
+   style="stop-color:#7D7D99"
+   id="midPointStop298" />
+          <midPointStop
+   offset="0.5"
+   style="stop-color:#7D7D99"
+   id="midPointStop300" />
+          <midPointStop
+   offset="1"
+   style="stop-color:#585868"
+   id="midPointStop302" />
+        </svg:linearGradient>
+        
+      <svg:linearGradient
+   inkscape:collect="always"
+   xlink:href="#linearGradient4008"
+   id="linearGradient4020"
+   x1="118.75899"
+   y1="81.676826"
+   x2="174.63171"
+   y2="81.676826"
+   gradientUnits="userSpaceOnUse"
+   gradientTransform="matrix(2.058049,0,0,2.058049,-175.77603,-69.944057)" /><svg:filter
+   color-interpolation-filters="sRGB"
+   id="f1"><svg:feGaussianBlur
+     id="fgb1"
+     stdDeviation="4.2510011" /></svg:filter><svg:radialGradient
+   id="rg1"
+   cx="3272.0874"
+   cy="5380.6934"
+   r="435.31769"
+   gradientTransform="matrix(0.1481,0,0,0.1412,-488.748,-362.8818)"
+   gradientUnits="userSpaceOnUse"><svg:stop
+     offset="0"
+     style="stop-color:#ff901f"
+     id="stop9" /><svg:stop
+     offset="1"
+     style="stop-color:#ffb61f"
+     id="stop11" /></svg:radialGradient><svg:radialGradient
+   id="rg2"
+   cx="3844.8518"
+   cy="443.1116"
+   r="366.08511"
+   gradientTransform="matrix(0.1446,0.1263,-1.2282,1.4069,-78.3734,-769.5161)"
+   gradientUnits="userSpaceOnUse"><svg:stop
+     offset="0"
+     style="stop-color:#fff"
+     id="stop14" /><svg:stop
+     offset="1"
+     style="stop-color:#fff;stop-opacity:0"
+     id="stop16" /></svg:radialGradient><svg:radialGradient
+   r="366.08511"
+   cy="443.1116"
+   cx="3844.8518"
+   gradientTransform="matrix(0.1446,0.1263,-1.2282,1.4069,-78.3734,-769.5161)"
+   gradientUnits="userSpaceOnUse"
+   id="radialGradient3035"
+   xlink:href="#rg2"
+   inkscape:collect="always" /></svg:defs>
+  <svg:metadata
+   id="metadata3">
+		<sfw
+   id="sfw5">
+			<slices
+   id="slices7">
+				
+					<slice
+   id="slice9"
+   sliceID="22825200"
+   background="none"
+   vertAlign="1"
+   horzAlign="1"
+   cellTextIsHTML="false"
+   altTag=""
+   message=""
+   target=""
+   url=""
+   groupID="668656106"
+   height="256"
+   width="256"
+   type="1"
+   name=""
+   x="0"
+   y="0">
+					<cellText
+   id="cellText11">
+						
+					</cellText>
+
+				</slice>
+
+			</slices>
+
+			<optimizationSettings
+   id="optimizationSettings17">
+				<targetSettings
+   id="targetSettings19"
+   targetSettingsID="0"
+   fileFormat="PNG24Format">
+					<PNG24Format
+   id="PNG24Format21"
+   filtered="false"
+   matteColor="#FFFFFF"
+   noMatteColor="false"
+   interlaced="false"
+   transparency="true">
+						</PNG24Format>
+
+				</targetSettings>
+
+				<targetSettings
+   id="targetSettings25"
+   targetSettingsID="668656106"
+   fileFormat="PNG24Format">
+					<PNG24Format
+   id="PNG24Format27"
+   filtered="false"
+   matteColor="#FFFFFF"
+   noMatteColor="false"
+   interlaced="false"
+   transparency="true">
+						</PNG24Format>
+
+				</targetSettings>
+
+			</optimizationSettings>
+
+			<sliceSourceBounds
+   id="sliceSourceBounds32"
+   bottomLeftOrigin="true"
+   height="16383"
+   width="470"
+   x="0"
+   y="-8064" />
+
+		</sfw>
+
+<svg:xpacket
+   id="xpacket35" />
+<xmpmeta
+   id="xmpmeta36"
+   xmptk="XMP toolkit 3.0-29, framework 1.6">
+
+<svg:metadata
+   id="metadata312">
+  <RDF
+   id="RDF38">
+
+ <Description
+   id="Description40"
+   about="uuid:9f75009b-5db3-4497-a513-f364d6143b99">
+ </Description>
+
+
+ <Description
+   id="Description43"
+   about="uuid:9f75009b-5db3-4497-a513-f364d6143b99">
+ </Description>
+
+
+ <Description
+   id="Description46"
+   about="uuid:9f75009b-5db3-4497-a513-f364d6143b99">
+  <CreateDate
+   id="CreateDate48">2004-01-19T14:19:12Z</CreateDate>
+
+  <ModifyDate
+   id="ModifyDate51">2005-02-15T09:38:27Z</ModifyDate>
+
+  <CreatorTool
+   id="CreatorTool54">Adobe Illustrator 10.0</CreatorTool>
+
+  <MetadataDate
+   id="MetadataDate57">2004-10-13T22:52:42+02:00</MetadataDate>
+
+  <Thumbnails
+   id="Thumbnails60">
+   <Alt
+   id="Alt62">
+    <li
+   id="li64"
+   parseType="Resource">
+     <format
+   id="format66">JPEG</format>
+
+     <width
+   id="width69">256</width>
+
+     <height
+   id="height72">256</height>
+
+     <image
+   id="image75">/9j/4AAQSkZJRgABAgEASABIAAD/7QAsUGhvdG9zaG9wIDMuMAA4QklNA+0AAAAAABAASAAAAAEA
+AQBIAAAAAQAB/+4ADkFkb2JlAGTAAAAAAf/bAIQABgQEBAUEBgUFBgkGBQYJCwgGBggLDAoKCwoK
+DBAMDAwMDAwQDA4PEA8ODBMTFBQTExwbGxscHx8fHx8fHx8fHwEHBwcNDA0YEBAYGhURFRofHx8f
+Hx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8f/8AAEQgBAAEAAwER
+AAIRAQMRAf/EAaIAAAAHAQEBAQEAAAAAAAAAAAQFAwIGAQAHCAkKCwEAAgIDAQEBAQEAAAAAAAAA
+AQACAwQFBgcICQoLEAACAQMDAgQCBgcDBAIGAnMBAgMRBAAFIRIxQVEGE2EicYEUMpGhBxWxQiPB
+UtHhMxZi8CRygvElQzRTkqKyY3PCNUQnk6OzNhdUZHTD0uIIJoMJChgZhJRFRqS0VtNVKBry4/PE
+1OT0ZXWFlaW1xdXl9WZ2hpamtsbW5vY3R1dnd4eXp7fH1+f3OEhYaHiImKi4yNjo+Ck5SVlpeYmZ
+qbnJ2en5KjpKWmp6ipqqusra6voRAAICAQIDBQUEBQYECAMDbQEAAhEDBCESMUEFURNhIgZxgZEy
+obHwFMHR4SNCFVJicvEzJDRDghaSUyWiY7LCB3PSNeJEgxdUkwgJChgZJjZFGidkdFU38qOzwygp
+0+PzhJSktMTU5PRldYWVpbXF1eX1RlZmdoaWprbG1ub2R1dnd4eXp7fH1+f3OEhYaHiImKi4yNjo
++DlJWWl5iZmpucnZ6fkqOkpaanqKmqq6ytrq+v/aAAwDAQACEQMRAD8A9U4q7FXYq7FXYq7FXYq7
+FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7F
+XYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FX
+Yq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXYq7FXY
+q7FXYq7FUNfajZ2MJlupRGoBO/U08BkZSA5tuLDPIaiHmHmT/nIzyRpMjQwTfXJlNCsA9b8VKx/8
+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
+FXYq7FXYq7FXYq//2Q==</image>
+
+    </li>
+
+   </Alt>
+
+  </Thumbnails>
+
+ </Description>
+
+
+ <Description
+   id="Description82"
+   about="uuid:9f75009b-5db3-4497-a513-f364d6143b99">
+  <DocumentID
+   id="DocumentID84">uuid:0dce5de2-4163-4b59-9fa8-07ede094259b</DocumentID>
+
+ </Description>
+
+
+ <Description
+   id="Description88"
+   about="uuid:9f75009b-5db3-4497-a513-f364d6143b99">
+  <format
+   id="format90">image/svg+xml</format>
+
+ </Description>
+
+
+<Work
+   id="Work369"
+   about="">
+  <format
+   id="format370">image/svg+xml</format>
+  <type
+   resource="http://purl.org/dc/dcmitype/StillImage"
+   id="type372" />
+</Work>
+</RDF>
+</svg:metadata>
+</xmpmeta>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <svg:xpacket
+   id="xpacket96" />
+
+			<rdf:RDF><cc:Work
+     rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+       rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></svg:metadata>
+  <svg:polyline
+   style="fill:none"
+   points="0,256 0,0 256,0 256,256 "
+   id="_x3C_Slice_x3E_"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192" /><svg:path
+   d="m 59.254797,26.094531 c -11.588949,0 -21.016802,10.51622 -21.016802,23.442033 l 0,156.926316 c 0,12.92637 9.427853,23.44259 21.016802,23.44259 l 137.491523,0 c 11.58839,0 21.01568,-10.51622 21.01568,-23.44259 l 0,-156.926316 c 0,-12.925813 -9.42729,-23.442033 -21.01568,-23.442033 l -137.491523,0 0,0 z"
+   id="path148"
+   style="fill:url(#linearGradient3220)"
+   inkscape:connector-curvature="0"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267" /><svg:path
+   d="m 211.85501,206.46288 c 0,9.68528 -6.76585,17.53447 -15.10869,17.53447 l -137.491523,0 c -8.342837,0 -15.109246,-7.84919 -15.109246,-17.53447 l 0,-156.926316 c 0,-9.684169 6.766409,-17.534478 15.109246,-17.534478 l 137.491523,0 c 8.34284,0 15.10869,7.850309 15.10869,17.534478 l 0,156.926316 0,0 z"
+   id="path169"
+   style="fill:url(#linearGradient3217)"
+   inkscape:connector-curvature="0"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267" /><svg:path
+   d="m 203.57248,167.48943 c 0,7.51861 -6.09797,13.61659 -13.61658,13.61659 l -123.910681,0 c -7.520839,0 -13.617699,-6.09798 -13.617699,-13.61659 l 0,-121.869644 c 0,-7.52028 6.09686,-13.617699 13.617699,-13.617699 l 123.910681,0 c 7.51861,0 13.61658,6.097419 13.61658,13.617699 l 0,121.869644 0,0 z"
+   id="path196"
+   style="fill:url(#linearGradient3214)"
+   inkscape:connector-curvature="0"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267" /><svg:path
+   d="m 189.9559,32.002087 -2.5464,0 c 7.21034,0 13.05815,5.846128 13.05815,13.057601 l 0,116.861152 c 0,7.21035 -16.56505,13.05704 -23.77541,13.05704 l -97.591095,0 c -7.21203,0 -23.568236,-5.84669 -23.568236,-13.05704 l 0,-116.861152 c 0,-7.211473 5.847246,-13.057601 13.058718,-13.057601 l -2.546408,0 c -7.520838,0 -13.617699,6.097419 -13.617699,13.617699 l 0,121.869644 c 0,7.51861 6.096861,13.61659 13.617699,13.61659 l 123.910681,0 c 7.51861,0 13.61658,-6.09798 13.61658,-13.61659 l 0,-121.869644 c 0,-7.52028 -6.09797,-13.617699 -13.61658,-13.617699 z"
+   id="path221"
+   style="fill:url(#linearGradient3211)"
+   inkscape:connector-curvature="0"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267" /><svg:path
+   d="m 53.334957,180.06958 c 0,0 3.177425,5.89806 8.624841,5.89806 l -9.532278,32.22993 0.907437,-38.12799 z"
+   id="path244"
+   style="fill:url(#linearGradient3208)"
+   inkscape:connector-curvature="0"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267" /><svg:path
+   d="m 202.6656,180.06958 c 0,0 -3.17742,5.89806 -8.62539,5.89806 l 9.53227,32.22993 -0.90688,-38.12799 z"
+   id="path267"
+   style="fill:url(#linearGradient3205)"
+   inkscape:connector-curvature="0"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267" /><svg:path
+   d="m 176.6565,188.0997 -97.314674,0 c -5.561334,0 -14.927202,18.64909 -22.325188,35.68546 0.732651,0.12731 1.476471,0.21219 2.238159,0.21219 l 137.491523,0 c 0.76168,0 1.5055,-0.0849 2.23704,-0.21219 -7.39799,-17.03637 -16.76608,-35.68546 -22.32686,-35.68546 z"
+   id="path288"
+   style="opacity:0.2;fill:url(#linearGradient3202)"
+   inkscape:connector-curvature="0"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267" />
+<svg:text
+   xml:space="preserve"
+   style="font-size:142.81201172px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:url(#linearGradient4020);fill-opacity:1;stroke:none;font-family:Sans"
+   x="68.914726"
+   y="150.20612"
+   id="text4004"
+   sodipodi:linespacing="125%"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267"><svg:tspan
+     sodipodi:role="line"
+     id="tspan4006"
+     x="68.914726"
+     y="150.20612"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;fill:url(#linearGradient4020);fill-opacity:1;font-family:Sans;-inkscape-font-specification:Sans Bold Italic">Đ</svg:tspan></svg:text>
+
+
+<svg:text
+   xml:space="preserve"
+   style="font-size:68.26667023px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+   x="-216"
+   y="212.8"
+   id="text3054"
+   sodipodi:linespacing="125%"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19-on.png"
+   inkscape:export-xdpi="35.797882"
+   inkscape:export-ydpi="35.797882"><svg:tspan
+     sodipodi:role="line"
+     id="tspan3056"
+     x="-216"
+     y="212.8"
+     style="font-size:136.53334045px;font-weight:bold;fill:#008600;fill-opacity:1;stroke:none;-inkscape-font-specification:Sans Bold">on</svg:tspan></svg:text>
+
+<svg:text
+   xml:space="preserve"
+   style="font-size:68.26667023px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+   x="-223.2"
+   y="129.60001"
+   id="text3828"
+   sodipodi:linespacing="125%"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19-off.png"
+   inkscape:export-xdpi="35.797882"
+   inkscape:export-ydpi="35.797882"><svg:tspan
+     sodipodi:role="line"
+     id="tspan3830"
+     x="-223.2"
+     y="129.60001"
+     style="font-size:136.53334045px;font-weight:bold;fill:#c4ad00;fill-opacity:1;-inkscape-font-specification:Sans Bold">off</svg:tspan></svg:text>
+
+<svg:g
+   transform="matrix(0.98540916,0,0,0.93871483,189.59331,-168.97344)"
+   id="g18"
+   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon19.png"
+   inkscape:export-xdpi="36.458267"
+   inkscape:export-ydpi="36.458267"><svg:g
+     style="filter:url(#f1)"
+     id="g20"><svg:polygon
+       style="fill:#999999"
+       points="6.826,413.357 -29.222,389.206 -65.046,413.821 -54.485,372.701 -87.696,345.61 -44.824,343.532 -29.822,302.989 -13.179,343.975 28.595,344.86 -4.891,372.435 "
+       id="polygon22" /></svg:g><svg:path
+     style="fill:#ffcc75;stroke:#ba6100;stroke-width:1.5;stroke-linejoin:round"
+     d="m 6.254,410.113 -36.048,-24.149 -35.824,24.613 10.56,-41.12 -33.211,-27.091 42.872,-2.077 15.002,-40.543 16.643,40.986 41.776,0.885 -33.488,27.575 11.718,40.921 z"
+     id="path24"
+     inkscape:connector-curvature="0" /><svg:path
+     style="fill:url(#rg1)"
+     d="m 4.316,407.421 -34.205,-24.852 -33.177,24.811 9.638,-38.431 -30.903,-25.61 40.161,-1.807 13.702,-38.342 15.713,39.065 39.605,0.38 -33.98,25.104 13.446,39.682 z"
+     id="path26"
+     inkscape:connector-curvature="0" /><svg:path
+     style="fill:url(#radialGradient3035)"
+     d="m -59.084,391.597 5.656,-22.648 -30.808,-25.322 40.065,-2.025 13.677,-38.33 15.805,38.986 22.982,0.255 c -35.743,8.884 -46.555,13.59 -67.377,49.084 z"
+     id="path28"
+     inkscape:connector-curvature="0" /></svg:g></svg:svg>

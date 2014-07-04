@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<div style="width:210px;">
+	<b id="txtSel">Chọn một kiểu gõ:</b><br />
+	<input type="radio" name="method" id="auto" /> <label for="auto" id="txtAuto">Kết hợp</label><br />
+	<input type="radio" name="method" id="telex" /> <label for="telex" id="txtTelex">Kiểu TELEX</label><br />
+	<input type="radio" name="method" id="vni" /> <label for="vni" id="txtVni">Kiểu VNI</label><br />
+	<input type="radio" name="method" id="off" /> <label for="off" id="txtOff">Tắt AVIM</label><br />
+	<br />
+	<b><small id="txtTips">Mẹo nhỏ:</small></b><br />
+	- <small id="txtTipsCtrl">Nhấn Ctrl 2 lần để bật/tắt nhanh.</small>
+	<br />
+	<br />
+	<div>
+		<b id="txtDemo">Gõ nhanh</b><br />
+		<textarea id="inputDemo"></textarea>
+		<button id="demoCopy"><span id="txtDemoCopy">Copy</span></button>
+	</div>
+</div>
+	<script src="popup.js"></script>
+	<script src="avim.js"></script>
+</body>
+</html>
