@@ -51,10 +51,15 @@
 			}
 		});
 		
-		offEle.addEventListener("click", function(){setAVIMConfig('onOff', 0);})
-		autoEle.addEventListener("click", function(){setAVIMConfig('method', 0);})
-		telexEle.addEventListener("click", function(){setAVIMConfig('method', 1);})
-		vniEle.addEventListener("click", function(){setAVIMConfig('method', 2);})
+		offEle.addEventListener("click", function(){setAVIMConfig('onOff', 0);});
+		autoEle.addEventListener("click", function(){setAVIMConfig('method', 0);});
+		telexEle.addEventListener("click", function(){setAVIMConfig('method', 1);});
+		vniEle.addEventListener("click", function(){setAVIMConfig('method', 2);});
+		
+		setTimeout(function(){
+			$g("inputDemo").focus();
+		}, 1000);
+		
 	}
 	
 //	window.onload = init;
