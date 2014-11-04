@@ -62,11 +62,9 @@
 		var bg = {};
 	
 		if (prefs.onOff == 1) {
-			//chrome.browserAction.setIcon({path:"icon19.png"});
 			txt.text = "on";
 			bg.color = [0, 255, 0, 255];
 		} else {
-			//chrome.browserAction.setIcon({path:"icon19-off.png"});
 			txt.text = "off";
 			bg.color = [255, 0, 0, 255];
 		}
