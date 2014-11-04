@@ -572,7 +572,7 @@
 			var replaceBy = fcc(c), wfix = upperCase(unV(fcc(c)));
 			AVIMObj.changed = true;
 		} else {
-			var replaceBy = c;
+			//var replaceBy = c;
 			if((upperCase(c) == "O") && AVIMObj.whit) {
 				bb=true;
 			}
@@ -582,9 +582,11 @@
 			if ((upperCase(o.value.substr(pos - 1, 1)) == 'U') && (pos < savePos - 1) && (upperCase(o.value.substr(pos - 2, 1)) != 'Q')) {
 				if((wfix == "Ơ") || bb) {
 					if (o.value.substr(pos-1,1) == 'u') {
-						var r = fcc(432);
+						//var r = fcc(432);
+						fcc(432);
 					} else {
-						var r = fcc(431);
+						//var r = fcc(431);
+						fcc(431);
 					}
 				}
 				if(bb) {
@@ -1135,9 +1137,9 @@
 	function _keyDownHandler(e) {
 		if(e == "iframe") {
 			AVIMObj.frame = findF();
-			var key = AVIMObj.frame.event.keyCode;
+			//var key = AVIMObj.frame.event.keyCode;
 		} else {
-			var key = e.which;
+			//var key = e.which;
 		}
 	}
 	
