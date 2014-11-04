@@ -970,7 +970,7 @@
 	function repSign(k) {
 		var t = [], u = [], a, b;
 		for(a = 0; a < 5; a++) {
-			if((k == null)||(AVIMObj.SFJRX.substr(a, 1) != upperCase(k))) {
+			if((k === null)||(AVIMObj.SFJRX.substr(a, 1) != upperCase(k))) {
 				t = retKC(AVIMObj.SFJRX.substr(a, 1));
 				for(b = 0; b < t.length; b++) u[u.length] = t[b];
 			}
@@ -1151,7 +1151,7 @@
 
 	function keyPressHandler(e) {
 		var a = _keyPressHandler(e);
-		if (a == false) {
+		if (a === false) {
 			e.preventDefault();
 		}
 	}
