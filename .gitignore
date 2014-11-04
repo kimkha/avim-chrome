@@ -1,3 +1,6 @@
 compiled
 vendor
 /avim.zip
+build
+dist
+node_modules
