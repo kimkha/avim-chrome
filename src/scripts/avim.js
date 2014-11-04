@@ -140,7 +140,7 @@
 			}
 		}
 		for(b = 0; b < vDConsonant.length; b++) {
-			if(tw.indexOf(vDConsonant[b]) == 0) {
+			if(tw.indexOf(vDConsonant[b]) === 0) {
 				tw = tw.substr(vDConsonant[b].length);
 				update = true;
 				t = b;
@@ -149,7 +149,7 @@
 		}
 		if(!update) {
 			for(b = 0; b < vSConsonant.length; b++) {
-				if(tw.indexOf(vSConsonant[b]) == 0) {
+				if(tw.indexOf(vSConsonant[b]) === 0) {
 					tw=tw.substr(1);
 					break;
 				}
@@ -304,7 +304,7 @@
 		var w = "", method = AVIMGlobalConfig.method, dockspell = AVIMGlobalConfig.ckSpell, uni, uni2 = false, uni3 = false, uni4 = false;
 		AVIMObj.oc=obj;
 		var telex = "D,A,E,O,W,W".split(','), vni = "9,6,6,6,7,8".split(','), viqr = "D,^,^,^,+,(".split(','), viqr2 = "D,^,^,^,*,(".split(','), a, noNormC;
-		if(method == 0) {
+		if(method === 0) {
 			var arr = [], check = [AVIMAutoConfig.telex, AVIMAutoConfig.vni, AVIMAutoConfig.viqr, AVIMAutoConfig.viqrStar];
 			var value1 = [telex, vni, viqr, viqr2], uniA = [uni, uni2, uni3, uni4], D2A = ["DAWEO", "6789", "D^+(", "D^*("];
 			for(a = 0; a < check.length; a++) {
@@ -531,7 +531,7 @@
 				v = 3;
 			}
 			var ttt = upperCase(w.substr(w.length - v, 2));
-			if((AVIMGlobalConfig.oldAccent == 0) && ((ttt == "UY") || (ttt == "OA") || (ttt == "OE"))) {
+			if((AVIMGlobalConfig.oldAccent === 0) && ((ttt == "UY") || (ttt == "OA") || (ttt == "OE"))) {
 				return vowA[0];
 			}
 			var c2 = 0, fdconsonant, sc = "BCD" + fcc(272) + "GHKLMNPQRSTVX", dc = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
@@ -662,7 +662,7 @@
 	function main(w, k, i, a, noNormC) {
 		var uk = upperCase(k), bya = [AVIMObj.db1, AVIMObj.ab1, AVIMObj.eb1, AVIMObj.ob1, AVIMObj.mocb1, AVIMObj.trangb1], got = false, t = "d,D,a,A,a,A,o,O,u,U,e,E,o,O".split(",");
 		var sfa = [AVIMObj.ds1, AVIMObj.as1, AVIMObj.es1, AVIMObj.os1, AVIMObj.mocs1, AVIMObj.trangs1], by = [], sf = [], method = AVIMGlobalConfig.method, h, g;
-		if((method == 2) || ((method == 0) && (a[0] == "9"))) {
+		if((method == 2) || ((method === 0) && (a[0] == "9"))) {
 			AVIMObj.DAWEO = "6789";
 			AVIMObj.SFJRX = "12534";
 			AVIMObj.S = "1";
@@ -680,7 +680,7 @@
 			AVIMObj.A = "^";
 			AVIMObj.E = "^";
 			AVIMObj.O = "^";
-		} else if((method == 3) || ((method == 0) && (a[4] == "+"))) {
+		} else if((method == 3) || ((method === 0) && (a[4] == "+"))) {
 			AVIMObj.DAWEO = "^+(D";
 			AVIMObj.SFJRX = "'`.?~";
 			AVIMObj.S = "'";
@@ -698,7 +698,7 @@
 			AVIMObj.A = "^";
 			AVIMObj.E = "^";
 			AVIMObj.O = "^";
-		} else if((method == 4) || ((method == 0) && (a[4] == "*"))) {
+		} else if((method == 4) || ((method === 0) && (a[4] == "*"))) {
 			AVIMObj.DAWEO = "^*(D";
 			AVIMObj.SFJRX = "'`.?~";
 			AVIMObj.S = "'";
@@ -716,7 +716,7 @@
 			AVIMObj.A = "^";
 			AVIMObj.E = "^";
 			AVIMObj.O = "^";
-		} else if((method == 1) || ((method == 0) && (a[0] == "D"))) {
+		} else if((method == 1) || ((method === 0) && (a[0] == "D"))) {
 			AVIMObj.SFJRX = "SFJRX";
 			AVIMObj.DAWEO = "DAWEO";
 			AVIMObj.D = 'D';
@@ -1025,7 +1025,7 @@
 	}
 	
 	function checkCode(code) {
-		if(((AVIMGlobalConfig.onOff == 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
+		if(((AVIMGlobalConfig.onOff === 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
 			return true;
 		}
 	}
