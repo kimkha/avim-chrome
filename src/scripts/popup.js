@@ -18,7 +18,7 @@
 	
 	function loadText() {
 		var keys = ["Sel", "Auto", "Telex", "Vni", "Off", "Tips", "TipsCtrl", "Demo", "DemoCopy"];
-		for (k in keys) {
+		for (var k in keys) {
 			$g("txt" + keys[k]).innerHTML = getI18n("extPopup" + keys[k]);
 		}
 	}
@@ -36,16 +36,16 @@
 		var vniEle = $g("vni");
 		
 		chrome.extension.sendMessage({'get_prefs':'all'}, function(response){
-			if (response.onOff == 0) {
+			if (response.onOff === 0) {
 				offEle.checked = true;
 			} else {
-				if (response.method == 0) {
+				if (response.method === 0) {
 					autoEle.checked = true;
 				}
-				if (response.method == 1) {
+				if (response.method === 1) {
 					telexEle.checked = true;
 				}
-				if (response.method == 2) {
+				if (response.method === 2) {
 					vniEle.checked = true;
 				}
 			}
