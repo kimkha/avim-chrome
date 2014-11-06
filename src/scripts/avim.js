@@ -568,25 +568,26 @@
 	
 	function replaceChar(o, pos, c) {
 		var bb = false;
+		var replaceBy, wfix, r;
 		if(!notNumber(c)) {
-			var replaceBy = fcc(c), wfix = upperCase(unV(fcc(c)));
+			replaceBy = fcc(c);
+			wfix = upperCase(unV(fcc(c)));
 			AVIMObj.changed = true;
 		} else {
-			//var replaceBy = c;
+			replaceBy = c;
 			if((upperCase(c) == "O") && AVIMObj.whit) {
 				bb=true;
 			}
 		}
 		if(!o.data) {
 			var savePos = o.selectionStart, sst = o.scrollTop;
+			r = "";
 			if ((upperCase(o.value.substr(pos - 1, 1)) == 'U') && (pos < savePos - 1) && (upperCase(o.value.substr(pos - 2, 1)) != 'Q')) {
 				if((wfix == "Ơ") || bb) {
 					if (o.value.substr(pos-1,1) == 'u') {
-						//var r = fcc(432);
-						fcc(432);
+						r = fcc(432);
 					} else {
-						//var r = fcc(431);
-						fcc(431);
+						r = fcc(431);
 					}
 				}
 				if(bb) {
@@ -603,12 +604,13 @@
 			o.setSelectionRange(savePos, savePos);
 			o.scrollTop = sst;
 		} else {
+			r = "";
 			if ((upperCase(o.data.substr(pos - 1, 1)) == 'U') && (pos < o.pos - 1)) {
 				if((wfix == "Ơ") || bb) {
 					if (o.data.substr(pos - 1, 1) == 'u') {
-						var r = fcc(432);
+						r = fcc(432);
 					} else {
-						var r = fcc(431);
+						r = fcc(431);
 					}
 				}
 				if(bb) {
@@ -1012,19 +1014,19 @@
 		}
 	}
 	
-	function ifInit(w) {
+	/*function ifInit(w) {
 		var sel = w.getSelection();
 		AVIMObj.range = sel ? sel.getRangeAt(0) : document.createRange();
-	}
+	}/**/
 	
-	function FKeyPress() {
-		var obj = findF();
+	/*function FKeyPress() {
+		var obj = findFrame();
 		AVIMObj.sk = fcc(obj.event.keyCode);
 		if(checkCode(obj.event.keyCode) || (obj.event.ctrlKey && (obj.event.keyCode != 92) && (obj.event.keyCode != 126))) {
 			return;
 		}
 		start(obj, AVIMObj.sk);
-	}
+	}/**/
 	
 	function checkCode(code) {
 		if(((AVIMGlobalConfig.onOff === 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
@@ -1067,7 +1069,7 @@
 		return false;
 	}
 	
-	function findF() {
+	function findFrame() {
 		var g;
 		for(g = 0; g < AVIMObj.fID.length; g++) {
 			if(findIgnore(AVIMObj.fID[g])) return;
@@ -1135,11 +1137,12 @@
 	}
 
 	function _keyDownHandler(e) {
+		var key;
 		if(e == "iframe") {
-			AVIMObj.frame = findF();
-			//var key = AVIMObj.frame.event.keyCode;
+			AVIMObj.frame = findFrame();
+			key = AVIMObj.frame.event.keyCode;
 		} else {
-			//var key = e.which;
+			key = e.which;
 		}
 	}
 	
@@ -1151,10 +1154,10 @@
 		_keyDownHandler(e);
 	}
 
-	function keyPressHandler(e) {
-		var a = _keyPressHandler(e);
+	function keyPressHandler(evt) {
+		var a = _keyPressHandler(evt);
 		if (a === false) {
-			e.preventDefault();
+			evt.preventDefault();
 		}
 	}
 	
@@ -1193,16 +1196,16 @@
 		}
 	}
 
-	function AVIMAJAXFix(e) {
-		if (isNaN(parseInt(e))) {
-			e = 0;
+	function AVIMAJAXFix(counter) {
+		if (isNaN(parseInt(counter))) {
+			counter = 0;
 		} else {
-			e = parseInt(e);
+			counter = parseInt(counter);
 		}
 		AVIMInit(AVIMObj, true);
-		e++;
-		if (e < 100) {
-			setTimeout(function(){AVIMAJAXFix(e)}, 100);
+		counter++;
+		if (counter < 100) {
+			setTimeout(function(){AVIMAJAXFix(counter);}, 100);
 		}
 	}
 
