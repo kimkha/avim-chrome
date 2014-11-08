@@ -102,15 +102,15 @@
 		return sf;
 	}
 	
-	function nospell(w, k) {
+	function nospell(word, k) {
 		return false;
 	}
 	
-	function ckspell(w, k) {
-		w = unV(w);
+	function ckspell(word, k) {
+		word = unV(word);
 		var exc = "UOU,IEU".split(','), z, next = true, noE = "UU,UOU,UOI,IEU,AO,IA,AI,AY,AU,AO".split(','), noBE = "YEU";
 		var check = true, noM = "UE,UYE,IU,EU,UY".split(','), noMT = "AY,AU".split(','), noT = "UA", t = -1, notV2 = "IAO";
-		var uw = upperCase(w), tw = uw, update = false, gi = "IO", noAOEW = "OE,OO,AO,EO,IA,AI".split(','), noAOE = "OA", test, a, b;
+		var uw = upperCase(word), tw = uw, update = false, gi = "IO", noAOEW = "OE,OO,AO,EO,IA,AI".split(','), noAOE = "OA", test, a, b;
 		var notViet = "AA,AE,EE,OU,YY,YI,IY,EY,EA,EI,II,IO,YO,YA,OOO".split(','), uk = upperCase(k), twE, uw2 = unV2(uw);
 		var vSConsonant = "B,C,D,G,H,K,L,M,N,P,Q,R,S,T,V,X".split(','), vDConsonant = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
 		var vDConsonantE = "CH,NG,NH".split(','),sConsonant = "C,P,T,CH".split(','),vSConsonantE = "C,M,N,P,T".split(',');
@@ -268,7 +268,7 @@
 	}
 	
 	function mozGetText(obj) {
-		var v, pos, w = "", g = 1;
+		var v, pos, word = "", g = 1;
 		v = (obj.data) ? obj.data : ( (obj.value) ? obj.value : obj.innerText );
 		if(v.length <= 0) {
 			return false;
@@ -289,19 +289,19 @@
 				break;
 			} else if(notWord(v.substr(pos - g, 1))) {
 				if(v.substr(pos - g, 1) == "\\") {
-					w = v.substr(pos - g, 1) + w;
+					word = v.substr(pos - g, 1) + word;
 				}
 				break;
 			} else {
-				w = v.substr(pos - g, 1) + w;
+				word = v.substr(pos - g, 1) + word;
 			}
 			g++;
 		}
-		return [w, pos];
+		return [word, pos];
 	}
 	
 	function start(obj, key) {
-		var w = "", method = AVIMGlobalConfig.method, dockspell = AVIMGlobalConfig.ckSpell, uni, uni2 = false, uni3 = false, uni4 = false;
+		var word = "", method = AVIMGlobalConfig.method, dockspell = AVIMGlobalConfig.ckSpell, uni, uni2 = false, uni3 = false, uni4 = false;
 		AVIMObj.oc=obj;
 		var telex = "D,A,E,O,W,W".split(','), vni = "9,6,6,6,7,8".split(','), viqr = "D,^,^,^,+,(".split(','), viqr2 = "D,^,^,^,*,(".split(','), a, noNormC;
 		if(method === 0) {
@@ -343,8 +343,8 @@
 		}
 	
 		key = fcc(key.which);
-		w = mozGetText(obj);
-		if(!w || obj.sel) {
+		word = mozGetText(obj);
+		if(!word || obj.sel) {
 			return;
 		}
 		if(AVIMObj.D2.indexOf(upperCase(key)) >= 0) {
@@ -352,41 +352,41 @@
 		} else {
 			noNormC = false;
 		}
-		main(w[0], key, w[1], uni, noNormC);
+		main(word[0], key, word[1], uni, noNormC);
 		if(!dockspell) {
-			w = mozGetText(obj);
+			word = mozGetText(obj);
 		}
-		if(w && uni2 && !AVIMObj.changed) {
-			main(w[0], key, w[1], uni2, noNormC);
-		}
-		if(!dockspell) {
-			w = mozGetText(obj);
-		}
-		if(w && uni3 && !AVIMObj.changed) {
-			main(w[0], key, w[1], uni3, noNormC);
+		if(word && uni2 && !AVIMObj.changed) {
+			main(word[0], key, word[1], uni2, noNormC);
 		}
 		if(!dockspell) {
-			w = mozGetText(obj);
+			word = mozGetText(obj);
 		}
-		if(w && uni4 && !AVIMObj.changed) {
-			main(w[0], key, w[1], uni4, noNormC);
+		if(word && uni3 && !AVIMObj.changed) {
+			main(word[0], key, word[1], uni3, noNormC);
+		}
+		if(!dockspell) {
+			word = mozGetText(obj);
+		}
+		if(word && uni4 && !AVIMObj.changed) {
+			main(word[0], key, word[1], uni4, noNormC);
 		}
 	
 		if(AVIMObj.D2.indexOf(upperCase(key)) >= 0) {
-			w = mozGetText(obj);
-			if(!w) {
+			word = mozGetText(obj);
+			if(!word) {
 				return;
 			}
-			normC(w[0], key, w[1]);
+			normC(word[0], key, word[1]);
 		}
 	}
 	
-	function findC(w, k, sf) {
+	function findC(word, k, sf) {
 		var method = AVIMGlobalConfig.method;
-		if(((method == 3) || (method == 4)) && (w.substr(w.length - 1, 1) == "\\")) {
+		if(((method == 3) || (method == 4)) && (word.substr(word.length - 1, 1) == "\\")) {
 			return [1, k.charCodeAt(0)];
 		}
-		var str = "", res, cc = "", pc = "", tE = "", vowA = [], s = "ÂĂÊÔƠƯêâăơôư", c = 0, dn = false, uw = upperCase(w), tv, g;
+		var str = "", res, cc = "", pc = "", tE = "", vowA = [], s = "ÂĂÊÔƠƯêâăơôư", c = 0, dn = false, uw = upperCase(word), tv, g;
 		var DAWEOFA = upperCase(AVIMObj.aA.join() + AVIMObj.eA.join() + AVIMObj.mocA.join() + AVIMObj.trangA.join() + AVIMObj.oA.join() + AVIMObj.english), h, uc;
 		for(g = 0; g < sf.length; g++) {
 			if(notNumber(sf[g])) {
@@ -395,17 +395,17 @@
 				str += fcc(sf[g]);
 			}
 		}
-		var uk = upperCase(k), uni_array = repSign(k), w2 = upperCase(unV2(unV(w))), dont = "ƯA,ƯU".split(',');
+		var uk = upperCase(k), uni_array = repSign(k), w2 = upperCase(unV2(unV(word))), dont = "ƯA,ƯU".split(',');
 		if (AVIMObj.DAWEO.indexOf(uk) >= 0) {
 			if(uk == AVIMObj.moc) {
 				if((w2.indexOf("UU") >= 0) && (AVIMObj.tw5 != dont[1])) {
-					if(w2.indexOf("UU") == (w.length - 2)) {
+					if(w2.indexOf("UU") == (word.length - 2)) {
 						res=2;
 					} else {
 						return false;
 					}
 				} else if(w2.indexOf("UOU") >= 0) {
-					if(w2.indexOf("UOU") == (w.length-3)) {
+					if(w2.indexOf("UOU") == (word.length-3)) {
 						res=2;
 					} else {
 						return false;
@@ -413,9 +413,9 @@
 				}
 			}
 			if(!res) {
-				for(g = 1; g <= w.length; g++) {
-					cc = w.substr(w.length - g, 1);
-					pc = upperCase(w.substr(w.length - g - 1, 1));
+				for(g = 1; g <= word.length; g++) {
+					cc = word.substr(word.length - g, 1);
+					pc = upperCase(word.substr(word.length - g - 1, 1));
 					uc = upperCase(cc);
 					for(h = 0; h < dont.length; h++) {
 						if((AVIMObj.tw5 == dont[h]) && (AVIMObj.tw5 == unV(pc + uc))) {
@@ -427,13 +427,13 @@
 						continue;
 					}
 					if(str.indexOf(uc) >= 0) {
-						if(((uk == AVIMObj.moc) && (unV(uc) == "U") && (upperCase(unV(w.substr(w.length - g + 1, 1))) == "A")) || ((uk == AVIMObj.trang) && (unV(uc) == 'A') && (unV(pc) == 'U'))) {
+						if(((uk == AVIMObj.moc) && (unV(uc) == "U") && (upperCase(unV(word.substr(word.length - g + 1, 1))) == "A")) || ((uk == AVIMObj.trang) && (unV(uc) == 'A') && (unV(pc) == 'U'))) {
 							if(unV(uc) == "U") {
 								tv=1;
 							} else {
 								tv=2;
 							}
-							var ccc = upperCase(w.substr(w.length - g - tv, 1));
+							var ccc = upperCase(word.substr(word.length - g - tv, 1));
 							if(ccc != "Q") {
 								res = g + tv - 1;
 							} else if(uk == AVIMObj.trang) {
@@ -468,10 +468,10 @@
 				tE += fcc(tEC[g]);
 			}
 		}
-		for(g = 1; g <= w.length; g++) {
+		for(g = 1; g <= word.length; g++) {
 			if(AVIMObj.DAWEO.indexOf(uk) < 0) {
-				cc = upperCase(w.substr(w.length - g, 1));
-				pc = upperCase(w.substr(w.length - g - 1, 1));
+				cc = upperCase(word.substr(word.length - g, 1));
+				pc = upperCase(word.substr(word.length - g - 1, 1));
 				if(str.indexOf(cc) >= 0) {
 					if(cc == 'U') {
 						if(pc != 'Q') {
@@ -488,14 +488,14 @@
 						vowA[vowA.length] = g;
 					}
 				} else if(uk != AVIMObj.Z) {
-					for(h = 0; h < uni_array.length; h++) if(uni_array[h] == w.charCodeAt(w.length - g)) {
-						if(AVIMObj.spellerr(w, k)) {
+					for(h = 0; h < uni_array.length; h++) if(uni_array[h] == word.charCodeAt(word.length - g)) {
+						if(AVIMObj.spellerr(word, k)) {
 							return false;
 						}
 						return [g, tEC[h % 24]];
 					}
 					for(h = 0; h < tEC.length; h++) {
-						if(tEC[h] == w.charCodeAt(w.length - g)) {
+						if(tEC[h] == word.charCodeAt(word.length - g)) {
 							return [g, fcc(AVIMObj.skey[h])];
 						}
 					}
@@ -503,17 +503,17 @@
 			}
 		}
 		if((uk != AVIMObj.Z) && (typeof(res) != 'object')) {
-			if(AVIMObj.spellerr(w, k)) {
+			if(AVIMObj.spellerr(word, k)) {
 				return false;
 			}
 		}
 		if(AVIMObj.DAWEO.indexOf(uk) < 0) {
-			for(g = 1; g <= w.length; g++) {
-				if((uk != AVIMObj.Z) && (s.indexOf(w.substr(w.length - g, 1)) >= 0)) {
+			for(g = 1; g <= word.length; g++) {
+				if((uk != AVIMObj.Z) && (s.indexOf(word.substr(word.length - g, 1)) >= 0)) {
 					return g;
-				} else if(tE.indexOf(w.substr(w.length - g, 1)) >= 0) {
+				} else if(tE.indexOf(word.substr(word.length - g, 1)) >= 0) {
 					for(h = 0; h < tEC.length; h++) {
-						if(w.substr(w.length - g, 1).charCodeAt(0) == tEC[h]) {
+						if(word.substr(word.length - g, 1).charCodeAt(0) == tEC[h]) {
 							return [g, fcc(AVIMObj.skey[h])];
 						}
 					}
@@ -527,18 +527,18 @@
 			return vowA[0];
 		} else if(c == 2) {
 			var v = 2;
-			if(w.substr(w.length - 1) == " ") {
+			if(word.substr(word.length - 1) == " ") {
 				v = 3;
 			}
-			var ttt = upperCase(w.substr(w.length - v, 2));
+			var ttt = upperCase(word.substr(word.length - v, 2));
 			if((AVIMGlobalConfig.oldAccent === 0) && ((ttt == "UY") || (ttt == "OA") || (ttt == "OE"))) {
 				return vowA[0];
 			}
 			var c2 = 0, fdconsonant, sc = "BCD" + fcc(272) + "GHKLMNPQRSTVX", dc = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
-			for(h = 1; h <= w.length; h++) {
+			for(h = 1; h <= word.length; h++) {
 				fdconsonant=false;
 				for(g = 0; g < dc.length; g++) {
-					if(upperCase(w.substr(w.length - h - dc[g].length + 1, dc[g].length)).indexOf(dc[g])>=0) {
+					if(upperCase(word.substr(word.length - h - dc[g].length + 1, dc[g].length)).indexOf(dc[g])>=0) {
 						c2++;
 						fdconsonant = true;
 						if(dc[g] != 'NGH') {
@@ -549,7 +549,7 @@
 					}
 				}
 				if(!fdconsonant) {
-					if(sc.indexOf(upperCase(w.substr(w.length - h, 1))) >= 0) {
+					if(sc.indexOf(upperCase(word.substr(word.length - h, 1))) >= 0) {
 						c2++;
 					} else { 
 						break;
@@ -634,13 +634,13 @@
 		}
 	}
 	
-	function tr(k, w, by, sf, i) {
-		var r, pos = findC(w, k, sf), g;
+	function tr(k, word, by, sf, i) {
+		var r, pos = findC(word, k, sf), g;
 		if(pos) {
 			if(pos[1]) {
 				return replaceChar(AVIMObj.oc, i-pos[0], pos[1]);
 			} else {
-				var c, pC = w.substr(w.length - pos, 1), cmp;
+				var c, pC = word.substr(word.length - pos, 1), cmp;
 				r = sf;
 				for(g = 0; g < r.length; g++) {
 					if(notNumber(r[g]) || (r[g] == "e")) {
@@ -663,7 +663,7 @@
 		return false;
 	}
 	
-	function main(w, k, i, a, noNormC) {
+	function main(word, k, i, a, noNormC) {
 		var uk = upperCase(k), bya = [AVIMObj.db1, AVIMObj.ab1, AVIMObj.eb1, AVIMObj.ob1, AVIMObj.mocb1, AVIMObj.trangb1], got = false, t = "d,D,a,A,a,A,o,O,u,U,e,E,o,O".split(",");
 		var sfa = [AVIMObj.ds1, AVIMObj.as1, AVIMObj.es1, AVIMObj.os1, AVIMObj.mocs1, AVIMObj.trangs1], by = [], sf = [], method = AVIMGlobalConfig.method, h, g;
 		if((method == 2) || ((method === 0) && (a[0] == "9"))) {
@@ -739,7 +739,7 @@
 			AVIMObj.O = "O";
 		}
 		if(AVIMObj.SFJRX.indexOf(uk) >= 0) {
-			var ret = sr(w,k,i);
+			var ret = sr(word,k,i);
 			got=true;
 			if(ret) {
 				return ret;
@@ -775,26 +775,26 @@
 			if(noNormC) {
 				return;
 			} else {
-				return normC(w, k, i);
+				return normC(word, k, i);
 			}
 		}
-		return DAWEOZ(k, w, by, sf, i, uk);
+		return DAWEOZ(k, word, by, sf, i, uk);
 	}
 	
-	function DAWEOZ(k, w, by, sf, i, uk) {
+	function DAWEOZ(k, word, by, sf, i, uk) {
 		if((AVIMObj.DAWEO.indexOf(uk) >= 0) || (AVIMObj.Z.indexOf(uk) >= 0)) {
-			return tr(k, w, by, sf, i);
+			return tr(k, word, by, sf, i);
 		}
 	}
 	
-	function normC(w, k, i) {
+	function normC(word, k, i) {
 		var uk = upperCase(k), u = repSign(null), fS, c, j, h;
 		if(k.charCodeAt(0) == 32) {
 			return;
 		}
-		for(j = 1; j <= w.length; j++) {
+		for(j = 1; j <= word.length; j++) {
 			for(h = 0; h < u.length; h++) {
-				if(u[h] == w.charCodeAt(w.length - j)) {
+				if(u[h] == word.charCodeAt(word.length - j)) {
 					if(h <= 23) {
 						fS = AVIMObj.S;
 					} else if(h <= 47) {
@@ -808,14 +808,14 @@
 					}
 					c = AVIMObj.skey[h % 24];
 					if((AVIMObj.alphabet.indexOf(uk) < 0) && (AVIMObj.D2.indexOf(uk) < 0)) {
-						return w;
+						return word;
 					}
-					w = unV(w);
+					word = unV(word);
 					// TODO: NEW CODE
 					return;
 					// TODO: OLD CODE
 					//if(!space && !AVIMObj.changed) {
-					//	w += k;
+					//	word += k;
 					//}
 				
 					//var sp = AVIMObj.oc.selectionStart, pos = sp;
@@ -836,11 +836,11 @@
 					//if(!AVIMObj.oc.data) {
 					//	AVIMObj.oc.setSelectionRange(pos, pos);
 					//}
-					//if(!ckspell(w, fS)) {
+					//if(!ckspell(word, fS)) {
 					//	replaceChar(AVIMObj.oc, i - j, c);
 					//	if(!AVIMObj.oc.data) {
 					//		var a = [AVIMObj.D];
-					//		main(w, fS, pos, a, false);
+					//		main(word, fS, pos, a, false);
 					//	} else {
 					//		var ww = mozGetText(AVIMObj.oc), a = [AVIMObj.D];
 					//		main(ww[0], fS, ww[1], a, false);
@@ -947,28 +947,28 @@
 		}
 	}
 	
-	function unV(w) {
+	function unV(word) {
 		var u = repSign(null), b, a;
-		for(a = 1; a <= w.length; a++) {
+		for(a = 1; a <= word.length; a++) {
 			for(b = 0; b < u.length; b++) {
-				if(u[b] == w.charCodeAt(w.length - a)) {
-					w = w.substr(0, w.length - a) + fcc(AVIMObj.skey[b % 24]) + w.substr(w.length - a + 1);
+				if(u[b] == word.charCodeAt(word.length - a)) {
+					word = word.substr(0, word.length - a) + fcc(AVIMObj.skey[b % 24]) + word.substr(word.length - a + 1);
 				}
 			}
 		}
-		return w;
+		return word;
 	}
 	
-	function unV2(w) {
+	function unV2(word) {
 		var a, b;
-		for(a = 1; a <= w.length; a++) {
+		for(a = 1; a <= word.length; a++) {
 			for(b = 0; b < AVIMObj.skey.length; b++) {
-				if(AVIMObj.skey[b] == w.charCodeAt(w.length - a)) {
-					w = w.substr(0, w.length - a) + AVIMObj.skey2[b] + w.substr(w.length - a + 1);
+				if(AVIMObj.skey[b] == word.charCodeAt(word.length - a)) {
+					word = word.substr(0, word.length - a) + AVIMObj.skey2[b] + word.substr(word.length - a + 1);
 				}
 			}
 		}
-		return w;
+		return word;
 	}
 	
 	function repSign(k) {
@@ -982,21 +982,21 @@
 		return u;
 	}
 	
-	function sr(w, k, i) {
-		var sf = getSF(), pos = findC(w, k, sf);
+	function sr(word, k, i) {
+		var sf = getSF(), pos = findC(word, k, sf);
 		if(pos) {
 			if(pos[1]) {
 				replaceChar(AVIMObj.oc, i-pos[0], pos[1]);
 			} else {
-				var c = retUni(w, k, pos);
+				var c = retUni(word, k, pos);
 				replaceChar(AVIMObj.oc, i-pos, c);
 			}
 		}
 		return false;
 	}
 	
-	function retUni(w, k, pos) {
-		var u = retKC(upperCase(k)), uC, lC, c = w.charCodeAt(w.length - pos), a, t = fcc(c);
+	function retUni(word, k, pos) {
+		var u = retKC(upperCase(k)), uC, lC, c = word.charCodeAt(word.length - pos), a, t = fcc(c);
 		for(a = 0; a < AVIMObj.skey.length; a++) {
 			if(AVIMObj.skey[a] == c) {
 				if(a < 12) {
@@ -1014,8 +1014,8 @@
 		}
 	}
 	
-	/*function ifInit(w) {
-		var sel = w.getSelection();
+	/*function ifInit(word) {
+		var sel = word.getSelection();
 		AVIMObj.range = sel ? sel.getRangeAt(0) : document.createRange();
 	}/**/
 	
@@ -1034,29 +1034,29 @@
 		}
 	}
 	
-	function notWord(w) {
+	function notWord(word) {
 		var str = "\ \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]\'~|^\@\&\t" + fcc(160);
-		return (str.indexOf(w) >= 0);
+		return (str.indexOf(word) >= 0);
 	}
 	
-	function notNumber(w) {
-		if (isNaN(w) || (w == 'e')) {
+	function notNumber(word) {
+		if (isNaN(word) || (word == 'e')) {
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	function upperCase(w) {
-		w = w.toUpperCase();
-		var str = "êôơâăưếốớấắứềồờầằừễỗỡẫẵữệộợậặự", rep="ÊÔƠÂĂƯẾỐỚẤẮỨỀỒỜẦẰỪỄỖỠẪẴỮỆỘỢẶỰ", z, io;
-		for(z = 0; z < w.length; z++) {
-			io = str.indexOf(w.substr(z, 1));
+	function upperCase(word) {
+		word = word.toUpperCase();
+		var str = "êôơâăưếốớấắứềồờầằừễỗỡẫẵữệộợậặự", rep="ÊÔƠÂĂƯẾỐỚẤẮỨỀỒỜẦẰỪỄỖỠẪẴỮỆỘỢẶỰ", io;
+		for(var i = 0; i < word.length; i++) {
+			io = str.indexOf(word.substr(i, 1));
 			if(io >= 0) {
-				w = w.substr(0, z) + rep.substr(io, 1) + w.substr(z + 1);
+				word = word.substr(0, i) + rep.substr(io, 1) + word.substr(i + 1);
 			}
 		}
-		return w;
+		return word;
 	}
 	
 	function findIgnore(el) {
@@ -1070,10 +1070,9 @@
 	}
 	
 	function findFrame() {
-		var g;
-		for(g = 0; g < AVIMObj.fID.length; g++) {
-			if(findIgnore(AVIMObj.fID[g])) return;
-			AVIMObj.frame = AVIMObj.fID[g];
+		for(var i = 0; i < AVIMObj.fID.length; i++) {
+			if(findIgnore(AVIMObj.fID[i])) return;
+			AVIMObj.frame = AVIMObj.fID[i];
 			if(typeof(AVIMObj.frame) != "undefined") {
 				try {
 					if (AVIMObj.frame.contentWindow.document && AVIMObj.frame.contentWindow.event) {
@@ -1117,11 +1116,13 @@
 		if(AVIMObj.changed) {
 			AVIMObj.changed = false;
 			e.preventDefault();
+			return false;
 		}
+		return;
 	}
 
-	function _keyUpHandler(e) {
-		var code = e.which;
+	function _keyUpHandler(evt) {
+		var code = evt.which;
 	
 		// Press Ctrl twice to off/on AVIM
 		if (code == 17) {
@@ -1136,27 +1137,27 @@
 		}
 	}
 
-	function _keyDownHandler(e) {
+	function _keyDownHandler(evt) {
 		var key;
-		if(e == "iframe") {
+		if(evt == "iframe") {
 			AVIMObj.frame = findFrame();
 			key = AVIMObj.frame.event.keyCode;
 		} else {
-			key = e.which;
+			key = evt.which;
 		}
 	}
 	
-	function keyUpHandler(e) {
-		_keyUpHandler(e);
+	function keyUpHandler(evt) {
+		_keyUpHandler(evt);
 	}
 
-	function keyDownHandler(e) {
-		_keyDownHandler(e);
+	function keyDownHandler(evt) {
+		_keyDownHandler(evt);
 	}
 
 	function keyPressHandler(evt) {
-		var a = _keyPressHandler(evt);
-		if (a === false) {
+		var success = _keyPressHandler(evt);
+		if (success === false) {
 			evt.preventDefault();
 		}
 	}
