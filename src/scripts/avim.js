@@ -50,7 +50,7 @@
 		this.attached = [];
 		this.changed = false;
 		this.agt = navigator.userAgent.toLowerCase();
-		this.alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM\ ";
+		this.alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
 		this.support = true;
 		this.ver = 0;
 		this.specialChange = false;
@@ -304,7 +304,7 @@
 		var word = "", method = AVIMGlobalConfig.method, dockspell = AVIMGlobalConfig.ckSpell, uni, uni2 = false, uni3 = false, uni4 = false;
 		AVIMObj.oc=obj;
 		var telex = "D,A,E,O,W,W".split(','), vni = "9,6,6,6,7,8".split(','), viqr = "D,^,^,^,+,(".split(','), viqr2 = "D,^,^,^,*,(".split(','), a, noNormC;
-		if(method === 0) {
+		if(method === 0) { // AUTO Method
 			var arr = [], check = [AVIMAutoConfig.telex, AVIMAutoConfig.vni, AVIMAutoConfig.viqr, AVIMAutoConfig.viqrStar];
 			var value1 = [telex, vni, viqr, viqr2], uniA = [uni, uni2, uni3, uni4], D2A = ["DAWEO", "6789", "D^+(", "D^*("];
 			for(a = 0; a < check.length; a++) {
@@ -325,19 +325,19 @@
 			if(!uni) {
 				return;
 			}
-		} else if(method == 1) {
+		} else if(method == 1) { // TELEX Method
 			uni = telex;
 			AVIMObj.D2 = "DAWEO";
 		}
-		else if(method == 2) {
+		else if(method == 2) { // VNI Method
 			uni = vni;
 			AVIMObj.D2 = "6789";
 		}
-		else if(method == 3) {
+		else if(method == 3) { // VIQR Method
 			uni = viqr;
 			AVIMObj.D2 = "D^+(";
 		}
-		else if(method == 4) {
+		else if(method == 4) { // VIQR2 Method
 			uni = viqr2;
 			AVIMObj.D2 = "D^*(";
 		}
@@ -462,8 +462,10 @@
 				}
 			}
 		}
+		
+		var tEC;
 		if((uk != AVIMObj.Z) && (AVIMObj.DAWEO.indexOf(uk) < 0)) {
-			var tEC = retKC(uk);
+			tEC = retKC(uk);
 			for(g = 0;g < tEC.length; g++) {
 				tE += fcc(tEC[g]);
 			}
@@ -1035,7 +1037,7 @@
 	}
 	
 	function notWord(word) {
-		var str = "\ \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]\'~|^\@\&\t" + fcc(160);
+		var str = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]\'~|^@&\t" + fcc(160);
 		return (str.indexOf(word) >= 0);
 	}
 	
