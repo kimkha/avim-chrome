@@ -1133,6 +1133,10 @@
 				sendRequest({'turn_avim':'onOff'}, configAVIM);
 			} else {
 				AVIMObj.isPressCtrl = true;
+				// Must press twice in 300ms
+				setTimeout(function(){
+					AVIMObj.isPressCtrl = false;
+				}, 300);
 			}
 		} else {
 			AVIMObj.isPressCtrl = false;
