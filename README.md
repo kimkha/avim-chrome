@@ -1,4 +1,4 @@
-avim-chrome
+avim-chrome [![Build Status](https://travis-ci.org/kimkha/avim-chrome.svg?branch=master)](https://travis-ci.org/kimkha/avim-chrome)
 ===========
 
 Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trình duyệt Google Chrome.
