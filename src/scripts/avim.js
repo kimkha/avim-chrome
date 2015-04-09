@@ -24,6 +24,7 @@
  */
  
 (function(window){
+	var debug = true;
 	var extension = chrome.extension;
 	var document = window.document;
 	var sendRequest = extension.sendMessage;
@@ -267,21 +268,37 @@
 		return false;
 	}
 	
-	function mozGetText(obj) {
+	function getEditorObject(ele) {
+		var value, start, end;
+		value = (ele.data) ? ele.data : ( (ele.value) ? ele.value : ele.innerText );
+		if(!ele.data) {
+			if(!ele.setSelectionRange) {
+				return false;
+			}
+			start = ele.selectionStart;
+			end = ele.selectionEnd;
+		} else {
+			start = ele.pos;
+			end = ele.pos;
+		}
+		return {
+			"v": value, // value
+			"s": start, // start selection
+			"e": end // end selection
+		};
+	}
+	
+	function mozGetText(editor) {
+		if (!editor) {
+			return false;
+		}
 		var v, pos, word = "", g = 1;
-		v = (obj.data) ? obj.data : ( (obj.value) ? obj.value : obj.innerText );
+		v = editor.v;
 		if(v.length <= 0) {
 			return false;
 		}
-		if(!obj.data) {
-			if(!obj.setSelectionRange) {
-				return false;
-			}
-			pos = obj.selectionStart;
-		} else {
-			pos = obj.pos;
-		}
-		if(obj.selectionStart != obj.selectionEnd) {
+		pos = editor.s;
+		if(pos != editor.e) {
 			return ["", pos];
 		}
 		while(1) {
@@ -343,7 +360,7 @@
 		}
 	
 		key = fcc(key.which);
-		word = mozGetText(obj);
+		word = mozGetText(getEditorObject(obj));
 		if(!word || obj.sel) {
 			return;
 		}
@@ -354,26 +371,26 @@
 		}
 		main(word[0], key, word[1], uni, noNormC);
 		if(!dockspell) {
-			word = mozGetText(obj);
+			word = mozGetText(getEditorObject(obj));
 		}
 		if(word && uni2 && !AVIMObj.changed) {
 			main(word[0], key, word[1], uni2, noNormC);
 		}
 		if(!dockspell) {
-			word = mozGetText(obj);
+			word = mozGetText(getEditorObject(obj));
 		}
 		if(word && uni3 && !AVIMObj.changed) {
 			main(word[0], key, word[1], uni3, noNormC);
 		}
 		if(!dockspell) {
-			word = mozGetText(obj);
+			word = mozGetText(getEditorObject(obj));
 		}
 		if(word && uni4 && !AVIMObj.changed) {
 			main(word[0], key, word[1], uni4, noNormC);
 		}
 	
 		if(AVIMObj.D2.indexOf(upperCase(key)) >= 0) {
-			word = mozGetText(obj);
+			word = mozGetText(getEditorObject(obj));
 			if(!word) {
 				return;
 			}
@@ -844,7 +861,7 @@
 						if(!AVIMObj.oc.data) {
 							main(word, fS, pos, a, false);
 						} else {
-							var ww = mozGetText(AVIMObj.oc);
+							var ww = mozGetText(getEditorObject(AVIMObj.oc));
 							main(ww[0], fS, ww[1], a, false);
 						}
 					}
@@ -1155,10 +1172,12 @@
 	
 	function keyUpHandler(evt) {
 		_keyUpHandler(evt);
+		debug && console.log("keyUpHandler");
 	}
 
 	function keyDownHandler(evt) {
 		_keyDownHandler(evt);
+		debug && console.log("keyDownHandler");
 	}
 
 	function keyPressHandler(evt) {
@@ -1166,6 +1185,7 @@
 		if (success === false) {
 			evt.preventDefault();
 		}
+		debug && console.log("keyPressHandler");
 	}
 	
 	function attachEvt(obj, evt, handle, capture) {
