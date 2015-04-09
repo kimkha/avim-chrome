@@ -40,11 +40,11 @@
 		"description" : ""
 	},
 	"extPopupDemo" : {
-		"message" : "Fast input",
+		"message" : "Gõ nhanh",
 		"description" : ""
 	},
 	"extPopupDemoCopy" : {
-		"message" : "Highlight Copy",
+		"message" : "Bôi đen toàn bộ",
 		"description" : ""
 	}
 }

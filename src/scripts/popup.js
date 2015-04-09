@@ -22,6 +22,11 @@
 			$g("txt" + keys[k]).innerHTML = getI18n("extPopup" + keys[k]);
 		}
 	}
+	
+	function hightlightDemo() {
+		$g("inputDemo").focus();
+		$g("inputDemo").select();
+	}
 
 	function $g(id) {
 		return document.getElementById(id);
@@ -56,10 +61,7 @@
 		telexEle.addEventListener("click", function(){setAVIMConfig('method', 1);});
 		vniEle.addEventListener("click", function(){setAVIMConfig('method', 2);});
 		
-		setTimeout(function(){
-			$g("inputDemo").focus();
-		}, 1000);
-		
+		$g("demoCopy").addEventListener("click", hightlightDemo);
 	}
 	
 //	window.onload = init;
