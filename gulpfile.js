@@ -64,9 +64,9 @@ gulp.task('styles', function() {
 
 //build ditributable and sourcemaps after other tasks completed
 gulp.task('zip', ['html', 'scripts', 'styles', 'copy'], function() {
-	var manifest = require('./src/manifest'),
-		distFileName = manifest.name + ' v' + manifest.version + '.zip',
-		mapFileName = manifest.name + ' v' + manifest.version + '-maps.zip';
+	var manifest = require('./src/manifest.json'),
+		distFileName = 'avim-chrome-' + manifest.version + '.zip',
+		mapFileName = 'avim-chrome-' + manifest.version + '-maps.zip';
 	//collect all source maps
 	gulp.src('build/scripts/**/*.map')
 		.pipe(zip(mapFileName))

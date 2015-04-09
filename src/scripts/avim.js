@@ -814,40 +814,40 @@
 					}
 					word = unV(word);
 					// TODO: NEW CODE
-					return;
+					//return;
 					// TODO: OLD CODE
-					//if(!space && !AVIMObj.changed) {
-					//	word += k;
-					//}
+					if(!AVIMObj.changed) {
+						word += k;
+					}
 				
-					//var sp = AVIMObj.oc.selectionStart, pos = sp;
-					//if(!AVIMObj.changed) {
-					//	var sst = AVIMObj.oc.scrollTop;
-					//	pos += k.length;
-					//	if(!AVIMObj.oc.data) {
-					//		AVIMObj.oc.value = AVIMObj.oc.value.substr(0, sp) + k + AVIMObj.oc.value.substr(AVIMObj.oc.selectionEnd);
-					//		AVIMObj.changed = true;
-					//		AVIMObj.oc.scrollTop = sst;
-					//	} else {
-					//		AVIMObj.oc.insertData(AVIMObj.oc.pos, k);
-					//		AVIMObj.oc.pos++;
-					//		AVIMObj.range.setEnd(AVIMObj.oc, AVIMObj.oc.pos);
-					//		AVIMObj.specialChange = true;
-					//	}
-					//}
-					//if(!AVIMObj.oc.data) {
-					//	AVIMObj.oc.setSelectionRange(pos, pos);
-					//}
-					//if(!ckspell(word, fS)) {
-					//	replaceChar(AVIMObj.oc, i - j, c);
-					//	if(!AVIMObj.oc.data) {
-					//		var a = [AVIMObj.D];
-					//		main(word, fS, pos, a, false);
-					//	} else {
-					//		var ww = mozGetText(AVIMObj.oc), a = [AVIMObj.D];
-					//		main(ww[0], fS, ww[1], a, false);
-					//	}
-					//}
+					var sp = AVIMObj.oc.selectionStart, pos = sp;
+					if(!AVIMObj.changed) {
+						var sst = AVIMObj.oc.scrollTop;
+						pos += k.length;
+						if(!AVIMObj.oc.data) {
+							AVIMObj.oc.value = AVIMObj.oc.value.substr(0, sp) + k + AVIMObj.oc.value.substr(AVIMObj.oc.selectionEnd);
+							AVIMObj.changed = true;
+							AVIMObj.oc.scrollTop = sst;
+						} else {
+							AVIMObj.oc.insertData(AVIMObj.oc.pos, k);
+							AVIMObj.oc.pos++;
+							AVIMObj.range.setEnd(AVIMObj.oc, AVIMObj.oc.pos);
+							AVIMObj.specialChange = true;
+						}
+					}
+					if(!AVIMObj.oc.data) {
+						AVIMObj.oc.setSelectionRange(pos, pos);
+					}
+					if(!ckspell(word, fS)) {
+						replaceChar(AVIMObj.oc, i - j, c);
+						var a = [AVIMObj.D];
+						if(!AVIMObj.oc.data) {
+							main(word, fS, pos, a, false);
+						} else {
+							var ww = mozGetText(AVIMObj.oc);
+							main(ww[0], fS, ww[1], a, false);
+						}
+					}
 				}
 			}
 		}
@@ -887,65 +887,6 @@
 		}
 		if(k == AVIMObj.X) {
 			return [227,7851,7861,7869,7877,297,245,7895,7905,361,7919,7929,195,7850,7860,7868,7876,296,213,7894,7904,360,7918,7928];
-		}
-	}
-	
-	function ifMoz(e) {
-		// Init code for editable iframes and divs
-		var code = e.which, avim = AVIMObj.AVIM, cwi = e.target.parentNode.wi;
-		if(typeof(avim) == "undefined") avim = AVIMObj;
-		if(typeof(cwi) == "undefined") cwi = e.target.parentNode.parentNode.wi;
-		if(typeof(cwi) == "undefined") cwi = window;
-		if(e.ctrlKey || (e.altKey && (code != 92) && (code != 126))) return;
-	
-		// get current caret and its node
-		var sel = cwi.getSelection();
-		var range = sel.getRangeAt(0);
-		var node = range.endContainer, newPos;
-	
-		avim.sk = fcc(code);
-		avim.saveStr = "";
-		if(checkCode(code) || !range.startOffset || (typeof(node.data) == 'undefined')) return;
-		node.sel = false;
-	
-		if(node.data) {
-			avim.saveStr = node.data.substr(range.endOffset);
-			if(range.startOffset != range.endOffset) {
-				node.sel=true;
-			}
-			node.deleteData(range.startOffset, node.data.length);
-		}
-	
-		if(!node.data) {
-			range.setStart(node, 0);
-			range.setEnd(node, range.endOffset);
-			sel.removeAllRanges();
-			sel.addRange(range);
-			return;
-		}
-	
-		node.value = node.data;
-		node.pos = node.data.length;
-		node.which=code;
-		start(node, e);
-		node.insertData(node.data.length, avim.saveStr);
-		newPos = node.data.length - avim.saveStr.length + avim.kl;
-	
-		// Set caret back to node
-		range.setStart(node, newPos);
-		range.setEnd(node, newPos);
-		sel.removeAllRanges();
-		sel.addRange(range);
-	
-		avim.kl = 0;
-		if(avim.specialChange) {
-			avim.specialChange = false;
-			avim.changed = false;
-			node.deleteData(node.pos - 1, 1);
-		}
-		if(avim.changed) {
-			avim.changed = false;
-			e.preventDefault();
 		}
 	}
 	
@@ -1020,6 +961,65 @@
 		var sel = word.getSelection();
 		AVIMObj.range = sel ? sel.getRangeAt(0) : document.createRange();
 	}/**/
+	
+	function ifMoz(e) {
+		// Init code for editable iframes and divs
+		var code = e.which, avim = AVIMObj.AVIM, cwi = e.target.parentNode.wi;
+		if(typeof(avim) == "undefined") avim = AVIMObj;
+		if(typeof(cwi) == "undefined") cwi = e.target.parentNode.parentNode.wi;
+		if(typeof(cwi) == "undefined") cwi = window;
+		if(e.ctrlKey || (e.altKey && (code != 92) && (code != 126))) return;
+	
+		// get current caret and its node
+		var sel = cwi.getSelection();
+		var range = sel.getRangeAt(0);
+		var node = range.endContainer, newPos;
+	
+		avim.sk = fcc(code);
+		avim.saveStr = "";
+		if(checkCode(code) || !range.startOffset || (typeof(node.data) == 'undefined')) return;
+		node.sel = false;
+	
+		if(node.data) {
+			avim.saveStr = node.data.substr(range.endOffset);
+			if(range.startOffset != range.endOffset) {
+				node.sel=true;
+			}
+			node.deleteData(range.startOffset, node.data.length);
+		}
+	
+		if(!node.data) {
+			range.setStart(node, 0);
+			range.setEnd(node, range.endOffset);
+			sel.removeAllRanges();
+			sel.addRange(range);
+			return;
+		}
+	
+		node.value = node.data;
+		node.pos = node.data.length;
+		node.which=code;
+		start(node, e);
+		node.insertData(node.data.length, avim.saveStr);
+		newPos = node.data.length - avim.saveStr.length + avim.kl;
+	
+		// Set caret back to node
+		range.setStart(node, newPos);
+		range.setEnd(node, newPos);
+		sel.removeAllRanges();
+		sel.addRange(range);
+	
+		avim.kl = 0;
+		if(avim.specialChange) {
+			avim.specialChange = false;
+			avim.changed = false;
+			node.deleteData(node.pos - 1, 1);
+		}
+		if(avim.changed) {
+			avim.changed = false;
+			e.preventDefault();
+		}
+	}
 	
 	/*function FKeyPress() {
 		var obj = findFrame();
@@ -1177,7 +1177,7 @@
 	}
 	
 	function AVIMInit(AVIM, isAttach) {
-		if(AVIM.support) {
+		/*if(AVIM.support) {
 			AVIM.fID = document.getElementsByTagName("iframe");
 			for(AVIM.g = 0; AVIM.g < AVIM.fID.length; AVIM.g++) {
 				if(findIgnore(AVIM.fID[AVIM.g])) {
@@ -1200,7 +1200,7 @@
 					}
 				} catch(e) {}
 			}
-		}
+		}*/
 	}
 
 	function AVIMAJAXFix(counter) {
