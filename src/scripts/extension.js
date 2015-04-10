@@ -24,10 +24,6 @@ function findFrame() {
 }
 
 function _keyPressHandler(e) {
-	if(!AVIMObj.support) {
-		return;
-	}
-
 	var el = e.target, code = e.which;
 	if(e.ctrlKey) {
 		return;
@@ -57,23 +53,24 @@ function _keyPressHandler(e) {
 	return;
 }
 
+var isPressCtrl = false;
 function _keyUpHandler(evt) {
 	var code = evt.which;
 
 	// Press Ctrl twice to off/on AVIM
 	if (code == 17) {
-		if (AVIMObj.isPressCtrl) {
-			AVIMObj.isPressCtrl = false;
+		if (isPressCtrl) {
+			isPressCtrl = false;
 			sendRequest({'turn_avim':'onOff'}, configAVIM);
 		} else {
-			AVIMObj.isPressCtrl = true;
+			isPressCtrl = true;
 			// Must press twice in 300ms
 			setTimeout(function(){
-				AVIMObj.isPressCtrl = false;
+				isPressCtrl = false;
 			}, 300);
 		}
 	} else {
-		AVIMObj.isPressCtrl = false;
+		isPressCtrl = false;
 	}
 }
 
@@ -137,10 +134,10 @@ function newAVIMInit() {
 
 function configAVIM(data) {
 	if (data) {
-		AVIMGlobalConfig.method = data.method;
-		AVIMGlobalConfig.onOff = data.onOff;
-		AVIMGlobalConfig.ckSpell = data.ckSpell;
-		AVIMGlobalConfig.oldAccent = data.oldAccent;
+		method = data.method;
+		onOff = data.onOff;
+		checkSpell = data.ckSpell;
+		oldAccent = data.oldAccent;
 	}
 
 	newAVIMInit();

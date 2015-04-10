@@ -28,14 +28,12 @@ var document = window.document;
 var sendRequest = extension.sendMessage;
 var AVIMObj = '';
 
-var AVIMGlobalConfig = {
-		method: 0, //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
-		onOff: 1, //Starting status: 0=Off, 1=On
-		ckSpell: 1, //Spell Check: 0=Off, 1=On
-		oldAccent: 1, //0: New way (oa`, oe`, uy`), 1: The good old day (o`a, o`e, u`y)
-		useCookie: 0, //Cookies: 0=Off, 1=On
-		exclude: ["email"] //IDs of the fields you DON'T want to let users type Vietnamese in
-	};
+var method = 0, //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
+	  onOff = 1, //Starting status: 0=Off, 1=On
+	  checkSpell = 1, //Spell Check: 0=Off, 1=On
+	  oldAccent = 1, //0: New way (oa`, oe`, uy`), 1: The good old day (o`a, o`e, u`y)
+	  useCookie = 0, //Cookies: 0=Off, 1=On
+	  exclude = ["email"]; //IDs of the fields you DON'T want to let users type Vietnamese in
 
 //Set to true the methods which you want to be included in the AUTO method
 var AVIMAutoConfig = {
@@ -50,7 +48,6 @@ function AVIM()	{
 	this.changed = false;
 	this.agt = navigator.userAgent.toLowerCase();
 	this.alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
-	this.support = true;
 	this.ver = 0;
 	this.specialChange = false;
 	this.kl = 0;
@@ -84,8 +81,7 @@ function AVIM()	{
 	this.oA = "ố,ồ,ổ,ỗ,ộ,ô,Ố,Ồ,Ổ,Ỗ,Ộ,Ô".split(',');
 	this.skey2 = "a,a,a,e,e,i,o,o,o,u,u,y,A,A,A,E,E,I,O,O,O,U,U,Y".split(',');
 
-	this.support = true;
-	this.spellerr = (AVIMGlobalConfig.ckSpell == 1) ? ckspell : nospell;
+	this.spellerr = (checkSpell == 1) ? ckspell : nospell;
 
 }
 
@@ -316,7 +312,7 @@ function mozGetText(editor) {
 }
 
 function start(obj, key) {
-	var word = "", method = AVIMGlobalConfig.method, dockspell = AVIMGlobalConfig.ckSpell, uni, uni2 = false, uni3 = false, uni4 = false;
+	var word = "", dockspell = checkSpell, uni, uni2 = false, uni3 = false, uni4 = false;
 	AVIMObj.oc=obj;
 	var telex = "D,A,E,O,W,W".split(','), vni = "9,6,6,6,7,8".split(','), viqr = "D,^,^,^,+,(".split(','), viqr2 = "D,^,^,^,*,(".split(','), a, noNormC;
 	if(method === 0) { // AUTO Method
@@ -397,7 +393,6 @@ function start(obj, key) {
 }
 
 function findC(word, k, sf) {
-	var method = AVIMGlobalConfig.method;
 	if(((method == 3) || (method == 4)) && (word.substr(word.length - 1, 1) == "\\")) {
 		return [1, k.charCodeAt(0)];
 	}
@@ -548,7 +543,7 @@ function findC(word, k, sf) {
 			v = 3;
 		}
 		var ttt = upperCase(word.substr(word.length - v, 2));
-		if((AVIMGlobalConfig.oldAccent === 0) && ((ttt == "UY") || (ttt == "OA") || (ttt == "OE"))) {
+		if((oldAccent === 0) && ((ttt == "UY") || (ttt == "OA") || (ttt == "OE"))) {
 			return vowA[0];
 		}
 		var c2 = 0, fdconsonant, sc = "BCD" + fcc(272) + "GHKLMNPQRSTVX", dc = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
@@ -682,7 +677,7 @@ function tr(k, word, by, sf, i) {
 
 function main(word, k, i, a, noNormC) {
 	var uk = upperCase(k), bya = [AVIMObj.db1, AVIMObj.ab1, AVIMObj.eb1, AVIMObj.ob1, AVIMObj.mocb1, AVIMObj.trangb1], got = false, t = "d,D,a,A,a,A,o,O,u,U,e,E,o,O".split(",");
-	var sfa = [AVIMObj.ds1, AVIMObj.as1, AVIMObj.es1, AVIMObj.os1, AVIMObj.mocs1, AVIMObj.trangs1], by = [], sf = [], method = AVIMGlobalConfig.method, h, g;
+	var sfa = [AVIMObj.ds1, AVIMObj.as1, AVIMObj.es1, AVIMObj.os1, AVIMObj.mocs1, AVIMObj.trangs1], by = [], sf = [], h, g;
 	if((method == 2) || ((method === 0) && (a[0] == "9"))) {
 		AVIMObj.DAWEO = "6789";
 		AVIMObj.SFJRX = "12534";
@@ -1037,7 +1032,7 @@ function ifMoz(e) {
 }
 
 function checkCode(code) {
-	if(((AVIMGlobalConfig.onOff === 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
+	if(((onOff === 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
 		return true;
 	}
 }
@@ -1068,7 +1063,7 @@ function upperCase(word) {
 }
 
 function findIgnore(el) {
-	var va = AVIMGlobalConfig.exclude, i;
+	var va = exclude, i;
 	for(i = 0; i < va.length; i++) {
 		if((va[i].length > 0) && (el.name == va[i] || el.id == va[i])) {
 			return true;
