@@ -1036,15 +1036,6 @@ function ifMoz(e) {
 	}
 }
 
-/*function FKeyPress() {
-	var obj = findFrame();
-	AVIMObj.sk = fcc(obj.event.keyCode);
-	if(checkCode(obj.event.keyCode) || (obj.event.ctrlKey && (obj.event.keyCode != 92) && (obj.event.keyCode != 126))) {
-		return;
-	}
-	start(obj, AVIMObj.sk);
-}/**/
-
 function checkCode(code) {
 	if(((AVIMGlobalConfig.onOff === 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
 		return true;
@@ -1084,114 +1075,6 @@ function findIgnore(el) {
 		}
 	}
 	return false;
-}
-
-function findFrame() {
-	for(var i = 0; i < AVIMObj.fID.length; i++) {
-		if(findIgnore(AVIMObj.fID[i])) return;
-		AVIMObj.frame = AVIMObj.fID[i];
-		if(typeof(AVIMObj.frame) != "undefined") {
-			try {
-				if (AVIMObj.frame.contentWindow.document && AVIMObj.frame.contentWindow.event) {
-					return AVIMObj.frame.contentWindow;
-				}
-			} catch(e) {
-				if (AVIMObj.frame.document && AVIMObj.frame.event) {
-					return AVIMObj.frame;
-				}
-			}
-		}
-	}
-}
-
-function _keyPressHandler(e) {
-	if(!AVIMObj.support) {
-		return;
-	}
-
-	var el = e.target, code = e.which;
-	if(e.ctrlKey) {
-		return;
-	}
-	if(e.altKey && (code != 92) && (code != 126)) {
-		return;
-	}
-	if((el.type != 'textarea') && (el.type != 'text')) {
-		if (el.isContentEditable) {
-			ifMoz(e);
-		}
-		return;
-	}
-	if (checkCode(code)) {
-		return;
-	}
-	AVIMObj.sk = fcc(code);
-	if(findIgnore(el)) {
-		return;
-	}
-	start(el, e);
-	if(AVIMObj.changed) {
-		AVIMObj.changed = false;
-		e.preventDefault();
-		return false;
-	}
-	return;
-}
-
-function _keyUpHandler(evt) {
-	var code = evt.which;
-
-	// Press Ctrl twice to off/on AVIM
-	if (code == 17) {
-		if (AVIMObj.isPressCtrl) {
-			AVIMObj.isPressCtrl = false;
-			sendRequest({'turn_avim':'onOff'}, configAVIM);
-		} else {
-			AVIMObj.isPressCtrl = true;
-			// Must press twice in 300ms
-			setTimeout(function(){
-				AVIMObj.isPressCtrl = false;
-			}, 300);
-		}
-	} else {
-		AVIMObj.isPressCtrl = false;
-	}
-}
-
-function _keyDownHandler(evt) {
-	var key;
-	if(evt == "iframe") {
-		AVIMObj.frame = findFrame();
-		key = AVIMObj.frame.event.keyCode;
-	} else {
-		key = evt.which;
-	}
-}
-
-function keyUpHandler(evt) {
-	_keyUpHandler(evt);
-	console.log("keyUpHandler");
-}
-
-function keyDownHandler(evt) {
-	_keyDownHandler(evt);
-	console.log("keyDownHandler");
-}
-
-function keyPressHandler(evt) {
-	var success = _keyPressHandler(evt);
-	if (success === false) {
-		evt.preventDefault();
-	}
-	console.log("keyPressHandler");
-}
-
-function attachEvt(obj, evt, handle, capture) {
-	obj.addEventListener(evt, handle, capture);
-}
-
-function removeEvt(obj, evt, handle, capture) {
-	obj.removeEventListener(evt, handle, capture);
 }
 
 function AVIMInit(AVIM, isAttach) {
