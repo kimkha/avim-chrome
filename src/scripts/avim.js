@@ -1,7 +1,7 @@
 /*
  *  AVIM for Chrome based on avim.js by Hieu Tran Dang
  * 
- *	Copyright (C) 2011-2014 Nguyen Kim Kha <nkimkha (at) gmail (dot) com>
+ *	Copyright (C) 2011-2015 Nguyen Kim Kha <nkimkha (at) gmail (dot) com>
  * 
  * My changes is published by GPLv3.
  *
@@ -23,8 +23,7 @@
  *		   of this software in any way.
  */
  
-(function(window){
-	var debug = true;
+//(function(window){
 	var extension = chrome.extension;
 	var document = window.document;
 	var sendRequest = extension.sendMessage;
@@ -1172,12 +1171,12 @@
 	
 	function keyUpHandler(evt) {
 		_keyUpHandler(evt);
-		debug && console.log("keyUpHandler");
+		console.log("keyUpHandler");
 	}
 
 	function keyDownHandler(evt) {
 		_keyDownHandler(evt);
-		debug && console.log("keyDownHandler");
+		console.log("keyDownHandler");
 	}
 
 	function keyPressHandler(evt) {
@@ -1185,7 +1184,7 @@
 		if (success === false) {
 			evt.preventDefault();
 		}
-		debug && console.log("keyPressHandler");
+		console.log("keyPressHandler");
 	}
 	
 	function attachEvt(obj, evt, handle, capture) {
@@ -1275,4 +1274,4 @@
 		configAVIM(request);
 	});
 
-})(window);
+//})(window);

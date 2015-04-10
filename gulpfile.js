@@ -47,9 +47,17 @@ gulp.task('jshint', function() {
 gulp.task('scripts', ['jshint'], function() {
 	gulp.src('src/scripts/vendors/**/*.js')
 		.pipe(gulp.dest('build/scripts/vendors'));
+	var opt = {
+			outSourceMap: true,
+			mangle: {
+				"toplevel": true,
+				"eval": true,
+				"except": "chrome"
+			}
+		};
 	return gulp.src(['src/scripts/**/*.js', '!src/scripts/vendors/**/*.js'])
 		.pipe(stripdebug())
-		.pipe(uglify({outSourceMap: true}))
+		.pipe(uglify(opt))
 		.pipe(gulp.dest('build/scripts'));
 });
 
