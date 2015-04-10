@@ -9,6 +9,7 @@ var gulp = require('gulp'),
 	jshint = require('gulp-jshint'),
 	stripdebug = require('gulp-strip-debug'),
 	uglify = require('gulp-uglify'),
+	jasmine = require('gulp-jasmine'),
 	zip = require('gulp-zip');
 
 //clean build directory
@@ -43,8 +44,14 @@ gulp.task('jshint', function() {
 		.pipe(jshint.reporter('default'));
 });
 
+//run test script with jasmine
+gulp.task('test', ['jshint'], function () {
+    return gulp.src('test/avim.test.js')
+        .pipe(jasmine());
+});
+
 //copy vendor scripts and uglify all other scripts, creating source maps
-gulp.task('scripts', ['jshint'], function() {
+gulp.task('scripts', ['test'], function() {
 	gulp.src('src/scripts/vendors/**/*.js')
 		.pipe(gulp.dest('build/scripts/vendors'));
 	var opt = {
