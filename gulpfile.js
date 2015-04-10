@@ -3,7 +3,7 @@
 //npm install gulp gulp-minify-css gulp-uglify gulp-clean gulp-cleanhtml gulp-jshint gulp-strip-debug gulp-zip --save-dev
 
 var gulp = require('gulp'),
-	clean = require('gulp-clean'),
+	del = require('del'),
 	cleanhtml = require('gulp-cleanhtml'),
 	minifycss = require('gulp-minify-css'),
 	jshint = require('gulp-jshint'),
@@ -15,9 +15,8 @@ var gulp = require('gulp'),
 	zip = require('gulp-zip');
 
 //clean build directory
-gulp.task('clean', function() {
-	return gulp.src('build/*', {read: false})
-		.pipe(clean());
+gulp.task('clean', function(cb) {
+	del(["build/*"], cb);
 });
 
 //copy static folders to build directory
