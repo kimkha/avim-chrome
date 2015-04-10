@@ -13,7 +13,7 @@
     "default_popup": "popup.html" 
   },
   "content_scripts": [{
-  	"js": [ "scripts/avim.js" ],
+  	"js": [ "scripts/avim.js", "scripts/extension.js" ],
   	"matches": ["http://*/*", "https://*/*"],
   	"run_at": "document_idle",
   	"all_frames": true
