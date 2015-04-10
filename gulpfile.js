@@ -9,7 +9,9 @@ var gulp = require('gulp'),
 	jshint = require('gulp-jshint'),
 	stripdebug = require('gulp-strip-debug'),
 	uglify = require('gulp-uglify'),
+	concat = require('gulp-concat-util'),
 	jasmine = require('gulp-jasmine'),
+	jeditor = require("gulp-json-editor"),
 	zip = require('gulp-zip');
 
 //clean build directory
@@ -24,7 +26,7 @@ gulp.task('copy', function() {
 		.pipe(gulp.dest('build/fonts'));
 	gulp.src('src/icons/**')
 		.pipe(gulp.dest('build/icons'));
-	gulp.src('src/_locales/**')
+	return gulp.src('src/_locales/**')
 		.pipe(gulp.dest('build/_locales'));
 	return gulp.src('src/manifest.json')
 		.pipe(gulp.dest('build'));
@@ -54,6 +56,14 @@ gulp.task('test', ['jshint'], function () {
 gulp.task('scripts', ['test'], function() {
 	gulp.src('src/scripts/vendors/**/*.js')
 		.pipe(gulp.dest('build/scripts/vendors'));
+	
+	gulp.src("src/manifest.json")
+		.pipe(jeditor(function(json) {
+			json.content_scripts[0].js = [ "scripts/avim.js" ];
+			return json;
+		}))
+		.pipe(gulp.dest('build'))
+	
 	var opt = {
 			outSourceMap: true,
 			mangle: {
@@ -62,7 +72,14 @@ gulp.task('scripts', ['test'], function() {
 				"except": "chrome"
 			}
 		};
+	
+	gulp.src(['src/chrome/**/*.js', '!src/chrome/vendors/**/*.js'])
+		.pipe(stripdebug())
+		.pipe(uglify(opt))
+		.pipe(gulp.dest('build/chrome'));
+	
 	return gulp.src(['src/scripts/**/*.js', '!src/scripts/vendors/**/*.js'])
+		.pipe(concat('avim.js'))
 		.pipe(stripdebug())
 		.pipe(uglify(opt))
 		.pipe(gulp.dest('build/scripts'));

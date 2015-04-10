@@ -21,7 +21,7 @@
   "default_locale": "en",
   "offline_enabled": true,
   "background": {
-    "scripts": ["scripts/background.js"]
+    "scripts": ["chrome/background.js"]
   },
   "permissions": [
     "tabs", "storage"
