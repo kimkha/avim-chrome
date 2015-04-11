@@ -981,7 +981,8 @@ function ifMoz(e) {
 
 	// get current caret and its node
 	var sel = cwi.getSelection();
-	var range = sel.getRangeAt(0);
+	var range = sel ? sel.getRangeAt(0) : document.createRange();
+	AVIMObj.range = range;
 	var node = range.endContainer, newPos;
 
 	avim.sk = fcc(code);
