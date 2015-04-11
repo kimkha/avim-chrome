@@ -9,6 +9,7 @@
  * 	- Make it work inside Chrome Extension
  * 	- Remove unused codes for other browsers (Firefox, IE,...)
  * 	- Add API for setting from popup.html
+ *  - Refactor
  */
 
 /*
@@ -22,10 +23,8 @@
  *		2. You must not claim that you or any other third party is the author
  *		   of this software in any way.
  */
- 
-var extension = chrome.extension;
+
 var document = window.document;
-var sendRequest = extension.sendMessage;
 var AVIMObj = '';
 
 var method = 0, //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
@@ -36,12 +35,12 @@ var method = 0, //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
 	  exclude = ["email"]; //IDs of the fields you DON'T want to let users type Vietnamese in
 
 //Set to true the methods which you want to be included in the AUTO method
-var AVIMAutoConfig = {
-	telex: true,
-	vni: true,
-	viqr: false,
-	viqrStar: false
-};
+var AVIMAutoConfig = [
+	true,//telex
+	true,//vni
+	false,//viqr
+	false//viqrStar
+];
 
 function AVIM()	{
 	this.attached = [];
@@ -316,7 +315,7 @@ function start(obj, key) {
 	AVIMObj.oc=obj;
 	var telex = "D,A,E,O,W,W".split(','), vni = "9,6,6,6,7,8".split(','), viqr = "D,^,^,^,+,(".split(','), viqr2 = "D,^,^,^,*,(".split(','), a, noNormC;
 	if(method === 0) { // AUTO Method
-		var arr = [], check = [AVIMAutoConfig.telex, AVIMAutoConfig.vni, AVIMAutoConfig.viqr, AVIMAutoConfig.viqrStar];
+		var arr = [], check = AVIMAutoConfig;
 		var value1 = [telex, vni, viqr, viqr2], uniA = [uni, uni2, uni3, uni4], D2A = ["DAWEO", "6789", "D^+(", "D^*("];
 		for(a = 0; a < check.length; a++) {
 			if(check[a]) {
