@@ -27,6 +27,14 @@
 		"message" : "VNI only",
 		"description" : ""
 	},
+	"extPopupViqr" : {
+		"message" : "VIQR only",
+		"description" : ""
+	},
+	"extPopupViqrStar" : {
+		"message" : "VIQR* only",
+		"description" : ""
+	},
 	"extPopupOff" : {
 		"message" : "Turn off AVIM",
 		"description" : ""

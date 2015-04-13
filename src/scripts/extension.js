@@ -40,7 +40,7 @@ function _keyPressHandler(e) {
 	if (checkCode(code)) {
 		return;
 	}
-	AVIMObj.sk = fcc(code);
+	AVIMObj.sk = fromCharCode(code);
 	if(findIgnore(el)) {
 		return;
 	}
@@ -108,6 +108,20 @@ function attachEvt(obj, evt, handle, capture) {
 
 function removeEvt(obj, evt, handle, capture) {
 	obj.removeEventListener(evt, handle, capture);
+}
+
+var ajaxCounter = 0;
+function AVIMAJAXFix() {
+	if (isNaN(parseInt(ajaxCounter))) {
+		ajaxCounter = 0;
+	} else {
+		ajaxCounter = parseInt(ajaxCounter);
+	}
+	AVIMInit(AVIMObj, true);
+	ajaxCounter++;
+	if (ajaxCounter < 100) {
+		setTimeout(AVIMAJAXFix, 100);
+	}
 }
 
 function removeOldAVIM() {

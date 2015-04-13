@@ -45,9 +45,7 @@ var AVIMAutoConfig = [
 function AVIM()	{
 	this.attached = [];
 	this.changed = false;
-	this.agt = navigator.userAgent.toLowerCase();
 	this.alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
-	this.ver = 0;
 	this.specialChange = false;
 	this.kl = 0;
 	this.skey = [97,226,259,101,234,105,111,244,417,117,432,121,65,194,258,69,202,73,79,212,416,85,431,89];
@@ -84,14 +82,14 @@ function AVIM()	{
 
 }
 
-function fcc(x) {
+function fromCharCode(x) {
 	return String.fromCharCode(x);
 }
 
 function getSF() {
 	var sf = [], x;
 	for(x = 0; x < AVIMObj.skey.length; x++) {
-		sf[sf.length] = fcc(AVIMObj.skey[x]);
+		sf[sf.length] = fromCharCode(AVIMObj.skey[x]);
 	}
 	return sf;
 }
@@ -352,7 +350,7 @@ function start(obj, key) {
 		AVIMObj.D2 = "D^*(";
 	}
 
-	key = fcc(key.which);
+	key = fromCharCode(key.which);
 	word = mozGetText(getEditorObject(obj));
 	if(!word || obj.sel) {
 		return;
@@ -401,7 +399,7 @@ function findC(word, k, sf) {
 		if(notNumber(sf[g])) {
 			str += sf[g];
 		} else {
-			str += fcc(sf[g]);
+			str += fromCharCode(sf[g]);
 		}
 	}
 	var uk = upperCase(k), uni_array = repSign(k), w2 = upperCase(unV2(unV(word))), dont = "ƯA,ƯU".split(',');
@@ -476,7 +474,7 @@ function findC(word, k, sf) {
 	if((uk != AVIMObj.Z) && (AVIMObj.DAWEO.indexOf(uk) < 0)) {
 		tEC = retKC(uk);
 		for(g = 0;g < tEC.length; g++) {
-			tE += fcc(tEC[g]);
+			tE += fromCharCode(tEC[g]);
 		}
 	}
 	for(g = 1; g <= word.length; g++) {
@@ -507,7 +505,7 @@ function findC(word, k, sf) {
 				}
 				for(h = 0; h < tEC.length; h++) {
 					if(tEC[h] == word.charCodeAt(word.length - g)) {
-						return [g, fcc(AVIMObj.skey[h])];
+						return [g, fromCharCode(AVIMObj.skey[h])];
 					}
 				}
 			}
@@ -525,7 +523,7 @@ function findC(word, k, sf) {
 			} else if(tE.indexOf(word.substr(word.length - g, 1)) >= 0) {
 				for(h = 0; h < tEC.length; h++) {
 					if(word.substr(word.length - g, 1).charCodeAt(0) == tEC[h]) {
-						return [g, fcc(AVIMObj.skey[h])];
+						return [g, fromCharCode(AVIMObj.skey[h])];
 					}
 				}
 			}
@@ -545,7 +543,7 @@ function findC(word, k, sf) {
 		if((oldAccent === 0) && ((ttt == "UY") || (ttt == "OA") || (ttt == "OE"))) {
 			return vowA[0];
 		}
-		var c2 = 0, fdconsonant, sc = "BCD" + fcc(272) + "GHKLMNPQRSTVX", dc = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
+		var c2 = 0, fdconsonant, sc = "BCD" + fromCharCode(272) + "GHKLMNPQRSTVX", dc = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
 		for(h = 1; h <= word.length; h++) {
 			fdconsonant=false;
 			for(g = 0; g < dc.length; g++) {
@@ -581,8 +579,8 @@ function replaceChar(o, pos, c) {
 	var bb = false;
 	var replaceBy, wfix, r;
 	if(!notNumber(c)) {
-		replaceBy = fcc(c);
-		wfix = upperCase(unV(fcc(c)));
+		replaceBy = fromCharCode(c);
+		wfix = upperCase(unV(fromCharCode(c)));
 		AVIMObj.changed = true;
 	} else {
 		replaceBy = c;
@@ -596,9 +594,9 @@ function replaceChar(o, pos, c) {
 		if ((upperCase(o.value.substr(pos - 1, 1)) == 'U') && (pos < savePos - 1) && (upperCase(o.value.substr(pos - 2, 1)) != 'Q')) {
 			if((wfix == "Ơ") || bb) {
 				if (o.value.substr(pos-1,1) == 'u') {
-					r = fcc(432);
+					r = fromCharCode(432);
 				} else {
-					r = fcc(431);
+					r = fromCharCode(431);
 				}
 			}
 			if(bb) {
@@ -619,9 +617,9 @@ function replaceChar(o, pos, c) {
 		if ((upperCase(o.data.substr(pos - 1, 1)) == 'U') && (pos < o.pos - 1)) {
 			if((wfix == "Ơ") || bb) {
 				if (o.data.substr(pos - 1, 1) == 'u') {
-					r = fcc(432);
+					r = fromCharCode(432);
 				} else {
-					r = fcc(431);
+					r = fromCharCode(431);
 				}
 			}
 			if(bb) {
@@ -904,7 +902,7 @@ function unV(word) {
 	for(a = 1; a <= word.length; a++) {
 		for(b = 0; b < u.length; b++) {
 			if(u[b] == word.charCodeAt(word.length - a)) {
-				word = word.substr(0, word.length - a) + fcc(AVIMObj.skey[b % 24]) + word.substr(word.length - a + 1);
+				word = word.substr(0, word.length - a) + fromCharCode(AVIMObj.skey[b % 24]) + word.substr(word.length - a + 1);
 			}
 		}
 	}
@@ -948,7 +946,7 @@ function sr(word, k, i) {
 }
 
 function retUni(word, k, pos) {
-	var u = retKC(upperCase(k)), uC, lC, c = word.charCodeAt(word.length - pos), a, t = fcc(c);
+	var u = retKC(upperCase(k)), uC, lC, c = word.charCodeAt(word.length - pos), a, t = fromCharCode(c);
 	for(a = 0; a < AVIMObj.skey.length; a++) {
 		if(AVIMObj.skey[a] == c) {
 			if(a < 12) {
@@ -985,7 +983,7 @@ function ifMoz(e) {
 	AVIMObj.range = range;
 	var node = range.endContainer, newPos;
 
-	avim.sk = fcc(code);
+	avim.sk = fromCharCode(code);
 	avim.saveStr = "";
 	if(checkCode(code) || !range.startOffset || (typeof(node.data) == 'undefined')) return;
 	node.sel = false;
@@ -1038,7 +1036,7 @@ function checkCode(code) {
 }
 
 function notWord(word) {
-	var str = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]\'~|^@&\t" + fcc(160);
+	var str = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]\'~|^@&\t" + fromCharCode(160);
 	return (str.indexOf(word) >= 0);
 }
 
@@ -1097,18 +1095,5 @@ function AVIMInit(AVIM, isAttach) {
 			} catch(e) {}
 		}
 	}*/
-}
-
-function AVIMAJAXFix(counter) {
-	if (isNaN(parseInt(counter))) {
-		counter = 0;
-	} else {
-		counter = parseInt(counter);
-	}
-	AVIMInit(AVIMObj, true);
-	counter++;
-	if (counter < 100) {
-		setTimeout(function(){AVIMAJAXFix(counter);}, 100);
-	}
 }
 
