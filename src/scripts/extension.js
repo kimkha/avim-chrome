@@ -2,13 +2,51 @@
 var extension = chrome.extension;
 var document = window.document;
 var sendRequest = extension.sendMessage;
+var allFrames = [];
 
 var inputTypes = ["textarea", "text", "search", "tel"];
 
+function AVIMInit(AVIM, isAttach) {
+	/*if(AVIM.support) {
+		allFrames = document.getElementsByTagName("iframe");
+		for(AVIM.g = 0; AVIM.g < allFrames.length; AVIM.g++) {
+			if(findIgnore(allFrames[AVIM.g])) {
+				continue;
+			}
+			var iframedit;
+			try {
+				AVIM.wi = allFrames[AVIM.g].contentWindow;
+				iframedit = AVIM.wi.document;
+				iframedit.wi = AVIM.wi;
+				if(iframedit && (upperCase(iframedit.designMode) == "ON")) {
+					iframedit.AVIM = AVIM;
+					if (isAttach) {
+						attachEvt(iframedit, "keypress", ifMoz, false);
+						attachEvt(iframedit, "keydown", keyDownHandler, false);
+					} else {
+						attachEvt(iframedit, "keypress", ifMoz, false);
+						attachEvt(iframedit, "keydown", keyDownHandler, false);
+					}
+				}
+			} catch(e) {}
+		}
+	}*/
+}
+
+function findIgnore(el) {
+	var va = exclude, i;
+	for(i = 0; i < va.length; i++) {
+		if((va[i].length > 0) && (el.name == va[i] || el.id == va[i])) {
+			return true;
+		}
+	}
+	return false;
+}
+
 function findFrame() {
-	for(var i = 0; i < AVIMObj.fID.length; i++) {
-		if(findIgnore(AVIMObj.fID[i])) return;
-		AVIMObj.frame = AVIMObj.fID[i];
+	for(var i = 0; i < allFrames.length; i++) {
+		if(findIgnore(allFrames[i])) return;
+		AVIMObj.frame = allFrames[i];
 		if(typeof(AVIMObj.frame) != "undefined") {
 			try {
 				if (AVIMObj.frame.contentWindow.document && AVIMObj.frame.contentWindow.event) {
@@ -125,10 +163,13 @@ function AVIMAJAXFix() {
 }
 
 function removeOldAVIM() {
+	// Untrigger event
 	removeEvt(document, "mouseup", AVIMAJAXFix, false);
 	removeEvt(document, "keydown", keyDownHandler, true);
 	removeEvt(document, "keypress", keyPressHandler, true);
 	removeEvt(document, "keyup", keyUpHandler, true);
+	
+	// Remove AVIM
 	AVIMInit(AVIMObj, false);
 	AVIMObj = null;
 	//delete AVIMObj;
@@ -138,8 +179,12 @@ function newAVIMInit() {
 	if (typeof AVIMObj != "undefined" && AVIMObj) {
 		removeOldAVIM();
 	}
+	
+	allFrames = document.getElementsByTagName("iframe");
 	AVIMObj = new AVIM();
 	AVIMAJAXFix();
+	
+	// Trigger event
 	attachEvt(document, "mouseup", AVIMAJAXFix, false);
 	attachEvt(document, "keydown", keyDownHandler, true);
 	attachEvt(document, "keyup", keyUpHandler, true);

@@ -24,7 +24,6 @@
  *		   of this software in any way.
  */
 
-var document = window.document;
 var AVIMObj = '';
 
 var method = 0, //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
@@ -42,16 +41,20 @@ var AVIMAutoConfig = [
 	false//viqrStar
 ];
 
+/**
+ * Private variables (Only use in AVIM Object)
+ */
+var $_alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
+var $_skey = [97,226,259,101,234,105,111,244,417,117,432,121,65,194,258,69,202,73,79,212,416,85,431,89]; // a,â,ă,e,ê,i,o,ô,ơ,u,ư,y,A,Â,Ă,E,Ê,I,O,Ô,Ơ,U,Ư,Y
+var _range = null; // Range object, maybe from Document.createRange()
+var _whit = false; // Unknown
+
+/**
+ * Start new object
+ */
 function AVIM()	{
-	this.attached = [];
 	this.changed = false;
-	this.alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
 	this.specialChange = false;
-	this.kl = 0;
-	this.skey = [97,226,259,101,234,105,111,244,417,117,432,121,65,194,258,69,202,73,79,212,416,85,431,89];
-	this.fID = document.getElementsByTagName("iframe");
-	this.range = null;
-	this.whit = false;
 	this.db1 = [273,272];
 	this.ds1 = ['d','D'];
 	this.os1 = "o,O,ơ,Ơ,ó,Ó,ò,Ò,ọ,Ọ,ỏ,Ỏ,õ,Õ,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ".split(",");
@@ -88,8 +91,8 @@ function fromCharCode(x) {
 
 function getSF() {
 	var sf = [], x;
-	for(x = 0; x < AVIMObj.skey.length; x++) {
-		sf[sf.length] = fromCharCode(AVIMObj.skey[x]);
+	for(x = 0; x < $_skey.length; x++) {
+		sf[sf.length] = fromCharCode($_skey[x]);
 	}
 	return sf;
 }
@@ -451,7 +454,7 @@ function findC(word, k, sf) {
 					} else {
 						res = g;
 					}
-					if(!AVIMObj.whit || (uw.indexOf("Ư") < 0) || (uw.indexOf("W") < 0)) {
+					if(!_whit || (uw.indexOf("Ư") < 0) || (uw.indexOf("W") < 0)) {
 						break;
 					}
 				} else if(DAWEOFA.indexOf(uc) >= 0) {
@@ -505,7 +508,7 @@ function findC(word, k, sf) {
 				}
 				for(h = 0; h < tEC.length; h++) {
 					if(tEC[h] == word.charCodeAt(word.length - g)) {
-						return [g, fromCharCode(AVIMObj.skey[h])];
+						return [g, fromCharCode($_skey[h])];
 					}
 				}
 			}
@@ -523,7 +526,7 @@ function findC(word, k, sf) {
 			} else if(tE.indexOf(word.substr(word.length - g, 1)) >= 0) {
 				for(h = 0; h < tEC.length; h++) {
 					if(word.substr(word.length - g, 1).charCodeAt(0) == tEC[h]) {
-						return [g, fromCharCode(AVIMObj.skey[h])];
+						return [g, fromCharCode($_skey[h])];
 					}
 				}
 			}
@@ -584,7 +587,7 @@ function replaceChar(o, pos, c) {
 		AVIMObj.changed = true;
 	} else {
 		replaceBy = c;
-		if((upperCase(c) == "O") && AVIMObj.whit) {
+		if((upperCase(c) == "O") && _whit) {
 			bb=true;
 		}
 	}
@@ -638,8 +641,8 @@ function replaceChar(o, pos, c) {
 			o.insertData(pos - 1, r);
 		}
 	}
-	if(AVIMObj.whit) {
-		AVIMObj.whit=false;
+	if(_whit) {
+		_whit=false;
 	}
 }
 
@@ -760,8 +763,8 @@ function main(word, k, i, a, noNormC) {
 			sf[sf.length] = AVIMObj.english.charCodeAt(h);
 		}
 		for(h = 0; h < 5; h++) {
-			for(g = 0; g < AVIMObj.skey.length; g++) {
-				by[by.length] = AVIMObj.skey[g];
+			for(g = 0; g < $_skey.length; g++) {
+				by[by.length] = $_skey[g];
 			}
 		}
 		for(h = 0; h < t.length; h++) {
@@ -778,7 +781,7 @@ function main(word, k, i, a, noNormC) {
 		}
 	}
 	if(uk == AVIMObj.moc) {
-		AVIMObj.whit = true;
+		_whit = true;
 	}
 	if(!got) {
 		if(noNormC) {
@@ -815,8 +818,8 @@ function normC(word, k, i) {
 				} else {
 					fS = AVIMObj.X;
 				}
-				c = AVIMObj.skey[h % 24];
-				if((AVIMObj.alphabet.indexOf(uk) < 0) && (AVIMObj.D2.indexOf(uk) < 0)) {
+				c = $_skey[h % 24];
+				if(($_alphabet.indexOf(uk) < 0) && (AVIMObj.D2.indexOf(uk) < 0)) {
 					return word;
 				}
 				word = unV(word);
@@ -838,7 +841,7 @@ function normC(word, k, i) {
 					} else {
 						AVIMObj.oc.insertData(AVIMObj.oc.pos, k);
 						AVIMObj.oc.pos++;
-						AVIMObj.range.setEnd(AVIMObj.oc, AVIMObj.oc.pos);
+						_range.setEnd(AVIMObj.oc, AVIMObj.oc.pos);
 						AVIMObj.specialChange = true;
 					}
 				}
@@ -902,7 +905,7 @@ function unV(word) {
 	for(a = 1; a <= word.length; a++) {
 		for(b = 0; b < u.length; b++) {
 			if(u[b] == word.charCodeAt(word.length - a)) {
-				word = word.substr(0, word.length - a) + fromCharCode(AVIMObj.skey[b % 24]) + word.substr(word.length - a + 1);
+				word = word.substr(0, word.length - a) + fromCharCode($_skey[b % 24]) + word.substr(word.length - a + 1);
 			}
 		}
 	}
@@ -912,8 +915,8 @@ function unV(word) {
 function unV2(word) {
 	var a, b;
 	for(a = 1; a <= word.length; a++) {
-		for(b = 0; b < AVIMObj.skey.length; b++) {
-			if(AVIMObj.skey[b] == word.charCodeAt(word.length - a)) {
+		for(b = 0; b < $_skey.length; b++) {
+			if($_skey[b] == word.charCodeAt(word.length - a)) {
 				word = word.substr(0, word.length - a) + AVIMObj.skey2[b] + word.substr(word.length - a + 1);
 			}
 		}
@@ -947,8 +950,8 @@ function sr(word, k, i) {
 
 function retUni(word, k, pos) {
 	var u = retKC(upperCase(k)), uC, lC, c = word.charCodeAt(word.length - pos), a, t = fromCharCode(c);
-	for(a = 0; a < AVIMObj.skey.length; a++) {
-		if(AVIMObj.skey[a] == c) {
+	for(a = 0; a < $_skey.length; a++) {
+		if($_skey[a] == c) {
 			if(a < 12) {
 				lC=a;
 				uC=a+12;
@@ -966,7 +969,7 @@ function retUni(word, k, pos) {
 
 /*function ifInit(word) {
 	var sel = word.getSelection();
-	AVIMObj.range = sel ? sel.getRangeAt(0) : document.createRange();
+	_range = sel ? sel.getRangeAt(0) : document.createRange();
 }/**/
 
 function ifMoz(e) {
@@ -980,7 +983,7 @@ function ifMoz(e) {
 	// get current caret and its node
 	var sel = cwi.getSelection();
 	var range = sel ? sel.getRangeAt(0) : document.createRange();
-	AVIMObj.range = range;
+	_range = range;
 	var node = range.endContainer, newPos;
 
 	avim.sk = fromCharCode(code);
@@ -1009,7 +1012,7 @@ function ifMoz(e) {
 	node.which=code;
 	start(node, e);
 	node.insertData(node.data.length, avim.saveStr);
-	newPos = node.data.length - avim.saveStr.length + avim.kl;
+	newPos = node.data.length - avim.saveStr.length;
 
 	// Set caret back to node
 	range.setStart(node, newPos);
@@ -1017,7 +1020,6 @@ function ifMoz(e) {
 	sel.removeAllRanges();
 	sel.addRange(range);
 
-	avim.kl = 0;
 	if(avim.specialChange) {
 		avim.specialChange = false;
 		avim.changed = false;
@@ -1058,42 +1060,5 @@ function upperCase(word) {
 		}
 	}
 	return word;
-}
-
-function findIgnore(el) {
-	var va = exclude, i;
-	for(i = 0; i < va.length; i++) {
-		if((va[i].length > 0) && (el.name == va[i] || el.id == va[i])) {
-			return true;
-		}
-	}
-	return false;
-}
-
-function AVIMInit(AVIM, isAttach) {
-	/*if(AVIM.support) {
-		AVIM.fID = document.getElementsByTagName("iframe");
-		for(AVIM.g = 0; AVIM.g < AVIM.fID.length; AVIM.g++) {
-			if(findIgnore(AVIM.fID[AVIM.g])) {
-				continue;
-			}
-			var iframedit;
-			try {
-				AVIM.wi = AVIM.fID[AVIM.g].contentWindow;
-				iframedit = AVIM.wi.document;
-				iframedit.wi = AVIM.wi;
-				if(iframedit && (upperCase(iframedit.designMode) == "ON")) {
-					iframedit.AVIM = AVIM;
-					if (isAttach) {
-						attachEvt(iframedit, "keypress", ifMoz, false);
-						attachEvt(iframedit, "keydown", keyDownHandler, false);
-					} else {
-						attachEvt(iframedit, "keypress", ifMoz, false);
-						attachEvt(iframedit, "keydown", keyDownHandler, false);
-					}
-				}
-			} catch(e) {}
-		}
-	}*/
 }
 
