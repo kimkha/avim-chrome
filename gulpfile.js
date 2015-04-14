@@ -47,7 +47,7 @@ gulp.task('jshint', function() {
 
 //run test script with jasmine
 gulp.task('test', ['jshint'], function () {
-    return gulp.src('test/avim.test.js')
+    return gulp.src(['test/avim.test.js'])
         .pipe(jasmine());
 });
 
