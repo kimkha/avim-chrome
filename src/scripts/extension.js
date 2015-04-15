@@ -7,30 +7,28 @@ var allFrames = [];
 var inputTypes = ["textarea", "text", "search", "tel"];
 
 function AVIMInit(AVIM, isAttach) {
-	/*if(AVIM.support) {
-		allFrames = document.getElementsByTagName("iframe");
-		for(AVIM.g = 0; AVIM.g < allFrames.length; AVIM.g++) {
-			if(findIgnore(allFrames[AVIM.g])) {
-				continue;
-			}
-			var iframedit;
-			try {
-				AVIM.wi = allFrames[AVIM.g].contentWindow;
-				iframedit = AVIM.wi.document;
-				iframedit.wi = AVIM.wi;
-				if(iframedit && (upperCase(iframedit.designMode) == "ON")) {
-					iframedit.AVIM = AVIM;
-					if (isAttach) {
-						attachEvt(iframedit, "keypress", ifMoz, false);
-						attachEvt(iframedit, "keydown", keyDownHandler, false);
-					} else {
-						attachEvt(iframedit, "keypress", ifMoz, false);
-						attachEvt(iframedit, "keydown", keyDownHandler, false);
-					}
-				}
-			} catch(e) {}
+	allFrames = document.getElementsByTagName("iframe");
+	for(AVIM.g = 0; AVIM.g < allFrames.length; AVIM.g++) {
+		if(findIgnore(allFrames[AVIM.g])) {
+			continue;
 		}
-	}*/
+		var iframedit;
+		try {
+			AVIM.wi = allFrames[AVIM.g].contentWindow;
+			iframedit = AVIM.wi.document;
+			iframedit.wi = AVIM.wi;
+			if(iframedit && (upperCase(iframedit.designMode) == "ON")) {
+				iframedit.AVIM = AVIM;
+				if (isAttach) {
+					attachEvt(iframedit, "keypress", ifMoz, false);
+					attachEvt(iframedit, "keydown", keyDownHandler, false);
+				} else {
+					attachEvt(iframedit, "keypress", ifMoz, false);
+					attachEvt(iframedit, "keydown", keyDownHandler, false);
+				}
+			}
+		} catch(e) {}
+	}/**/
 }
 
 function findIgnore(el) {
