@@ -6,3 +6,5 @@ install:
   - npm install --save-dev
 script:
   - gulp
+notifications:
+  email: false
