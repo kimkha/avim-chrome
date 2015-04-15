@@ -3,4 +3,6 @@ avim-chrome [![Build Status](https://travis-ci.org/kimkha/avim-chrome.svg?branch
 
 Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trình duyệt Google Chrome.
 
-Các bạn có thể tải về Chrome tại địa chỉ https://chrome.google.com/webstore/detail/opgbbffpdglhkpglnlkiclakjlpiedoh
+Các bạn có thể tải về AVIM-Chrome tại địa chỉ https://chrome.google.com/webstore/detail/opgbbffpdglhkpglnlkiclakjlpiedoh
+
+Hiện đã support trình duyệt Opera: https://addons.opera.com/extensions/details/avim-vietnamese-input-method/
