@@ -77,7 +77,7 @@ function _keyPressHandler(e) {
 		return;
 	}
 	AVIMObj.sk = fromCharCode(code);
-	if(findIgnore(el)) {
+	if(findIgnore(el) || el.readOnly) {
 		return;
 	}
 	start(el, e);
