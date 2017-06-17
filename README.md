@@ -6,7 +6,3 @@ Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trì
 Các bạn có thể tải về AVIM-Chrome tại địa chỉ https://chrome.google.com/webstore/detail/opgbbffpdglhkpglnlkiclakjlpiedoh
 
 Hiện đã support trình duyệt Opera: https://addons.opera.com/extensions/details/avim-vietnamese-input-method/
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/kimkha/avim-chrome/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
