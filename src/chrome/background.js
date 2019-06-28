@@ -119,6 +119,88 @@
 		var demo = chrome.contextMenus.create({"title" : "AVIM Demo", "contexts" : ["selection"], "parentId": parentId, "onclick": genericOnClick});
 	}
 
+	function turnAvimOnTab(isOn) {
+		if (!getLocalStorageItem('method')) {
+			init();
+		}
+
+		setLocalStorageItem('onOff', isOn);
+
+		var txt = {};
+		var bg = {};
+	
+		if (isOn == '1') {
+			txt.text = "on";
+			bg.color = [0, 255, 0, 255];
+		} else {
+			txt.text = "off";
+			bg.color = [255, 0, 0, 255];
+		}
+	
+		chrome.browserAction.setBadgeText(txt);
+		chrome.browserAction.setBadgeBackgroundColor(bg);
+	}
+
+	function turnOffAvim() {
+		turnAvimOnTab('0');
+	}
+
+	function turnOnAvim() {
+		turnAvimOnTab('1');
+	}
+
+	function parseURL(href) {
+	    var match = href.match(/^(https?\:)\/\/(([^:\/?#]*)(?:\:([0-9]+))?)([\/]{0,1}[^?#]*)(\?[^#]*|)(#.*|)$/);
+	    return match && {
+	        href: href,
+	        protocol: match[1],
+	        host: match[2],
+	        hostname: match[3],
+	        port: match[4],
+	        pathname: match[5],
+	        search: match[6],
+	        hash: match[7]
+	    }
+	}
+
+	function getHostname(url) {
+		if (url) {
+			parsed = parseURL(url);
+			if (parsed && parsed.hostname) {
+				return parsed.hostname;
+			}
+		}
+		return '';
+	}
+
+	function switchModeByURL(url) {
+		chrome.storage.sync.get('black_list', function(data) {
+		    black_list = data.black_list;
+		    if (black_list.includes(url)) {
+		    	turnOffAvim();
+		    } else {
+		    	turnOnAvim();
+		    }
+		});
+	}
+
+
+	function tabUpdateAction(tabId, changeInfo, tab) {
+		var url = changeInfo.url;
+		if (url) {
+			url = getHostname(url);
+			switchModeByURL(url);
+		}
+	}
+
+	function initBlackList() {
+		chrome.storage.sync.get('black_list', function(data) {
+			if (!data.black_list) {
+				chrome.storage.sync.set({black_list: []});
+			}
+		})
+	}
+
 	function init() {
 		if (!getLocalStorageItem('method')) {
 			setLocalStorageItem('method', '0');
@@ -135,10 +217,14 @@
 		if (!getLocalStorageItem('oldAccent')) {
 			setLocalStorageItem('oldAccent', '1');
 		}
+
+		initBlackList();
 	
 		getPrefs(updateIcon);
 	
 		chrome.extension.onMessage.addListener(processRequest);
+
+		chrome.tabs.onUpdated.addListener(tabUpdateAction);
 		
 		//createMenus();
 	}
