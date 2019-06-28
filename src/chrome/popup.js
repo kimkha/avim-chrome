@@ -21,6 +21,24 @@
 		for (var k in keys) {
 			$g("txt" + keys[k]).innerHTML = getI18n("extPopup" + keys[k]);
 		}
+
+		chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
+		    var url = tabs[0].url;
+		    url = getHostname(url)
+		    $g("url").value = url;
+
+			chrome.storage.sync.get('black_list', function(data) {
+			    black_list = data.black_list;
+			    if (!black_list.includes(url)) {
+			    	$g("toggle_blacklist_title").innerHTML = "Block Avim on this page"
+			    } else {
+			    	$g("toggle_blacklist_title").innerHTML = "Unblock Avim on this page"
+			    }
+			});
+		});
+
+
+
 	}
 	
 	function hightlightDemo() {
@@ -30,6 +48,47 @@
 
 	function $g(id) {
 		return document.getElementById(id);
+	}
+
+	function parseURL(href) {
+	    var match = href.match(/^(https?\:)\/\/(([^:\/?#]*)(?:\:([0-9]+))?)([\/]{0,1}[^?#]*)(\?[^#]*|)(#.*|)$/);
+	    return match && {
+	        href: href,
+	        protocol: match[1],
+	        host: match[2],
+	        hostname: match[3],
+	        port: match[4],
+	        pathname: match[5],
+	        search: match[6],
+	        hash: match[7]
+	    }
+	}
+
+	function getHostname(url) {
+		if (url) {
+			parsed = parseURL(url);
+			return parsed.hostname;
+		}
+		return '';
+	}
+
+	function toggleBlacklist() {
+	    var url = $g("url").value;
+
+		chrome.storage.sync.get('black_list', function(data) {
+		    black_list = data.black_list;
+		    if (!black_list.includes(url)) {
+		    	black_list.push(url);
+		    	chrome.storage.sync.set({'black_list': black_list});
+		    	setAVIMConfig('onOff', 0);
+		    	$g("toggle_blacklist_title").innerHTML = "Unblock Avim on this page"
+		    } else {
+		    	var index = black_list.indexOf(url);
+		    	black_list.splice(index,1);
+		    	chrome.storage.sync.set({'black_list': black_list});
+		    	$g("toggle_blacklist_title").innerHTML = "Block Avim on this page"
+		    }
+		});
 	}
 	
 	function init() {
@@ -72,6 +131,7 @@
 		viqrStarEle.addEventListener("click", function(){setAVIMConfig('method', 4);});
 		
 		$g("demoCopy").addEventListener("click", hightlightDemo);
+		$g("toggle_blacklist").addEventListener("click", toggleBlacklist);
 	}
 	
 //	window.onload = init;
