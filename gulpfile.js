@@ -5,7 +5,7 @@
 var gulp = require('gulp'),
 	del = require('del'),
 	cleanhtml = require('gulp-cleanhtml'),
-	minifycss = require('gulp-minify-css'),
+	// minifycss = require('gulp-minify-css'),
 	jshint = require('gulp-jshint'),
 	stripdebug = require('gulp-strip-debug'),
 	uglify = require('gulp-uglify'),
@@ -16,7 +16,7 @@ var gulp = require('gulp'),
 
 //clean build directory
 gulp.task('clean', function(cb) {
-	del(["build/*"], cb);
+	return del(["build/*"], cb);
 });
 
 //copy static folders to build directory
@@ -25,7 +25,7 @@ gulp.task('copy', function() {
 		.pipe(gulp.dest('build/fonts'));
 	gulp.src('src/icons/**')
 		.pipe(gulp.dest('build/icons'));
-	return gulp.src('src/_locales/**')
+	gulp.src('src/_locales/**')
 		.pipe(gulp.dest('build/_locales'));
 	return gulp.src('src/manifest.json')
 		.pipe(gulp.dest('build'));
@@ -46,23 +46,23 @@ gulp.task('jshint', function() {
 });
 
 //run test script with jasmine
-gulp.task('test', ['jshint'], function () {
+gulp.task('test', gulp.series('jshint'), function () {
     return gulp.src(['test/avim.test.js'])
         .pipe(jasmine());
 });
 
 //copy vendor scripts and uglify all other scripts, creating source maps
-gulp.task('scripts', ['test'], function() {
+gulp.task('scripts', gulp.series('test'), function() {
 	gulp.src('src/scripts/vendors/**/*.js')
 		.pipe(gulp.dest('build/scripts/vendors'));
-	
+
 	gulp.src("src/manifest.json")
 		.pipe(jeditor(function(json) {
 			json.content_scripts[0].js = [ "scripts/avim.js" ];
 			return json;
 		}))
 		.pipe(gulp.dest('build'))
-	
+
 	var opt = {
 			outSourceMap: true,
 			mangle: {
@@ -71,12 +71,12 @@ gulp.task('scripts', ['test'], function() {
 				"except": "chrome"
 			}
 		};
-	
+
 	gulp.src(['src/chrome/**/*.js', '!src/chrome/vendors/**/*.js'])
 		.pipe(stripdebug())
 		.pipe(uglify(opt))
 		.pipe(gulp.dest('build/chrome'));
-	
+
 	return gulp.src(['src/scripts/**/*.js', '!src/scripts/vendors/**/*.js'])
 		.pipe(concat('avim.js'))
 		.pipe(stripdebug())
@@ -94,7 +94,7 @@ gulp.task('styles', function() {
 });
 
 //build ditributable and sourcemaps after other tasks completed
-gulp.task('zip', ['html', 'scripts', 'styles', 'copy'], function() {
+gulp.task('zip', gulp.series('html', 'scripts', 'styles', 'copy'), function() {
 	var manifest = require('./src/manifest.json'),
 		distFileName = 'avim-chrome-' + manifest.version + '.zip',
 		mapFileName = 'avim-chrome-' + manifest.version + '-maps.zip';
@@ -109,6 +109,6 @@ gulp.task('zip', ['html', 'scripts', 'styles', 'copy'], function() {
 });
 
 //run all tasks after build directory has been cleaned
-gulp.task('default', ['clean'], function() {
-    gulp.start('zip');
+gulp.task('default', gulp.series('clean'), function() {
+	return gulp.start('zip');
 });
