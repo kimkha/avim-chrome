@@ -3,7 +3,8 @@
   "version": "0.7.0",
   "description": "avim-chrome ===========",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "gulp",
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",

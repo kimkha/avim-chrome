@@ -1,26 +1,28 @@
 {
   "name": "__MSG_extName__",
-  "version": "0.8.5",
-  "manifest_version": 2,
+  "version": "0.9.0",
+  "manifest_version": 3,
   "description": "__MSG_extDescription__",
-  "icons": { "16": "icons/icon16.png",
-           "48": "icons/icon48.png",
-          "128": "icons/icon128.png"
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
-  "browser_action": {
+  "action": {
     "default_icon": "icons/icon19.png",
     "default_title": "__MSG_extAction__",
     "default_popup": "popup.html"
   },
   "content_scripts": [{
-  	"js": [ "scripts/avim.js", "scripts/extension.js" ],
-  	"matches": ["http://*/*", "https://*/*"],
-  	"run_at": "document_idle",
-  	"all_frames": true
+    "js": [ "scripts/avim.js", "scripts/extension.js" ],
+    "matches": ["http://*/*", "https://*/*"],
+    "run_at": "document_idle",
+    "all_frames": true
   }],
   "default_locale": "en",
   "offline_enabled": true,
+  "permissions": ["storage"],
   "background": {
-    "scripts": ["chrome/background.js"]
+    "service_worker": "chrome/background.js"
   }
 }

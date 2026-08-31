@@ -1,5 +1,5 @@
 
-var extension = chrome.extension;
+var extension = chrome.runtime;
 var document = window.document;
 var sendRequest = extension.sendMessage;
 var allFrames = [];

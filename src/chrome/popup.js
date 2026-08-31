@@ -7,7 +7,7 @@
 		if (key == 'onOff') {
 			obj = {'save_prefs':'all', 'onOff' : value};
 		}
-		chrome.extension.sendMessage(obj, function(response){
+		chrome.runtime.sendMessage(obj, function(response){
 			window.location.reload();
 		});
 	}
@@ -42,7 +42,7 @@
 		var viqrEle = $g("viqr");
 		var viqrStarEle = $g("viqrStar");
 		
-		chrome.extension.sendMessage({'get_prefs':'all'}, function(response){
+		chrome.runtime.sendMessage({'get_prefs':'all'}, function(response){
 			if (response.onOff === 0) {
 				offEle.checked = true;
 			} else {
