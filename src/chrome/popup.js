@@ -17,15 +17,27 @@
 	}
 	
 	function loadText() {
-		var keys = ["Sel", "Auto", "Telex", "Vni", "Viqr", "ViqrStar", "Off", "Tips", "TipsCtrl", "Demo", "DemoCopy"];
+		var keys = ["Sel", "Auto", "Telex", "Vni", "Viqr", "ViqrStar", "Off", "Tips", "TipsCtrl", "Demo", "DemoCopy", "RemoveAccent"];
 		for (var k in keys) {
 			$g("txt" + keys[k]).innerHTML = getI18n("extPopup" + keys[k]);
 		}
 	}
 	
 	function hightlightDemo() {
-		$g("inputDemo").focus();
-		$g("inputDemo").select();
+		var inputDemo = $g("inputDemo");
+		inputDemo.focus();
+		inputDemo.select();
+	}
+
+	function removeAccent() {
+		var inputDemo = $g("inputDemo");
+		inputDemo.value = inputDemo.value
+			.normalize("NFD")
+			.replace(/[\u0300-\u036f]/g, "")
+			.replace(/đ/g, "d")
+			.replace(/Đ/g, "D");
+		inputDemo.focus();
+		inputDemo.select();
 	}
 
 	function $g(id) {
@@ -72,6 +84,7 @@
 		viqrStarEle.addEventListener("click", function(){setAVIMConfig('method', 4);});
 		
 		$g("demoCopy").addEventListener("click", hightlightDemo);
+		$g("removeAccent").addEventListener("click", removeAccent);
 	}
 	
 //	window.onload = init;

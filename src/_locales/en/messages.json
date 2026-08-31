@@ -54,5 +54,9 @@
 	"extPopupDemoCopy" : {
 		"message" : "Highlight All",
 		"description" : ""
+	},
+	"extPopupRemoveAccent" : {
+		"message" : "Remove accent",
+		"description" : "Strip Vietnamese diacritics from the demo text"
 	}
 }
