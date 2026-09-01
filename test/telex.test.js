@@ -1,9 +1,7 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const { METHOD, toneMatrixCases, type } = require("./helpers/avim-harness.js");
+import { METHOD, toneMatrixCases, type } from "./helpers/avim-harness.js";
 
 const TELEX = { method: METHOD.TELEX };
 

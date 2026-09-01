@@ -1,0 +1,12 @@
+{
+	"esversion": 11,
+	"browser": true,
+	"undef": true,
+	"eqeqeq": true,
+	"globals": {
+		"chrome": false,
+		"globalThis": false,
+		"exclude": true,
+		"AVIMAutoConfig": true
+	}
+}

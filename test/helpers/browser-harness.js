@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Chrome ships no test runner for third-party extensions: chrome.test needs a C++ ExtensionApiTest
  * harness inside a Chromium build, so the documented path is a browser driver with
@@ -7,12 +5,12 @@
  * injection, real Selection ranges, shadow-root retargeting, iframes and the system clipboard.
  */
 
-const fs = require("node:fs");
-const os = require("node:os");
-const http = require("node:http");
-const path = require("node:path");
+import fs from "node:fs";
+import os from "node:os";
+import http from "node:http";
+import path from "node:path";
 
-const ROOT = path.join(__dirname, "..", "..");
+const ROOT = path.join(import.meta.dirname, "..", "..");
 
 const NESTED_PAGE = '<!DOCTYPE html><html><body><textarea id="nested"></textarea></body></html>';
 
@@ -40,38 +38,38 @@ function outerPage(altOrigin) {
 <script>
 	document.getElementById("host").attachShadow({ mode: "open" }).innerHTML =
 		'<textarea id="shadowTextarea"></textarea><input id="shadowText" type="text">';
-	var dynamic = document.createElement("textarea");
+	const dynamic = document.createElement("textarea");
 	dynamic.id = "dynamic";
 	document.getElementById("slot").appendChild(dynamic);
 	document.getElementById("designMode").contentDocument.designMode = "on";
 	window.__inputEvents = 0;
-	document.getElementById("eventProbe").addEventListener("input", function () {
+	document.getElementById("eventProbe").addEventListener("input", () => {
 		window.__inputEvents++;
 	});
 
 	// #controlled stands in for Slate/Draft-style editors such as Discord's message box: it keeps
 	// its own model and re-renders the DOM from it on every input event.
-	var controlled = document.getElementById("controlled");
-	var model = "";
-	controlled.addEventListener("beforeinput", function (event) {
+	const controlled = document.getElementById("controlled");
+	let model = "";
+	controlled.addEventListener("beforeinput", (event) => {
 		if (event.data) {
 			model += event.data;
 		}
 	});
-	controlled.addEventListener("input", function () {
+	controlled.addEventListener("input", () => {
 		if (controlled.textContent !== model) {
 			controlled.textContent = model;
 		}
 		if (controlled.firstChild) {
-			var range = document.createRange();
+			const range = document.createRange();
 			range.setStart(controlled.firstChild, controlled.firstChild.data.length);
 			range.collapse(true);
-			var selection = getSelection();
+			const selection = getSelection();
 			selection.removeAllRanges();
 			selection.addRange(range);
 		}
 	});
-	window.__resetControlled = function () {
+	window.__resetControlled = () => {
 		model = "";
 		controlled.textContent = "";
 	};
@@ -79,10 +77,10 @@ function outerPage(altOrigin) {
 </body></html>`;
 }
 
-function resolveChromium() {
+async function resolveChromium() {
 	let chromium;
 	try {
-		chromium = require("playwright-core").chromium;
+		({ chromium } = await import("playwright-core"));
 	} catch {
 		return { skip: "playwright-core is not installed; run `yarn install`" };
 	}
@@ -98,7 +96,7 @@ function resolveChromium() {
 	if (!fs.existsSync(executablePath)) {
 		return { skip: `no chromium at ${executablePath}; run \`npx playwright install chromium\`` };
 	}
-	return { chromium: chromium, executablePath: executablePath };
+	return { chromium, executablePath };
 }
 
 function extensionDirs() {
@@ -125,8 +123,8 @@ async function startFixtureServer() {
 	const origin = await listen(main);
 
 	return {
-		origin: origin,
-		altOrigin: altOrigin,
+		origin,
+		altOrigin,
 		close: async () => {
 			await new Promise((resolve) => main.close(resolve));
 			await new Promise((resolve) => alt.close(resolve));
@@ -150,7 +148,7 @@ async function launchExtension(launcher, dir) {
 		context.serviceWorkers()[0] || (await context.waitForEvent("serviceworker", { timeout: 30000 }));
 
 	return {
-		context: context,
+		context,
 		extensionId: new URL(worker.url()).host,
 		close: async () => {
 			await context.close();
@@ -166,7 +164,7 @@ function locate(page, target) {
 }
 
 function readEditable(element) {
-	return element.value === undefined ? element.textContent : element.value;
+	return element.value ?? element.textContent;
 }
 
 // The content script lands at document_idle and the popup boots off an async get_prefs, so the
@@ -200,11 +198,11 @@ async function typeOnce(page, target, sequence) {
 	return locator.evaluate(readEditable);
 }
 
-module.exports = {
-	resolveChromium: resolveChromium,
-	extensionDirs: extensionDirs,
-	startFixtureServer: startFixtureServer,
-	launchExtension: launchExtension,
-	typeUntil: typeUntil,
-	typeOnce: typeOnce,
+export {
+	resolveChromium,
+	extensionDirs,
+	startFixtureServer,
+	launchExtension,
+	typeUntil,
+	typeOnce,
 };

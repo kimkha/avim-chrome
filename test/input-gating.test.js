@@ -1,9 +1,7 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const {
+import {
 	METHOD,
 	loadEngine,
 	createInput,
@@ -14,12 +12,12 @@ const {
 	capturedMessages,
 	clearCapturedMessages,
 	type,
-} = require("./helpers/avim-harness.js");
+} from "./helpers/avim-harness.js";
 
 const TELEX = { method: METHOD.TELEX };
 
 function typeWithModifier(char, modifiers, config) {
-	const context = loadEngine(Object.assign({ method: METHOD.TELEX }, config));
+	const context = loadEngine({ method: METHOD.TELEX, ...config });
 	const element = createInput({ value: "a", caret: 1 });
 	pressKey(context, element, char, modifiers);
 	return element.value;

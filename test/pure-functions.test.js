@@ -1,17 +1,15 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
+import { readFileSync } from "node:fs";
 
-const { readFileSync } = require("node:fs");
-
-const {
+import {
 	AVIM_PATH,
 	METHOD,
 	loadEngine,
 	createInput,
 	primeMethodTables,
-} = require("./helpers/avim-harness.js");
+} from "./helpers/avim-harness.js";
 
 function engine() {
 	return primeMethodTables(loadEngine({ method: METHOD.TELEX }));
@@ -167,9 +165,9 @@ describe("retKC returns the 24 accented code points for a tone key", () => {
 describe("upperCase fallback table", () => {
 	// unreachable while toUpperCase handles every entry, so behaviour cannot guard it
 	it("pairs every source character with its correct uppercase form", () => {
-		const table = readFileSync(AVIM_PATH, "utf8").match(/var str = "([^"]+)", rep="([^"]+)"/);
-		const lower = Array.from(table[1]);
-		const upper = Array.from(table[2]);
+		const source = readFileSync(AVIM_PATH, "utf8");
+		const lower = Array.from(source.match(/const LOWER_VIET = "([^"]+)"/)[1]);
+		const upper = Array.from(source.match(/const UPPER_VIET = "([^"]+)"/)[1]);
 		assert.equal(lower.length, upper.length);
 		assert.deepEqual(lower.map((char) => char.toUpperCase()), upper);
 	});

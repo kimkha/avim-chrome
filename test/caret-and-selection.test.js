@@ -1,9 +1,7 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const { METHOD, loadEngine, createInput, pressKey } = require("./helpers/avim-harness.js");
+import { METHOD, loadEngine, createInput, pressKey } from "./helpers/avim-harness.js";
 
 function pressOnce(elementOptions, char) {
 	const context = loadEngine({ method: METHOD.TELEX });
@@ -15,7 +13,7 @@ function pressOnce(elementOptions, char) {
 		caret: element.selectionStart,
 		caretEnd: element.selectionEnd,
 		scrollTop: element.scrollTop,
-		prevented: prevented,
+		prevented,
 	};
 }
 

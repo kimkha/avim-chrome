@@ -1,16 +1,14 @@
-"use strict";
+import { describe, it, before, after } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it, before, after } = require("node:test");
-const assert = require("node:assert/strict");
-
-const {
+import {
 	resolveChromium,
 	extensionDirs,
 	startFixtureServer,
 	launchExtension,
 	typeUntil,
 	typeOnce,
-} = require("./helpers/browser-harness.js");
+} from "./helpers/browser-harness.js";
 
 const CONVERTS = [
 	["a textarea", "#textarea"],
@@ -33,7 +31,7 @@ const LEAVES_ALONE = [
 	['an input whose name is "email"', "#byName"],
 ];
 
-const launcher = resolveChromium();
+const launcher = await resolveChromium();
 
 for (const dir of extensionDirs()) {
 	describe(`${dir}/ loaded in Chromium`, { skip: launcher.skip }, () => {

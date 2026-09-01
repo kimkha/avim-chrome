@@ -1,9 +1,7 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const { METHOD, type } = require("./helpers/avim-harness.js");
+import { METHOD, type } from "./helpers/avim-harness.js";
 
 /**
  * Three rules read the character *before* a vowel. For a word-initial vowel there is no
@@ -21,7 +19,7 @@ describe("The q+u rule reads before the u, not the end of the word", () => {
 
 	for (const [sequence, method, expected] of cases) {
 		it(`"${sequence}" produces "${expected}"`, () => {
-			assert.equal(type(sequence, { method: method, checkSpell: 0 }), expected);
+			assert.equal(type(sequence, { method, checkSpell: 0 }), expected);
 		});
 	}
 
@@ -42,7 +40,7 @@ describe("The breve shift reads before the a, not the end of the word", () => {
 
 	for (const [sequence, method, checkSpell, expected] of cases) {
 		it(`"${sequence}" produces "${expected}"`, () => {
-			assert.equal(type(sequence, { method: method, checkSpell: checkSpell }), expected);
+			assert.equal(type(sequence, { method, checkSpell }), expected);
 		});
 	}
 
@@ -61,7 +59,7 @@ describe("The uo pair check reads before the caret, not the end of the word", ()
 
 	for (const [sequence, method, expected] of cases) {
 		it(`"${sequence}" produces "${expected}" without inserting a stray ư`, () => {
-			assert.equal(type(sequence, { method: method, checkSpell: 0 }), expected);
+			assert.equal(type(sequence, { method, checkSpell: 0 }), expected);
 		});
 	}
 

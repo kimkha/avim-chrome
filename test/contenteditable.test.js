@@ -1,16 +1,14 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const {
+import {
 	METHOD,
 	typeContentEditable,
 	typeContentEditableDetailed,
-} = require("./helpers/avim-harness.js");
+} from "./helpers/avim-harness.js";
 
 function typeEditable(sequence, config) {
-	return typeContentEditable(sequence, Object.assign({ method: METHOD.TELEX }, config));
+	return typeContentEditable(sequence, { method: METHOD.TELEX, ...config });
 }
 
 describe("contenteditable: telex", () => {
@@ -62,7 +60,7 @@ describe("contenteditable: other input methods", () => {
 
 	for (const [sequence, expected, method] of cases) {
 		it(`"${sequence}" produces "${expected}"`, () => {
-			assert.equal(typeEditable(sequence, { method: method }), expected);
+			assert.equal(typeEditable(sequence, { method }), expected);
 		});
 	}
 });
@@ -93,7 +91,7 @@ describe("contenteditable: caret is restored before the trailing text", () => {
 		it(`typing "${sequence}" into "${element.value}" gives "${expectedText}"`, () => {
 			const result = typeContentEditableDetailed(sequence, {
 				method: METHOD.TELEX,
-				element: element,
+				element,
 			});
 			assert.equal(result.text, expectedText);
 			assert.equal(result.caret, expectedCaret);

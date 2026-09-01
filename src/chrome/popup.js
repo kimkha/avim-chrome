@@ -1,103 +1,96 @@
-(function(window){
-	function setAVIMConfig(key, value) {
-		var obj = {'save_prefs':'all'};
-		if (key == 'method') {
-			obj = {'save_prefs':'all', 'method' : value, 'onOff' : 1};
-		}
-		if (key == 'onOff') {
-			obj = {'save_prefs':'all', 'onOff' : value};
-		}
-		if (key == 'ckSpell') {
-			obj = {'save_prefs':'all', 'ckSpell' : value};
-		}
-		chrome.runtime.sendMessage(obj, function(response){
+(() => {
+	/** Each key maps to a #txt<Key> element in popup.html and an extPopup<Key> locale message. */
+	const LABEL_KEYS = [
+		"Sel",
+		"Auto",
+		"Telex",
+		"Vni",
+		"Viqr",
+		"ViqrStar",
+		"Off",
+		"SpellCheck",
+		"Tips",
+		"TipsCtrl",
+		"Demo",
+		"DemoCopy",
+		"RemoveAccent"
+	];
+
+	/** Radio element id -> the method number the engine expects. */
+	const METHOD_RADIOS = {
+		auto: 0,
+		telex: 1,
+		vni: 2,
+		viqr: 3,
+		viqrStar: 4
+	};
+
+	const COMBINING_MARKS = /[\u0300-\u036f]/g;
+
+	const $g = (id) => document.getElementById(id);
+
+	/** The background stores the prefs and pushes them to every tab; the reload re-reads them. */
+	function savePrefs(prefs) {
+		chrome.runtime.sendMessage({ save_prefs: "all", ...prefs }, () => {
 			window.location.reload();
 		});
 	}
-	
-	function getI18n(message) {
-		return chrome.i18n.getMessage(message);
-	}
-	
+
 	function loadText() {
-		var keys = ["Sel", "Auto", "Telex", "Vni", "Viqr", "ViqrStar", "Off", "SpellCheck", "Tips", "TipsCtrl", "Demo", "DemoCopy", "RemoveAccent"];
-		for (var k in keys) {
-			$g("txt" + keys[k]).innerHTML = getI18n("extPopup" + keys[k]);
+		for (const key of LABEL_KEYS) {
+			$g(`txt${key}`).innerHTML = chrome.i18n.getMessage(`extPopup${key}`);
 		}
 	}
-	
+
 	function copyAllDemo() {
-		var inputDemo = $g("inputDemo");
+		const inputDemo = $g("inputDemo");
 		inputDemo.focus();
 		inputDemo.select();
-		navigator.clipboard.writeText(inputDemo.value).catch(function() {
+		navigator.clipboard.writeText(inputDemo.value).catch(() => {
 			document.execCommand("copy");
 		});
 	}
 
 	function removeAccent() {
-		var inputDemo = $g("inputDemo");
+		const inputDemo = $g("inputDemo");
 		inputDemo.value = inputDemo.value
 			.normalize("NFD")
-			.replace(/[\u0300-\u036f]/g, "")
+			.replace(COMBINING_MARKS, "")
 			.replace(/đ/g, "d")
 			.replace(/Đ/g, "D");
 		inputDemo.focus();
 		inputDemo.select();
 	}
 
-	function $g(id) {
-		return document.getElementById(id);
+	function showPrefs(prefs) {
+		$g("spellCheck").checked = prefs.ckSpell === 1;
+		if (prefs.onOff === 0) {
+			$g("off").checked = true;
+			return;
+		}
+		const selected = Object.keys(METHOD_RADIOS).find((id) => METHOD_RADIOS[id] === prefs.method);
+		if (selected) {
+			$g(selected).checked = true;
+		}
 	}
-	
+
+	const selectMethod = (method) => () => savePrefs({ method, onOff: 1 });
+
 	function init() {
 		loadText();
-		
-		var offEle = $g("off");
-		var autoEle = $g("auto");
-		var telexEle = $g("telex");
-		var vniEle = $g("vni");
-		var viqrEle = $g("viqr");
-		var viqrStarEle = $g("viqrStar");
-		var spellCheckEle = $g("spellCheck");
-		
-		chrome.runtime.sendMessage({'get_prefs':'all'}, function(response){
-			spellCheckEle.checked = (response.ckSpell === 1);
-			if (response.onOff === 0) {
-				offEle.checked = true;
-			} else {
-				if (response.method === 0) {
-					autoEle.checked = true;
-				}
-				if (response.method === 1) {
-					telexEle.checked = true;
-				}
-				if (response.method === 2) {
-					vniEle.checked = true;
-				}
-				if (response.method === 3) {
-					viqrEle.checked = true;
-				}
-				if (response.method === 4) {
-					viqrStarEle.checked = true;
-				}
-			}
+		chrome.runtime.sendMessage({ get_prefs: "all" }, showPrefs);
+
+		for (const [id, method] of Object.entries(METHOD_RADIOS)) {
+			$g(id).addEventListener("click", selectMethod(method));
+		}
+		$g("off").addEventListener("click", () => savePrefs({ onOff: 0 }));
+		$g("spellCheck").addEventListener("change", () => {
+			savePrefs({ ckSpell: $g("spellCheck").checked ? 1 : 0 });
 		});
-		
-		offEle.addEventListener("click", function(){setAVIMConfig('onOff', 0);});
-		autoEle.addEventListener("click", function(){setAVIMConfig('method', 0);});
-		telexEle.addEventListener("click", function(){setAVIMConfig('method', 1);});
-		vniEle.addEventListener("click", function(){setAVIMConfig('method', 2);});
-		viqrEle.addEventListener("click", function(){setAVIMConfig('method', 3);});
-		viqrStarEle.addEventListener("click", function(){setAVIMConfig('method', 4);});
-		spellCheckEle.addEventListener("change", function(){
-			setAVIMConfig('ckSpell', spellCheckEle.checked ? 1 : 0);
-		});
-		
+
 		$g("demoCopy").addEventListener("click", copyAllDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);
 	}
-	
-//	window.onload = init;
+
 	init();
-})(window);
+})();

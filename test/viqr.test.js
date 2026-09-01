@@ -1,9 +1,7 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const { METHOD, toneMatrixCases, type } = require("./helpers/avim-harness.js");
+import { METHOD, toneMatrixCases, type } from "./helpers/avim-harness.js";
 
 const VIQR = { method: METHOD.VIQR };
 const VIQR_STAR = { method: METHOD.VIQR_STAR };
@@ -26,10 +24,11 @@ const VIQR_BASE_VOWELS = {
 };
 
 // VIQR* differs from VIQR only in the horn key: * instead of +
-const VIQR_STAR_BASE_VOWELS = Object.assign({}, VIQR_BASE_VOWELS, {
+const VIQR_STAR_BASE_VOWELS = {
+	...VIQR_BASE_VOWELS,
 	"ơ": "o*",
 	"ư": "u*",
-});
+};
 
 describe("VIQR: vowel x tone matrix", () => {
 	for (const testCase of toneMatrixCases(VIQR_BASE_VOWELS, TONE_KEYS)) {

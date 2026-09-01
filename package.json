@@ -2,16 +2,17 @@
   "name": "avim-chrome",
   "version": "0.7.0",
   "description": "avim-chrome ===========",
+  "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "lint": "jshint src/scripts",
+    "lint": "jshint src/scripts src/chrome",
     "test": "node --test test/*.test.js",
     "test:browser": "node --test test/browser-smoke.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.11.0"
   },
   "repository": {
     "type": "git",

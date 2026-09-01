@@ -1,11 +1,9 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-
-const SRC = path.join(__dirname, "..", "src");
+const SRC = path.join(import.meta.dirname, "..", "src");
 
 function read(relative) {
 	return fs.readFileSync(path.join(SRC, relative), "utf8");
@@ -114,11 +112,11 @@ describe("popup.js labels line up with popup.html and the locale files", () => {
 	// one side only fails silently at runtime: the label just stays as the hardcoded Vietnamese
 	// fallback, or throws on a missing element.
 	const popupSource = read(path.join("chrome", "popup.js"));
-	const declaration = popupSource.match(/var keys = \[([^\]]+)\]/);
+	const declaration = popupSource.match(/const LABEL_KEYS = \[([^\]]+)\]/);
 	const popupHtml = read("popup.html");
 
 	it("still builds its label list from a literal array", () => {
-		assert.ok(declaration, "loadText() no longer declares `var keys = [...]`; update this test");
+		assert.ok(declaration, "popup.js no longer declares `const LABEL_KEYS = [...]`; update this test");
 	});
 
 	const keys = declaration[1].split(",").map((entry) => entry.trim().replace(/^"|"$/g, ""));

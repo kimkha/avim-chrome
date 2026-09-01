@@ -24,17 +24,17 @@
  *		   of this software in any way.
  */
 
-var AVIMObj = '';
+let AVIMObj = null;
 
-var method = 0, //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
-	  onOff = 1, //Starting status: 0=Off, 1=On
-	  checkSpell = 1, //Spell Check: 0=Off, 1=On
-	  oldAccent = 1, //0: New way (oa`, oe`, uy`), 1: The good old day (o`a, o`e, u`y)
-	  useCookie = 0, //Cookies: 0=Off, 1=On
-	  exclude = ["email"]; //IDs of the fields you DON'T want to let users type Vietnamese in
+let method = 0; //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
+let onOff = 1; //Starting status: 0=Off, 1=On
+let checkSpell = 1; //Spell Check: 0=Off, 1=On
+let oldAccent = 1; //0: New way (oa`, oe`, uy`), 1: The good old day (o`a, o`e, u`y)
 
-//Set to true the methods which you want to be included in the AUTO method
-var AVIMAutoConfig = [
+// Kept on globalThis, not in a lexical binding: the page and the test harness override them after load
+globalThis.exclude = ["email"]; //IDs of the fields you DON'T want to let users type Vietnamese in
+//Set to true the methods which you want to be included in the AUTO method, in METHOD_KEYS order
+globalThis.AVIMAutoConfig = [
 	true,//telex
 	true,//vni
 	false,//viqr
@@ -44,44 +44,46 @@ var AVIMAutoConfig = [
 /**
  * Private variables (Only use in AVIM Object)
  */
-var $_alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
-var $_skey = [97,226,259,101,234,105,111,244,417,117,432,121,65,194,258,69,202,73,79,212,416,85,431,89]; // a,â,ă,e,ê,i,o,ô,ơ,u,ư,y,A,Â,Ă,E,Ê,I,O,Ô,Ơ,U,Ư,Y
-var _range = null; // Range object, maybe from Document.createRange()
-var _whit = false; // Unknown
+const $_alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
+const $_skey = [97,226,259,101,234,105,111,244,417,117,432,121,65,194,258,69,202,73,79,212,416,85,431,89]; // a,â,ă,e,ê,i,o,ô,ơ,u,ư,y,A,Â,Ă,E,Ê,I,O,Ô,Ơ,U,Ư,Y
+let _range = null; // Range object, maybe from Document.createRange()
+let _whit = false; // Set while a moc key is in flight, so a following o can also horn a bare u
 
 /**
- * Start new object
+ * Per-keystroke state plus the substitution tables. `xxxs1`/`xxxb1` are search/replace pairs read
+ * by index, so the two rows of a pair must stay aligned.
  */
-function AVIM()	{
-	this.changed = false;
-	this.specialChange = false;
-	this.db1 = [273,272];
-	this.ds1 = ['d','D'];
-	this.os1 = "o,O,ơ,Ơ,ó,Ó,ò,Ò,ọ,Ọ,ỏ,Ỏ,õ,Õ,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ".split(",");
-	this.ob1 = "ô,Ô,ô,Ô,ố,Ố,ồ,Ồ,ộ,Ộ,ổ,Ổ,ỗ,Ỗ,ố,Ố,ồ,Ồ,ộ,Ộ,ổ,Ổ,ỗ,Ỗ".split(",");
-	this.mocs1 = "o,O,ô,Ô,u,U,ó,Ó,ò,Ò,ọ,Ọ,ỏ,Ỏ,õ,Õ,ú,Ú,ù,Ù,ụ,Ụ,ủ,Ủ,ũ,Ũ,ố,Ố,ồ,Ồ,ộ,Ộ,ổ,Ổ,ỗ,Ỗ".split(",");
-	this.mocb1 = "ơ,Ơ,ơ,Ơ,ư,Ư,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ,ứ,Ứ,ừ,Ừ,ự,Ự,ử,Ử,ữ,Ữ,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ".split(",");
-	this.trangs1 = "a,A,â,Â,á,Á,à,À,ạ,Ạ,ả,Ả,ã,Ã,ấ,Ấ,ầ,Ầ,ậ,Ậ,ẩ,Ẩ,ẫ,Ẫ".split(",");
-	this.trangb1 = "ă,Ă,ă,Ă,ắ,Ắ,ằ,Ằ,ặ,Ặ,ẳ,Ẳ,ẵ,Ẵ,ắ,Ắ,ằ,Ằ,ặ,Ặ,ẳ,Ẳ,ẵ,Ẵ".split(",");
-	this.as1 = "a,A,ă,Ă,á,Á,à,À,ạ,Ạ,ả,Ả,ã,Ã,ắ,Ắ,ằ,Ằ,ặ,Ặ,ẳ,Ẳ,ẵ,Ẵ,ế,Ế,ề,Ề,ệ,Ệ,ể,Ể,ễ,Ễ".split(",");
-	this.ab1 = "â,Â,â,Â,ấ,Ấ,ầ,Ầ,ậ,Ậ,ẩ,Ẩ,ẫ,Ẫ,ấ,Ấ,ầ,Ầ,ậ,Ậ,ẩ,Ẩ,ẫ,Ẫ,é,É,è,È,ẹ,Ẹ,ẻ,Ẻ,ẽ,Ẽ".split(",");
-	this.es1 = "e,E,é,É,è,È,ẹ,Ẹ,ẻ,Ẻ,ẽ,Ẽ".split(",");
-	this.eb1 = "ê,Ê,ế,Ế,ề,Ề,ệ,Ệ,ể,Ể,ễ,Ễ".split(",");
-	this.english = "ĐÂĂƠƯÊÔ";
-	this.lowen = "đâăơưêô";
-	this.arA = "á,à,ả,ã,ạ,a,Á,À,Ả,Ã,Ạ,A".split(',');
-	this.mocrA = "ó,ò,ỏ,õ,ọ,o,ú,ù,ủ,ũ,ụ,u,Ó,Ò,Ỏ,Õ,Ọ,O,Ú,Ù,Ủ,Ũ,Ụ,U".split(',');
-	this.erA = "é,è,ẻ,ẽ,ẹ,e,É,È,Ẻ,Ẽ,Ẹ,E".split(',');
-	this.orA = "ó,ò,ỏ,õ,ọ,o,Ó,Ò,Ỏ,Õ,Ọ,O".split(',');
-	this.aA = "ấ,ầ,ẩ,ẫ,ậ,â,Ấ,Ầ,Ẩ,Ẫ,Ậ,Â".split(',');
-	this.oA = "ố,ồ,ổ,ỗ,ộ,ô,Ố,Ồ,Ổ,Ỗ,Ộ,Ô".split(',');
-	this.mocA = "ớ,ờ,ở,ỡ,ợ,ơ,ứ,ừ,ử,ữ,ự,ư,Ớ,Ờ,Ở,Ỡ,Ợ,Ơ,Ứ,Ừ,Ử,Ữ,Ự,Ư".split(',');
-	this.trangA = "ắ,ằ,ẳ,ẵ,ặ,ă,Ắ,Ằ,Ẳ,Ẵ,Ặ,Ă".split(',');
-	this.eA = "ế,ề,ể,ễ,ệ,ê,Ế,Ề,Ể,Ễ,Ệ,Ê".split(',');
-	this.skey2 = "a,a,a,e,e,i,o,o,o,u,u,y,A,A,A,E,E,I,O,O,O,U,U,Y".split(',');
+class AVIM {
+	constructor() {
+		this.changed = false;
+		this.specialChange = false;
+		this.db1 = [273,272];
+		this.ds1 = ['d','D'];
+		this.os1 = "o,O,ơ,Ơ,ó,Ó,ò,Ò,ọ,Ọ,ỏ,Ỏ,õ,Õ,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ".split(",");
+		this.ob1 = "ô,Ô,ô,Ô,ố,Ố,ồ,Ồ,ộ,Ộ,ổ,Ổ,ỗ,Ỗ,ố,Ố,ồ,Ồ,ộ,Ộ,ổ,Ổ,ỗ,Ỗ".split(",");
+		this.mocs1 = "o,O,ô,Ô,u,U,ó,Ó,ò,Ò,ọ,Ọ,ỏ,Ỏ,õ,Õ,ú,Ú,ù,Ù,ụ,Ụ,ủ,Ủ,ũ,Ũ,ố,Ố,ồ,Ồ,ộ,Ộ,ổ,Ổ,ỗ,Ỗ".split(",");
+		this.mocb1 = "ơ,Ơ,ơ,Ơ,ư,Ư,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ,ứ,Ứ,ừ,Ừ,ự,Ự,ử,Ử,ữ,Ữ,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ".split(",");
+		this.trangs1 = "a,A,â,Â,á,Á,à,À,ạ,Ạ,ả,Ả,ã,Ã,ấ,Ấ,ầ,Ầ,ậ,Ậ,ẩ,Ẩ,ẫ,Ẫ".split(",");
+		this.trangb1 = "ă,Ă,ă,Ă,ắ,Ắ,ằ,Ằ,ặ,Ặ,ẳ,Ẳ,ẵ,Ẵ,ắ,Ắ,ằ,Ằ,ặ,Ặ,ẳ,Ẳ,ẵ,Ẵ".split(",");
+		this.as1 = "a,A,ă,Ă,á,Á,à,À,ạ,Ạ,ả,Ả,ã,Ã,ắ,Ắ,ằ,Ằ,ặ,Ặ,ẳ,Ẳ,ẵ,Ẵ,ế,Ế,ề,Ề,ệ,Ệ,ể,Ể,ễ,Ễ".split(",");
+		this.ab1 = "â,Â,â,Â,ấ,Ấ,ầ,Ầ,ậ,Ậ,ẩ,Ẩ,ẫ,Ẫ,ấ,Ấ,ầ,Ầ,ậ,Ậ,ẩ,Ẩ,ẫ,Ẫ,é,É,è,È,ẹ,Ẹ,ẻ,Ẻ,ẽ,Ẽ".split(",");
+		this.es1 = "e,E,é,É,è,È,ẹ,Ẹ,ẻ,Ẻ,ẽ,Ẽ".split(",");
+		this.eb1 = "ê,Ê,ế,Ế,ề,Ề,ệ,Ệ,ể,Ể,ễ,Ễ".split(",");
+		this.english = "ĐÂĂƠƯÊÔ";
+		this.lowen = "đâăơưêô";
+		this.arA = "á,à,ả,ã,ạ,a,Á,À,Ả,Ã,Ạ,A".split(',');
+		this.mocrA = "ó,ò,ỏ,õ,ọ,o,ú,ù,ủ,ũ,ụ,u,Ó,Ò,Ỏ,Õ,Ọ,O,Ú,Ù,Ủ,Ũ,Ụ,U".split(',');
+		this.erA = "é,è,ẻ,ẽ,ẹ,e,É,È,Ẻ,Ẽ,Ẹ,E".split(',');
+		this.orA = "ó,ò,ỏ,õ,ọ,o,Ó,Ò,Ỏ,Õ,Ọ,O".split(',');
+		this.aA = "ấ,ầ,ẩ,ẫ,ậ,â,Ấ,Ầ,Ẩ,Ẫ,Ậ,Â".split(',');
+		this.oA = "ố,ồ,ổ,ỗ,ộ,ô,Ố,Ồ,Ổ,Ỗ,Ộ,Ô".split(',');
+		this.mocA = "ớ,ờ,ở,ỡ,ợ,ơ,ứ,ừ,ử,ữ,ự,ư,Ớ,Ờ,Ở,Ỡ,Ợ,Ơ,Ứ,Ừ,Ử,Ữ,Ự,Ư".split(',');
+		this.trangA = "ắ,ằ,ẳ,ẵ,ặ,ă,Ắ,Ằ,Ẳ,Ẵ,Ặ,Ă".split(',');
+		this.eA = "ế,ề,ể,ễ,ệ,ê,Ế,Ề,Ể,Ễ,Ệ,Ê".split(',');
+		this.skey2 = "a,a,a,e,e,i,o,o,o,u,u,y,A,A,A,E,E,I,O,O,O,U,U,Y".split(',');
 
-	this.spellerr = (checkSpell == 1) ? ckspell : nospell;
-
+		this.spellerr = checkSpell === 1 ? ckspell : nospell;
+	}
 }
 
 function fromCharCode(x) {
@@ -89,78 +91,91 @@ function fromCharCode(x) {
 }
 
 function getSF() {
-	var sf = [], x;
-	for(x = 0; x < $_skey.length; x++) {
-		sf[sf.length] = fromCharCode($_skey[x]);
-	}
-	return sf;
+	return $_skey.map((code) => fromCharCode(code));
 }
 
-function nospell(word, k) {
+function nospell() {
 	return false;
 }
 
+const NON_VIET_LETTERS = "FJZW1234567890";
+
 function ckspell(word, k) {
-	word = unV(word);
-	var exc = "UOU,IEU".split(','), z, next = true, noE = "UU,UOU,UOI,IEU,AO,IA,AI,AY,AU,AO".split(','), noBE = "YEU";
-	var check = true, noM = "UE,UYE,IU,EU,UY".split(','), noMT = "AY,AU".split(','), noT = "UA", t = -1, notV2 = "IAO";
-	var uw = upperCase(word), tw = uw, update = false, gi = "IO", noAOEW = "OE,OO,AO,EO,IA,AI".split(','), noAOE = "OA", test, a, b;
-	var notViet = "AA,AE,EE,OU,YY,YI,IY,EY,EA,EI,II,IO,YO,YA,OOO".split(','), uk = upperCase(k), twE, uw2 = unV2(uw);
-	var vSConsonant = "B,C,D,G,H,K,L,M,N,P,Q,R,S,T,V,X".split(','), vDConsonant = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
-	var vDConsonantE = "CH,NG,NH".split(','),sConsonant = "C,P,T,CH".split(','),vSConsonantE = "C,M,N,P,T".split(',');
-	var noNHE = "O,U,IE,Ô,Ơ,Ư,IÊ,Ă,Â,UYE,UYÊ,UO,ƯƠ,ƯO,UƠ,UA,ƯA,OĂ,OE,OÊ".split(','),oMoc = "UU,UOU".split(',');
-	if(AVIMObj.FRX.indexOf(uk) >= 0) {
-		for(a = 0; a < sConsonant.length; a++) {
-			if(uw.endsWith(sConsonant[a])) {
+	const exc = ["UOU", "IEU"];
+	const noE = ["UU", "UOU", "UOI", "IEU", "AO", "IA", "AI", "AY", "AU", "AO"];
+	const noBE = "YEU";
+	const noM = ["UE", "UYE", "IU", "EU", "UY"];
+	const noMT = ["AY", "AU"];
+	const noT = "UA";
+	const notV2 = "IAO";
+	const gi = "IO";
+	const noAOEW = ["OE", "OO", "AO", "EO", "IA", "AI"];
+	const noAOE = "OA";
+	const notViet = ["AA", "AE", "EE", "OU", "YY", "YI", "IY", "EY", "EA", "EI", "II", "IO", "YO", "YA", "OOO"];
+	const vSConsonant = ["B", "C", "D", "G", "H", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "X"];
+	const vDConsonant = ["CH", "GI", "KH", "NGH", "GH", "NG", "NH", "PH", "QU", "TH", "TR"];
+	const vDConsonantE = ["CH", "NG", "NH"];
+	const sConsonant = ["C", "P", "T", "CH"];
+	const vSConsonantE = ["C", "M", "N", "P", "T"];
+	const noNHE = ["O", "U", "IE", "Ô", "Ơ", "Ư", "IÊ", "Ă", "Â", "UYE", "UYÊ", "UO", "ƯƠ", "ƯO", "UƠ", "UA", "ƯA", "OĂ", "OE", "OÊ"];
+	const oMoc = ["UU", "UOU"];
+
+	const uw = upperCase(unV(word));
+	const uk = upperCase(k);
+	let uw2 = unV2(uw);
+	let tw = uw;
+	// Stays latched once cleared: a single hit disables the check for the rest of the word.
+	let check = true;
+	let leadConsonant = "";
+	let update = false;
+	// Loop invariant: an allowed cluster anywhere in the word waives the notViet check entirely
+	const hasAllowedCluster = exc.some((allowed) => uw2.includes(allowed));
+
+	if (AVIMObj.FRX.includes(uk) && sConsonant.some((consonant) => uw.endsWith(consonant))) {
+		return true;
+	}
+	for (let a = 0; a < uw.length; a++) {
+		if (NON_VIET_LETTERS.includes(uw.charAt(a))) {
+			return true;
+		}
+		if (hasAllowedCluster) {
+			continue;
+		}
+		for (const pair of notViet) {
+			if (!uw2.startsWith(pair, a)) {
+				continue;
+			}
+			if (!gi.includes(pair) || (a <= 0) || (uw2.charAt(a - 1) !== "G")) {
 				return true;
 			}
 		}
 	}
-	for(a = 0; a < uw.length; a++) {
-		if("FJZW1234567890".indexOf(uw.charAt(a)) >= 0) {
-			return true;
-		}
-		for(b = 0; b < notViet.length; b++) {
-			if(uw2.startsWith(notViet[b], a)) {
-				for(z = 0; z < exc.length; z++) {
-					if(uw2.indexOf(exc[z]) >= 0) {
-						next=false;
-					}
-				}
-				if(next && ((gi.indexOf(notViet[b]) < 0) || (a <= 0) || (uw2.charAt(a - 1) != 'G'))) {
-					return true;
-				}
-			}
-		}
-	}
-	for(b = 0; b < vDConsonant.length; b++) {
-		if(tw.indexOf(vDConsonant[b]) === 0) {
-			tw = tw.slice(vDConsonant[b].length);
+	for (const consonant of vDConsonant) {
+		if (tw.startsWith(consonant)) {
+			tw = tw.slice(consonant.length);
 			update = true;
-			t = b;
+			leadConsonant = consonant;
 			break;
 		}
 	}
-	if(!update) {
-		for(b = 0; b < vSConsonant.length; b++) {
-			if(tw.indexOf(vSConsonant[b]) === 0) {
+	if (!update) {
+		for (const consonant of vSConsonant) {
+			if (tw.startsWith(consonant)) {
 				tw = tw.slice(1);
 				break;
 			}
 		}
 	}
-	update=false;
-	twE=tw;
-	for(b = 0; b < vDConsonantE.length; b++) {
-		if(tw.endsWith(vDConsonantE[b])) {
-			tw = tw.slice(0, tw.length - vDConsonantE[b].length);
-			if(b == 2){
-				for(z = 0; z < noNHE.length; z++) {
-					if(tw == noNHE[z]) {
-						return true;
-					}
+	update = false;
+	const twE = tw;
+	for (const consonant of vDConsonantE) {
+		if (tw.endsWith(consonant)) {
+			tw = tw.slice(0, tw.length - consonant.length);
+			if (consonant === "NH") {
+				if (noNHE.includes(tw)) {
+					return true;
 				}
-				if((uk == AVIMObj.trang) && ((tw == "OA") || (tw == "A"))) {
+				if ((uk === AVIMObj.trang) && ((tw === "OA") || (tw === "A"))) {
 					return true;
 				}
 			}
@@ -168,839 +183,703 @@ function ckspell(word, k) {
 			break;
 		}
 	}
-	if(!update) {
-		for(b = 0; b < vSConsonantE.length; b++) {
-			if(tw.endsWith(vSConsonantE[b])) {
+	if (!update) {
+		for (const consonant of vSConsonantE) {
+			if (tw.endsWith(consonant)) {
 				tw = tw.slice(0, tw.length - 1);
 				break;
 			}
 		}
 	}
-	if(tw) {
-		for(a = 0; a < vDConsonant.length; a++) {
-			for(b = 0; b < tw.length; b++) {
-				if(tw.startsWith(vDConsonant[a], b)) {
-					return true;
-				}
-			}
+	if (tw) {
+		if (vDConsonant.some((consonant) => tw.includes(consonant))) {
+			return true;
 		}
-		for(a = 0; a < vSConsonant.length; a++) {
-			if(tw.indexOf(vSConsonant[a]) >= 0) {
-				return true;
-			}
+		if (vSConsonant.some((consonant) => tw.includes(consonant))) {
+			return true;
 		}
 	}
-	test = tw.charAt(0);
-	if((t == 3) && ((test == "A") || (test == "O") || (test == "U") || (test == "Y"))) {
+	const firstVowel = tw.charAt(0);
+	if ((leadConsonant === "NGH") && ["A", "O", "U", "Y"].includes(firstVowel)) {
 		return true;
 	}
-	if((t == 5) && ((test == "E") || (test == "I") || (test == "Y"))) {
+	if ((leadConsonant === "NG") && ["E", "I", "Y"].includes(firstVowel)) {
 		return true;
 	}
 	uw2 = unV2(tw);
-	if(uw2 == notV2) {
+	if (uw2 === notV2) {
 		return true;
 	}
-	if(tw != twE) {
-		for(z = 0; z < noE.length; z++) {
-			if(uw2 == noE[z]) {
-				return true;
-			}
-		}
-	}
-	if((tw != uw) && (uw2 == noBE)) {
+	if ((tw !== twE) && noE.includes(uw2)) {
 		return true;
 	}
-	if(uk != AVIMObj.moc) {
-		for(z = 0; z < oMoc.length; z++) {
-			if(tw == oMoc[z]) return true;
-		}
+	if ((tw !== uw) && (uw2 === noBE)) {
+		return true;
 	}
-	if((uw2.indexOf('UYE')>0) && (uk == 'E')) {
-		check=false;
+	if ((uk !== AVIMObj.moc) && oMoc.includes(tw)) {
+		return true;
 	}
-	if((AVIMObj.them.indexOf(uk) >= 0) && check) {
-		for(a = 0; a < noAOEW.length; a++) {
-			if(uw2.indexOf(noAOEW[a]) >= 0) {
-				return true;
-			}
+	// Deliberately > 0, not >= 0: a word-initial UYE is legal, an inner one is not.
+	if ((uw2.indexOf("UYE") > 0) && (uk === "E")) {
+		check = false;
+	}
+	if (AVIMObj.them.includes(uk) && check) {
+		if (noAOEW.some((pair) => uw2.includes(pair))) {
+			return true;
 		}
-		if(uk != AVIMObj.trang) {
-			if(uw2 == noAOE) {
-				return true;
-			}
+		if ((uk !== AVIMObj.trang) && (uw2 === noAOE)) {
+			return true;
 		}
-		if((uk == AVIMObj.trang) && (AVIMObj.trang != 'W')) {
-			if(uw2 == noT) {
-				return true;
-			}
+		if ((uk === AVIMObj.trang) && (AVIMObj.trang !== "W") && (uw2 === noT)) {
+			return true;
 		}
-		if(uk == AVIMObj.moc) {
-			for(a = 0; a < noM.length; a++) {
-				if(uw2 == noM[a]) {
-					return true;
-				}
-			}
+		if ((uk === AVIMObj.moc) && noM.includes(uw2)) {
+			return true;
 		}
-		if((uk == AVIMObj.moc) || (uk == AVIMObj.trang)) {
-			for(a = 0; a < noMT.length; a++) {
-				if(uw2 == noMT[a]) {
-					return true;
-				}
-			}
+		if (((uk === AVIMObj.moc) || (uk === AVIMObj.trang)) && noMT.includes(uw2)) {
+			return true;
 		}
 	}
 	AVIMObj.tw5 = tw;
-	if((uw2.charCodeAt(0) == 272) || (uw2.charCodeAt(0) == 273)) {
-		if(uw2.length > 4) {
-			return true;
-		}
-	} else if(uw2.length > 3) {
-		return true;
-	}
-	return false;
+	// A leading đ/Đ does not count toward the syllable length limit.
+	const startsWithD = (uw2.charCodeAt(0) === 272) || (uw2.charCodeAt(0) === 273);
+	return startsWithD ? uw2.length > 4 : uw2.length > 3;
 }
 
 function getEditorObject(ele) {
-	var value, start, end;
-	value = (ele.data) ? ele.data : ( (ele.value) ? ele.value : ele.innerText );
-	if(!ele.data) {
-		if(!ele.setSelectionRange) {
+	// Falls back to innerText only when both data and value are empty, not merely absent
+	const value = ele.data || ele.value || ele.innerText;
+	if (!ele.data) {
+		if (!ele.setSelectionRange) {
 			return false;
 		}
-		start = ele.selectionStart;
-		end = ele.selectionEnd;
-	} else {
-		start = ele.pos;
-		end = ele.pos;
+		return { v: value, s: ele.selectionStart, e: ele.selectionEnd };
 	}
-	return {
-		"v": value, // value
-		"s": start, // start selection
-		"e": end // end selection
-	};
+	return { v: value, s: ele.pos, e: ele.pos };
 }
 
+/** The word immediately before the caret, plus the caret offset. */
 function mozGetText(editor) {
 	if (!editor) {
 		return false;
 	}
-	var v, pos, word = "", g = 1;
-	v = editor.v;
-	if(v.length <= 0) {
+	const value = editor.v;
+	if (value.length <= 0) {
 		return false;
 	}
-	pos = editor.s;
-	if(pos != editor.e) {
+	const pos = editor.s;
+	if (pos !== editor.e) {
 		return ["", pos];
 	}
-	while(1) {
-		if(pos - g < 0) {
-			break;
-		} else if(notWord(v.charAt(pos - g))) {
-			if(v.charAt(pos - g) == "\\") {
-				word = v.charAt(pos - g) + word;
+	let word = "";
+	for (let at = pos - 1; at >= 0; at--) {
+		const char = value.charAt(at);
+		if (notWord(char)) {
+			// VIQR escapes the following key with a backslash, so that backslash is part of the word
+			if (char === "\\") {
+				word = char + word;
 			}
 			break;
-		} else {
-			word = v.charAt(pos - g) + word;
 		}
-		g++;
+		word = char + word;
 	}
 	return [word, pos];
 }
 
+/** Per-method modifier keys, in the order [D, A, E, O, moc, trang]. Index 0 is TELEX (method 1). */
+const METHOD_KEYS = [
+	{ keys: ["D", "A", "E", "O", "W", "W"], d2: "DAWEO" },
+	{ keys: ["9", "6", "6", "6", "7", "8"], d2: "6789" },
+	{ keys: ["D", "^", "^", "^", "+", "("], d2: "D^+(" },
+	{ keys: ["D", "^", "^", "^", "*", "("], d2: "D^*(" }
+];
+
 function start(obj, key) {
-	var word = "", dockspell = checkSpell, uni, uni2 = false, uni3 = false, uni4 = false;
-	AVIMObj.oc=obj;
-	var telex = "D,A,E,O,W,W".split(','), vni = "9,6,6,6,7,8".split(','), viqr = "D,^,^,^,+,(".split(','), viqr2 = "D,^,^,^,*,(".split(','), a, noNormC;
-	if(method === 0) { // AUTO Method
-		var arr = [], check = AVIMAutoConfig;
-		var value1 = [telex, vni, viqr, viqr2], uniA = [uni, uni2, uni3, uni4], D2A = ["DAWEO", "6789", "D^+(", "D^*("];
-		for(a = 0; a < check.length; a++) {
-			if(check[a]) {
-				arr[arr.length] = value1[a];
-			} else {
-				D2A[a] = "";
-			}
-		}
-		for(a = 0; a < arr.length; a++) {
-			uniA[a] = arr[a];
-		}
-		uni = uniA[0];
-		uni2 = uniA[1];
-		uni3 = uniA[2];
-		uni4 = uniA[3];
-		AVIMObj.D2 = D2A.join();
-		if(!uni) {
+	AVIMObj.oc = obj;
+	let variants;
+	if (method === 0) {
+		AVIMObj.D2 = METHOD_KEYS.map((entry, index) => (AVIMAutoConfig[index] ? entry.d2 : "")).join();
+		variants = METHOD_KEYS.filter((entry, index) => AVIMAutoConfig[index]).map((entry) => entry.keys);
+		if (variants.length === 0) {
 			return;
 		}
-	} else if(method == 1) { // TELEX Method
-		uni = telex;
-		AVIMObj.D2 = "DAWEO";
-	}
-	else if(method == 2) { // VNI Method
-		uni = vni;
-		AVIMObj.D2 = "6789";
-	}
-	else if(method == 3) { // VIQR Method
-		uni = viqr;
-		AVIMObj.D2 = "D^+(";
-	}
-	else if(method == 4) { // VIQR2 Method
-		uni = viqr2;
-		AVIMObj.D2 = "D^*(";
+	} else {
+		const entry = METHOD_KEYS[method - 1];
+		if (!entry) {
+			return;
+		}
+		AVIMObj.D2 = entry.d2;
+		variants = [entry.keys];
 	}
 
-	key = fromCharCode(key.which);
-	word = mozGetText(getEditorObject(obj));
-	if(!word || obj.sel) {
+	const char = fromCharCode(key.which);
+	let word = mozGetText(getEditorObject(obj));
+	if (!word || obj.sel) {
 		return;
 	}
-	if(AVIMObj.D2.indexOf(upperCase(key)) >= 0) {
-		noNormC = true;
-	} else {
-		noNormC = false;
-	}
-	main(word[0], key, word[1], uni, noNormC);
-	if(!dockspell) {
-		word = mozGetText(getEditorObject(obj));
-	}
-	if(word && uni2 && !AVIMObj.changed) {
-		main(word[0], key, word[1], uni2, noNormC);
-	}
-	if(!dockspell) {
-		word = mozGetText(getEditorObject(obj));
-	}
-	if(word && uni3 && !AVIMObj.changed) {
-		main(word[0], key, word[1], uni3, noNormC);
-	}
-	if(!dockspell) {
-		word = mozGetText(getEditorObject(obj));
-	}
-	if(word && uni4 && !AVIMObj.changed) {
-		main(word[0], key, word[1], uni4, noNormC);
+	const noNormC = AVIMObj.D2.includes(upperCase(char));
+	main(word[0], char, word[1], variants[0], noNormC);
+	for (const variant of variants.slice(1)) {
+		// With spell check off the word must be re-read, because the previous variant may have edited it
+		if (!checkSpell) {
+			word = mozGetText(getEditorObject(obj));
+		}
+		if (word && !AVIMObj.changed) {
+			main(word[0], char, word[1], variant, noNormC);
+		}
 	}
 
-	if(AVIMObj.D2.indexOf(upperCase(key)) >= 0) {
+	if (AVIMObj.D2.includes(upperCase(char))) {
 		word = mozGetText(getEditorObject(obj));
-		if(!word) {
-			return;
+		if (word) {
+			normC(word[0], char, word[1]);
 		}
-		normC(word[0], key, word[1]);
 	}
 }
 
+const DOUBLE_CONSONANTS = ["CH", "GI", "KH", "NGH", "GH", "NG", "NH", "PH", "QU", "TH", "TR"];
+const SINGLE_CONSONANTS = "BCDĐGHKLMNPQRSTVX";
+const MODIFIED_VOWELS = "ÂĂÊÔƠƯêâăơôư";
+
+/** Which character of `word` the key applies to: an offset from the end, or [offset, replacement]. */
 function findC(word, k, sf) {
-	if(((method == 3) || (method == 4)) && word.endsWith("\\")) {
+	// A trailing backslash is the VIQR escape: the key goes in literally
+	if (((method === 3) || (method === 4)) && word.endsWith("\\")) {
 		return [1, k.charCodeAt(0)];
 	}
-	var str = "", res, cc = "", pc = "", tE = "", vowA = [], s = "ÂĂÊÔƠƯêâăơôư", c = 0, dn = false, uw = upperCase(word), tv, g;
-	var DAWEOFA = upperCase(AVIMObj.aA.join() + AVIMObj.eA.join() + AVIMObj.mocA.join() + AVIMObj.trangA.join() + AVIMObj.oA.join() + AVIMObj.english), h, uc;
-	for(g = 0; g < sf.length; g++) {
-		if(notNumber(sf[g])) {
-			str += sf[g];
-		} else {
-			str += fromCharCode(sf[g]);
-		}
-	}
-	var uk = upperCase(k), uni_array = repSign(k), w2 = upperCase(unV2(unV(word))), dont = "ƯA,ƯU".split(',');
-	if (AVIMObj.DAWEO.indexOf(uk) >= 0) {
-		if(uk == AVIMObj.moc) {
-			if((w2.indexOf("UU") >= 0) && (AVIMObj.tw5 != dont[1])) {
-				if(w2.indexOf("UU") == (word.length - 2)) {
-					res=2;
-				} else {
+	const str = sf.map((entry) => (notNumber(entry) ? entry : fromCharCode(entry))).join("");
+	const dont = ["ƯA", "ƯU"];
+	const uw = upperCase(word);
+	const uk = upperCase(k);
+	const uniArray = repSign(k);
+	const w2 = upperCase(unV2(unV(word)));
+	const accentedBases = upperCase(
+		AVIMObj.aA.join() + AVIMObj.eA.join() + AVIMObj.mocA.join() +
+		AVIMObj.trangA.join() + AVIMObj.oA.join() + AVIMObj.english
+	);
+	const vowelsFromEnd = [];
+	let res;
+	let vowelCount = 0;
+
+	if (AVIMObj.DAWEO.includes(uk)) {
+		if (uk === AVIMObj.moc) {
+			if (w2.includes("UU") && (AVIMObj.tw5 !== dont[1])) {
+				if (w2.indexOf("UU") !== (word.length - 2)) {
 					return false;
 				}
-			} else if(w2.indexOf("UOU") >= 0) {
-				if(w2.indexOf("UOU") == (word.length-3)) {
-					res=2;
-				} else {
+				res = 2;
+			} else if (w2.includes("UOU")) {
+				if (w2.indexOf("UOU") !== (word.length - 3)) {
 					return false;
 				}
+				res = 2;
 			}
 		}
-		if(!res) {
-			for(g = 1; g <= word.length; g++) {
-				cc = word.charAt(word.length - g);
-				pc = upperCase(word.charAt(word.length - g - 1));
-				uc = upperCase(cc);
-				for(h = 0; h < dont.length; h++) {
-					if((AVIMObj.tw5 == dont[h]) && (AVIMObj.tw5 == unV(pc + uc))) {
-						dn = true;
-					}
-				}
-				if(dn) {
-					dn = false;
+		if (!res) {
+			for (let g = 1; g <= word.length; g++) {
+				const cc = word.charAt(word.length - g);
+				const pc = upperCase(word.charAt(word.length - g - 1));
+				const uc = upperCase(cc);
+				if (dont.includes(AVIMObj.tw5) && (AVIMObj.tw5 === unV(pc + uc))) {
 					continue;
 				}
-				if(str.indexOf(uc) >= 0) {
-					if(((uk == AVIMObj.moc) && (unV(uc) == "U") && (upperCase(unV(word.charAt(word.length - g + 1))) == "A")) || ((uk == AVIMObj.trang) && (unV(uc) == 'A') && (unV(pc) == 'U'))) {
-						if(unV(uc) == "U") {
-							tv=1;
-						} else {
-							tv=2;
-						}
-						var ccc = upperCase(word.charAt(word.length - g - tv));
-						if(ccc != "Q") {
+				if (str.includes(uc)) {
+					// ua + moc and ua + trang both put the mark on the other vowel of the pair
+					const shiftFromU = (uk === AVIMObj.moc) && (unV(uc) === "U") &&
+						(upperCase(unV(word.charAt(word.length - g + 1))) === "A");
+					const shiftFromA = (uk === AVIMObj.trang) && (unV(uc) === "A") && (unV(pc) === "U");
+					if (shiftFromU || shiftFromA) {
+						const tv = unV(uc) === "U" ? 1 : 2;
+						// qu is a consonant cluster, so its u never takes the mark
+						if (upperCase(word.charAt(word.length - g - tv)) !== "Q") {
 							res = g + tv - 1;
-						} else if(uk == AVIMObj.trang) {
+						} else if (uk === AVIMObj.trang) {
 							res = g;
-						} else if(AVIMObj.moc != AVIMObj.trang) {
+						} else if (AVIMObj.moc !== AVIMObj.trang) {
 							return false;
 						}
 					} else {
 						res = g;
 					}
-					if(!_whit || (uw.indexOf("Ư") < 0) || (uw.indexOf("W") < 0)) {
+					if (!_whit || !uw.includes("Ư") || !uw.includes("W")) {
 						break;
 					}
-				} else if(DAWEOFA.indexOf(uc) >= 0) {
-					if(uk == AVIMObj.D) {
-						if(cc == "đ") {
-							res = [g, 'd'];
-						} else if(cc == "Đ") {
-							res = [g, 'D'];
+				} else if (accentedBases.includes(uc)) {
+					if (uk === AVIMObj.D) {
+						if (cc === "đ") {
+							res = [g, "d"];
+						} else if (cc === "Đ") {
+							res = [g, "D"];
 						}
 					} else {
 						res = DAWEOF(cc, uk, g);
 					}
-					if(res) break;
+					if (res) {
+						break;
+					}
 				}
 			}
 		}
 	}
-	
-	var tEC;
-	if((uk != AVIMObj.Z) && (AVIMObj.DAWEO.indexOf(uk) < 0)) {
-		tEC = retKC(uk);
-		for(g = 0;g < tEC.length; g++) {
-			tE += fromCharCode(tEC[g]);
-		}
+
+	let toneCodes = [];
+	let toneChars = "";
+	if ((uk !== AVIMObj.Z) && !AVIMObj.DAWEO.includes(uk)) {
+		toneCodes = retKC(uk);
+		toneChars = toneCodes.map((code) => fromCharCode(code)).join("");
 	}
-	for(g = 1; g <= word.length; g++) {
-		if(AVIMObj.DAWEO.indexOf(uk) < 0) {
-			cc = upperCase(word.charAt(word.length - g));
-			pc = upperCase(word.charAt(word.length - g - 1));
-			if(str.indexOf(cc) >= 0) {
-				if(cc == 'U') {
-					if(pc != 'Q') {
-						c++;
-						vowA[vowA.length] = g;
-					}
-				} else if(cc == 'I') {
-					if((pc != 'G') || (c <= 0)) {
-						c++;
-						vowA[vowA.length] = g;
-					}
-				} else {
-					c++;
-					vowA[vowA.length] = g;
+	if (!AVIMObj.DAWEO.includes(uk)) {
+		for (let g = 1; g <= word.length; g++) {
+			const cc = upperCase(word.charAt(word.length - g));
+			const pc = upperCase(word.charAt(word.length - g - 1));
+			if (str.includes(cc)) {
+				const isQu = (cc === "U") && (pc === "Q");
+				const isGi = (cc === "I") && (pc === "G") && (vowelCount > 0);
+				if (!isQu && !isGi) {
+					vowelCount++;
+					vowelsFromEnd.push(g);
 				}
-			} else if(uk != AVIMObj.Z) {
-				for(h = 0; h < uni_array.length; h++) if(uni_array[h] == word.charCodeAt(word.length - g)) {
-					if(AVIMObj.spellerr(word, k)) {
+			} else if (uk !== AVIMObj.Z) {
+				const code = word.charCodeAt(word.length - g);
+				const accentedAt = uniArray.indexOf(code);
+				if (accentedAt >= 0) {
+					if (AVIMObj.spellerr(word, k)) {
 						return false;
 					}
-					return [g, tEC[h % 24]];
+					return [g, toneCodes[accentedAt % 24]];
 				}
-				for(h = 0; h < tEC.length; h++) {
-					if(tEC[h] == word.charCodeAt(word.length - g)) {
-						return [g, fromCharCode($_skey[h])];
-					}
+				const baseAt = toneCodes.indexOf(code);
+				if (baseAt >= 0) {
+					return [g, fromCharCode($_skey[baseAt])];
 				}
 			}
 		}
 	}
-	if((uk != AVIMObj.Z) && (typeof(res) != 'object')) {
-		if(AVIMObj.spellerr(word, k)) {
-			return false;
-		}
+	if ((uk !== AVIMObj.Z) && (typeof res !== "object") && AVIMObj.spellerr(word, k)) {
+		return false;
 	}
-	if(AVIMObj.DAWEO.indexOf(uk) < 0) {
-		for(g = 1; g <= word.length; g++) {
-			if((uk != AVIMObj.Z) && (s.indexOf(word.charAt(word.length - g)) >= 0)) {
+	if (!AVIMObj.DAWEO.includes(uk)) {
+		for (let g = 1; g <= word.length; g++) {
+			const char = word.charAt(word.length - g);
+			if ((uk !== AVIMObj.Z) && MODIFIED_VOWELS.includes(char)) {
 				return g;
-			} else if(tE.indexOf(word.charAt(word.length - g)) >= 0) {
-				for(h = 0; h < tEC.length; h++) {
-					if(word.charCodeAt(word.length - g) == tEC[h]) {
-						return [g, fromCharCode($_skey[h])];
-					}
+			}
+			if (toneChars.includes(char)) {
+				const at = toneCodes.indexOf(word.charCodeAt(word.length - g));
+				if (at >= 0) {
+					return [g, fromCharCode($_skey[at])];
 				}
 			}
 		}
 	}
-	if(res) {
+	if (res) {
 		return res;
 	}
-	if((c == 1) || (uk == AVIMObj.Z)) {
-		return vowA[0];
-	} else if(c == 2) {
-		var v = 2;
-		if(word.endsWith(" ")) {
-			v = 3;
-		}
-		var ttt = upperCase(word.slice(word.length - v, word.length - v + 2));
-		if((oldAccent === 0) && ((ttt == "UY") || (ttt == "OA") || (ttt == "OE"))) {
-			return vowA[0];
-		}
-		var c2 = 0, fdconsonant, sc = "BCD" + fromCharCode(272) + "GHKLMNPQRSTVX", dc = "CH,GI,KH,NGH,GH,NG,NH,PH,QU,TH,TR".split(',');
-		for(h = 1; h <= word.length; h++) {
-			fdconsonant=false;
-			for(g = 0; g < dc.length; g++) {
-				var dcAt = word.length - h - dc[g].length + 1;
-				if((dcAt >= 0) && (upperCase(word.slice(dcAt, dcAt + dc[g].length)).indexOf(dc[g])>=0)) {
-					c2++;
-					fdconsonant = true;
-					if(dc[g] != 'NGH') {
-						h++;
-					} else {
-						h+=2;
-					}
-				}
-			}
-			if(!fdconsonant) {
-				if(sc.indexOf(upperCase(word.charAt(word.length - h))) >= 0) {
-					c2++;
-				} else { 
-					break;
-				}
+	if ((vowelCount === 1) || (uk === AVIMObj.Z)) {
+		return vowelsFromEnd[0];
+	}
+	if (vowelCount === 2) {
+		return pickFromVowelPair(word, vowelsFromEnd);
+	}
+	if (vowelCount === 3) {
+		return vowelsFromEnd[1];
+	}
+	return false;
+}
+
+/** With two vowels the mark goes on the first unless the syllable has a full consonant onset. */
+function pickFromVowelPair(word, vowelsFromEnd) {
+	const at = word.length - (word.endsWith(" ") ? 3 : 2);
+	const pair = upperCase(word.slice(at, at + 2));
+	if ((oldAccent === 0) && ["UY", "OA", "OE"].includes(pair)) {
+		return vowelsFromEnd[0];
+	}
+	let consonants = 0;
+	for (let h = 1; h <= word.length; h++) {
+		let foundDouble = false;
+		for (const consonant of DOUBLE_CONSONANTS) {
+			const dcAt = word.length - h - consonant.length + 1;
+			if ((dcAt >= 0) && upperCase(word.slice(dcAt, dcAt + consonant.length)).includes(consonant)) {
+				consonants++;
+				foundDouble = true;
+				h += consonant === "NGH" ? 2 : 1;
 			}
 		}
-		if((c2 == 1) || (c2 == 2)) {
-			return vowA[0];
-		} else {
-			return vowA[1];
+		if (!foundDouble) {
+			if (!SINGLE_CONSONANTS.includes(upperCase(word.charAt(word.length - h)))) {
+				break;
+			}
+			consonants++;
 		}
-	} else if(c == 3) {
-		return vowA[1];
-	} else return false;
+	}
+	return (consonants === 1) || (consonants === 2) ? vowelsFromEnd[0] : vowelsFromEnd[1];
 }
 
 function replaceChar(o, pos, c) {
-	var bb = false;
-	var replaceBy, wfix, r;
-	if(!notNumber(c)) {
-		replaceBy = fromCharCode(c);
-		wfix = upperCase(unV(fromCharCode(c)));
+	const isCode = !notNumber(c);
+	const wfix = isCode ? upperCase(unV(fromCharCode(c))) : "";
+	let replaceBy = isCode ? fromCharCode(c) : c;
+	// TELEX types ơ as "ow", so an o keyed right after a bare u turns that u into ư as well
+	let addsHorn = false;
+	if (isCode) {
 		AVIMObj.changed = true;
-	} else {
-		replaceBy = c;
-		if((upperCase(c) == "O") && _whit) {
-			bb=true;
-		}
+	} else if ((upperCase(c) === "O") && _whit) {
+		addsHorn = true;
 	}
-	if(!o.data) {
-		var savePos = o.selectionStart, sst = o.scrollTop;
-		r = "";
-		if ((upperCase(o.value.charAt(pos - 1)) == 'U') && (pos < savePos - 1) && (upperCase(o.value.charAt(pos - 2)) != 'Q')) {
-			if((wfix == "Ơ") || bb) {
-				if (o.value.charAt(pos - 1) == 'u') {
-					r = fromCharCode(432);
-				} else {
-					r = fromCharCode(431);
-				}
+	if (!o.data) {
+		const savePos = o.selectionStart;
+		const scrollTop = o.scrollTop;
+		let hornedU = "";
+		if ((upperCase(o.value.charAt(pos - 1)) === "U") && (pos < savePos - 1) && (upperCase(o.value.charAt(pos - 2)) !== "Q")) {
+			if ((wfix === "Ơ") || addsHorn) {
+				hornedU = fromCharCode(o.value.charAt(pos - 1) === "u" ? 432 : 431);
 			}
-			if(bb) {
+			if (addsHorn) {
 				AVIMObj.changed = true;
-				if(c == "o") {
-					replaceBy = "ơ";
-				} else {
-					replaceBy = "Ơ";
-				}
+				replaceBy = c === "o" ? "ơ" : "Ơ";
 			}
 		}
 		o.value = o.value.slice(0, pos) + replaceBy + o.value.slice(pos + 1);
-		if(r) o.value = o.value.slice(0, pos - 1) + r + o.value.slice(pos);
+		if (hornedU) {
+			o.value = o.value.slice(0, pos - 1) + hornedU + o.value.slice(pos);
+		}
 		o.setSelectionRange(savePos, savePos);
-		o.scrollTop = sst;
+		o.scrollTop = scrollTop;
 	} else {
-		r = "";
-		if ((upperCase(o.data.charAt(pos - 1)) == 'U') && (pos < o.pos - 1)) {
-			if((wfix == "Ơ") || bb) {
-				if (o.data.charAt(pos - 1) == 'u') {
-					r = fromCharCode(432);
-				} else {
-					r = fromCharCode(431);
-				}
+		let hornedU = "";
+		if ((upperCase(o.data.charAt(pos - 1)) === "U") && (pos < o.pos - 1)) {
+			if ((wfix === "Ơ") || addsHorn) {
+				hornedU = fromCharCode(o.data.charAt(pos - 1) === "u" ? 432 : 431);
 			}
-			if(bb) {
+			if (addsHorn) {
 				AVIMObj.changed = true;
-				if(c == "o") {
-					replaceBy = "ơ";
-				} else {
-					replaceBy = "Ơ";
-				}
+				replaceBy = c === "o" ? "ơ" : "Ơ";
 			}
 		}
 		o.deleteData(pos, 1);
 		o.insertData(pos, replaceBy);
-		if(r) {
+		if (hornedU) {
 			o.deleteData(pos - 1, 1);
-			o.insertData(pos - 1, r);
+			o.insertData(pos - 1, hornedU);
 		}
 	}
-	if(_whit) {
-		_whit=false;
-	}
+	_whit = false;
 }
 
 function tr(k, word, by, sf, i) {
-	var r, pos = findC(word, k, sf), g;
-	if(pos) {
-		if(pos[1]) {
-			return replaceChar(AVIMObj.oc, i-pos[0], pos[1]);
-		} else {
-			var c, pC = word.charAt(word.length - pos), cmp;
-			r = sf;
-			for(g = 0; g < r.length; g++) {
-				if(notNumber(r[g]) || (r[g] == "e")) {
-					cmp = pC;
-				} else {
-					cmp = pC.charCodeAt(0);
-				}
-				if(cmp == r[g]) {
-					if(!notNumber(by[g])) {
-						c = by[g];
-					} else {
-						c = by[g].charCodeAt(0);
-					}
-				
-					return replaceChar(AVIMObj.oc, i - pos, c);
-				}
-			}
+	const pos = findC(word, k, sf);
+	if (!pos) {
+		return false;
+	}
+	if (pos[1]) {
+		return replaceChar(AVIMObj.oc, i - pos[0], pos[1]);
+	}
+	const target = word.charAt(word.length - pos);
+	for (const [g, entry] of sf.entries()) {
+		const matches = notNumber(entry) ? (target === entry) : (target.charCodeAt(0) === entry);
+		if (matches) {
+			return replaceChar(AVIMObj.oc, i - pos, notNumber(by[g]) ? by[g].charCodeAt(0) : by[g]);
 		}
 	}
 	return false;
 }
 
-function main(word, k, i, a, noNormC) {
-	var uk = upperCase(k), bya = [AVIMObj.db1, AVIMObj.ab1, AVIMObj.eb1, AVIMObj.ob1, AVIMObj.mocb1, AVIMObj.trangb1], got = false, t = "d,D,a,A,a,A,o,O,u,U,e,E,o,O".split(",");
-	var sfa = [AVIMObj.ds1, AVIMObj.as1, AVIMObj.es1, AVIMObj.os1, AVIMObj.mocs1, AVIMObj.trangs1], by = [], sf = [], h, g;
-	if((method == 2) || ((method === 0) && (a[0] == "9"))) {
-		AVIMObj.DAWEO = "6789";
-		AVIMObj.SFJRX = "12534";
-		AVIMObj.S = "1";
-		AVIMObj.F = "2";
-		AVIMObj.J = "5";
-		AVIMObj.R = "3";
-		AVIMObj.X = "4";
-		AVIMObj.Z = "0";
-		AVIMObj.D = "9";
-		AVIMObj.FRX = "234";
-		AVIMObj.AEO = "6";
-		AVIMObj.moc = "7";
-		AVIMObj.trang = "8";
-		AVIMObj.them = "678";
-		AVIMObj.A = "^";
-		AVIMObj.E = "^";
-		AVIMObj.O = "^";
-	} else if((method == 3) || ((method === 0) && (a[4] == "+"))) {
-		AVIMObj.DAWEO = "^+(D";
-		AVIMObj.SFJRX = "'`.?~";
-		AVIMObj.S = "'";
-		AVIMObj.F = "`";
-		AVIMObj.J = ".";
-		AVIMObj.R = "?";
-		AVIMObj.X = "~";
-		AVIMObj.Z = "-";
-		AVIMObj.D = "D";
-		AVIMObj.FRX = "`?~";
-		AVIMObj.AEO = "^";
-		AVIMObj.moc = "+";
-		AVIMObj.trang = "(";
-		AVIMObj.them = "^+(";
-		AVIMObj.A = "^";
-		AVIMObj.E = "^";
-		AVIMObj.O = "^";
-	} else if((method == 4) || ((method === 0) && (a[4] == "*"))) {
-		AVIMObj.DAWEO = "^*(D";
-		AVIMObj.SFJRX = "'`.?~";
-		AVIMObj.S = "'";
-		AVIMObj.F = "`";
-		AVIMObj.J = ".";
-		AVIMObj.R = "?";
-		AVIMObj.X = "~";
-		AVIMObj.Z = "-";
-		AVIMObj.D = "D";
-		AVIMObj.FRX = "`?~";
-		AVIMObj.AEO = "^";
-		AVIMObj.moc = "*";
-		AVIMObj.trang = "(";
-		AVIMObj.them = "^*(";
-		AVIMObj.A = "^";
-		AVIMObj.E = "^";
-		AVIMObj.O = "^";
-	} else if((method == 1) || ((method === 0) && (a[0] == "D"))) {
-		AVIMObj.SFJRX = "SFJRX";
-		AVIMObj.DAWEO = "DAWEO";
-		AVIMObj.D = 'D';
-		AVIMObj.S = 'S';
-		AVIMObj.F = 'F';
-		AVIMObj.J = 'J';
-		AVIMObj.R = 'R';
-		AVIMObj.X = 'X';
-		AVIMObj.Z = 'Z';
-		AVIMObj.FRX = "FRX";
-		AVIMObj.them = "AOEW";
-		AVIMObj.trang = "W";
-		AVIMObj.moc = "W";
-		AVIMObj.A = "A";
-		AVIMObj.E = "E";
-		AVIMObj.O = "O";
+/**
+ * The key each method uses for every role the engine asks about. `moc` and `trang` share the
+ * same key in TELEX, which several branches rely on.
+ */
+const METHOD_TABLES = {
+	telex: {
+		SFJRX: "SFJRX", DAWEO: "DAWEO", FRX: "FRX", them: "AOEW",
+		S: "S", F: "F", J: "J", R: "R", X: "X", Z: "Z", D: "D",
+		moc: "W", trang: "W", A: "A", E: "E", O: "O"
+	},
+	vni: {
+		SFJRX: "12534", DAWEO: "6789", FRX: "234", them: "678",
+		S: "1", F: "2", J: "5", R: "3", X: "4", Z: "0", D: "9",
+		moc: "7", trang: "8", A: "^", E: "^", O: "^"
+	},
+	viqr: {
+		SFJRX: "'`.?~", DAWEO: "^+(D", FRX: "`?~", them: "^+(",
+		S: "'", F: "`", J: ".", R: "?", X: "~", Z: "-", D: "D",
+		moc: "+", trang: "(", A: "^", E: "^", O: "^"
+	},
+	viqrStar: {
+		SFJRX: "'`.?~", DAWEO: "^*(D", FRX: "`?~", them: "^*(",
+		S: "'", F: "`", J: ".", R: "?", X: "~", Z: "-", D: "D",
+		moc: "*", trang: "(", A: "^", E: "^", O: "^"
 	}
-	if(AVIMObj.SFJRX.indexOf(uk) >= 0) {
-		var ret = sr(word,k,i);
-		got=true;
-		if(ret) {
+};
+
+/** Base letters the Z key restores, paired with the accented forms repSign() lists. */
+const Z_EXTRA_BASES = ["d", "D", "a", "A", "a", "A", "o", "O", "u", "U", "e", "E", "o", "O"];
+
+/** VIQR is checked before TELEX because both use D as their đ key. */
+function methodTableFor(keys) {
+	if ((method === 2) || ((method === 0) && (keys[0] === "9"))) {
+		return METHOD_TABLES.vni;
+	}
+	if ((method === 3) || ((method === 0) && (keys[4] === "+"))) {
+		return METHOD_TABLES.viqr;
+	}
+	if ((method === 4) || ((method === 0) && (keys[4] === "*"))) {
+		return METHOD_TABLES.viqrStar;
+	}
+	if ((method === 1) || ((method === 0) && (keys[0] === "D"))) {
+		return METHOD_TABLES.telex;
+	}
+	return null;
+}
+
+function main(word, k, i, a, noNormC) {
+	const uk = upperCase(k);
+	const table = methodTableFor(a);
+	if (table) {
+		Object.assign(AVIMObj, table);
+	}
+	const bya = [AVIMObj.db1, AVIMObj.ab1, AVIMObj.eb1, AVIMObj.ob1, AVIMObj.mocb1, AVIMObj.trangb1];
+	const sfa = [AVIMObj.ds1, AVIMObj.as1, AVIMObj.es1, AVIMObj.os1, AVIMObj.mocs1, AVIMObj.trangs1];
+	let by = [];
+	let sf = [];
+	let got = false;
+
+	if (AVIMObj.SFJRX.includes(uk)) {
+		const ret = sr(word, k, i);
+		got = true;
+		if (ret) {
 			return ret;
 		}
-	} else if(uk == AVIMObj.Z) {
+	} else if (uk === AVIMObj.Z) {
 		sf = repSign(null);
-		for(h = 0; h < AVIMObj.english.length; h++) {
-			sf[sf.length] = AVIMObj.lowen.charCodeAt(h);
-			sf[sf.length] = AVIMObj.english.charCodeAt(h);
+		for (const [h, upper] of [...AVIMObj.english].entries()) {
+			sf.push(AVIMObj.lowen.charCodeAt(h), upper.charCodeAt(0));
 		}
-		for(h = 0; h < 5; h++) {
-			for(g = 0; g < $_skey.length; g++) {
-				by[by.length] = $_skey[g];
-			}
+		// repSign() lists all five tone rows in $_skey order, so the base row repeats five times
+		for (let row = 0; row < 5; row++) {
+			by.push(...$_skey);
 		}
-		for(h = 0; h < t.length; h++) {
-			by[by.length] = t[h];
-		}
+		by.push(...Z_EXTRA_BASES);
 		got = true;
 	} else {
-		for(h = 0; h < a.length; h++) {
-			if(a[h] == uk) {
+		for (const [h, keyChar] of a.entries()) {
+			if (keyChar === uk) {
 				got = true;
 				by = by.concat(bya[h]);
 				sf = sf.concat(sfa[h]);
 			}
 		}
 	}
-	if(uk == AVIMObj.moc) {
+	if (uk === AVIMObj.moc) {
 		_whit = true;
 	}
-	if(!got) {
-		if(noNormC) {
-			return;
-		} else {
-			return normC(word, k, i);
-		}
+	if (!got) {
+		return noNormC ? undefined : normC(word, k, i);
 	}
 	return DAWEOZ(k, word, by, sf, i, uk);
 }
 
 function DAWEOZ(k, word, by, sf, i, uk) {
-	if((AVIMObj.DAWEO.indexOf(uk) >= 0) || (AVIMObj.Z.indexOf(uk) >= 0)) {
+	if (AVIMObj.DAWEO.includes(uk) || AVIMObj.Z.includes(uk)) {
 		return tr(k, word, by, sf, i);
 	}
+	return undefined;
 }
 
+/** repSign() emits 24 code points per tone, in SFJRX order, so the row index picks the tone key. */
+function toneKeyForRow(row) {
+	return [AVIMObj.S, AVIMObj.F, AVIMObj.J, AVIMObj.R, AVIMObj.X][Math.floor(row / 24)];
+}
+
+/** Moves an already-typed tone mark onto the vowel a newly typed modifier key just created. */
 function normC(word, k, i) {
-	var uk = upperCase(k), u = repSign(null), fS, c, j, h;
-	if(k.charCodeAt(0) == 32) {
-		return;
+	const uk = upperCase(k);
+	const accented = repSign(null);
+	if (k.charCodeAt(0) === 32) {
+		return undefined;
 	}
-	for(j = 1; j <= word.length; j++) {
-		for(h = 0; h < u.length; h++) {
-			if(u[h] == word.charCodeAt(word.length - j)) {
-				if(h <= 23) {
-					fS = AVIMObj.S;
-				} else if(h <= 47) {
-					fS = AVIMObj.F;
-				} else if(h <= 71) {
-					fS = AVIMObj.J;
-				} else if(h <= 95) {
-					fS = AVIMObj.R;
+	let current = word;
+	// current grows by one once the keystroke is inserted, which extends this loop by one round
+	for (let j = 1; j <= current.length; j++) {
+		for (const [h, code] of accented.entries()) {
+			if (code !== current.charCodeAt(current.length - j)) {
+				continue;
+			}
+			if (!$_alphabet.includes(uk) && !AVIMObj.D2.includes(uk)) {
+				return current;
+			}
+			const toneKey = toneKeyForRow(h);
+			const base = $_skey[h % 24];
+			current = unV(current);
+			if (!AVIMObj.changed) {
+				current += k;
+			}
+			const editor = AVIMObj.oc;
+			const start = editor.selectionStart;
+			let pos = start;
+			if (!AVIMObj.changed) {
+				pos += k.length;
+				if (!editor.data) {
+					const scrollTop = editor.scrollTop;
+					editor.value = editor.value.slice(0, start) + k + editor.value.slice(editor.selectionEnd);
+					AVIMObj.changed = true;
+					editor.scrollTop = scrollTop;
 				} else {
-					fS = AVIMObj.X;
+					editor.insertData(editor.pos, k);
+					editor.pos++;
+					_range.setEnd(editor, editor.pos);
+					AVIMObj.specialChange = true;
 				}
-				c = $_skey[h % 24];
-				if(($_alphabet.indexOf(uk) < 0) && (AVIMObj.D2.indexOf(uk) < 0)) {
-					return word;
-				}
-				word = unV(word);
-				// TODO: NEW CODE
-				//return;
-				// TODO: OLD CODE
-				if(!AVIMObj.changed) {
-					word += k;
-				}
-			
-				var sp = AVIMObj.oc.selectionStart, pos = sp;
-				if(!AVIMObj.changed) {
-					var sst = AVIMObj.oc.scrollTop;
-					pos += k.length;
-					if(!AVIMObj.oc.data) {
-						AVIMObj.oc.value = AVIMObj.oc.value.slice(0, sp) + k + AVIMObj.oc.value.slice(AVIMObj.oc.selectionEnd);
-						AVIMObj.changed = true;
-						AVIMObj.oc.scrollTop = sst;
-					} else {
-						AVIMObj.oc.insertData(AVIMObj.oc.pos, k);
-						AVIMObj.oc.pos++;
-						_range.setEnd(AVIMObj.oc, AVIMObj.oc.pos);
-						AVIMObj.specialChange = true;
-					}
-				}
-				if(!AVIMObj.oc.data) {
-					AVIMObj.oc.setSelectionRange(pos, pos);
-				}
-				if(!ckspell(word, fS)) {
-					replaceChar(AVIMObj.oc, i - j, c);
-					var a = [AVIMObj.D];
-					if(!AVIMObj.oc.data) {
-						main(word, fS, pos, a, false);
-					} else {
-						var ww = mozGetText(getEditorObject(AVIMObj.oc));
-						main(ww[0], fS, ww[1], a, false);
-					}
+			}
+			if (!editor.data) {
+				editor.setSelectionRange(pos, pos);
+			}
+			if (!ckspell(current, toneKey)) {
+				replaceChar(editor, i - j, base);
+				if (!editor.data) {
+					main(current, toneKey, pos, [AVIMObj.D], false);
+				} else {
+					const reread = mozGetText(getEditorObject(editor));
+					main(reread[0], toneKey, reread[1], [AVIMObj.D], false);
 				}
 			}
 		}
 	}
+	return undefined;
 }
 
+/** Strips the modifier a key would add back off an already-modified vowel, toggling it. */
 function DAWEOF(cc, k, g) {
-	var ret = [g], kA = [AVIMObj.A, AVIMObj.moc, AVIMObj.trang, AVIMObj.E, AVIMObj.O], z, a;
-	var ccA = [AVIMObj.aA, AVIMObj.mocA, AVIMObj.trangA, AVIMObj.eA, AVIMObj.oA], ccrA = [AVIMObj.arA, AVIMObj.mocrA, AVIMObj.arA, AVIMObj.erA, AVIMObj.orA];
-	for(a = 0; a < kA.length; a++) {
-		if(k == kA[a]) {
-			for(z = 0; z < ccA[a].length; z++) {
-				if(cc == ccA[a][z]) {
-					ret[1] = ccrA[a][z];
-				}
-			}
+	// Every matching row is scanned, not just the first: moc and trang share a key in TELEX
+	const rows = [
+		[AVIMObj.A, AVIMObj.aA, AVIMObj.arA],
+		[AVIMObj.moc, AVIMObj.mocA, AVIMObj.mocrA],
+		[AVIMObj.trang, AVIMObj.trangA, AVIMObj.arA],
+		[AVIMObj.E, AVIMObj.eA, AVIMObj.erA],
+		[AVIMObj.O, AVIMObj.oA, AVIMObj.orA]
+	];
+	let replacement;
+	for (const [keyChar, modified, plain] of rows) {
+		if (keyChar !== k) {
+			continue;
+		}
+		const at = modified.indexOf(cc);
+		if (at >= 0) {
+			replacement = plain[at];
 		}
 	}
-	if(ret[1]) {
-		return ret;
-	} else {
-		return false;
-	}
+	return replacement ? [g, replacement] : false;
 }
+
+/** Accented code points per tone, in $_skey order. Callers only read these, never mutate. */
+const TONE_CODES = {
+	S: [225,7845,7855,233,7871,237,243,7889,7899,250,7913,253,193,7844,7854,201,7870,205,211,7888,7898,218,7912,221],
+	F: [224,7847,7857,232,7873,236,242,7891,7901,249,7915,7923,192,7846,7856,200,7872,204,210,7890,7900,217,7914,7922],
+	J: [7841,7853,7863,7865,7879,7883,7885,7897,7907,7909,7921,7925,7840,7852,7862,7864,7878,7882,7884,7896,7906,7908,7920,7924],
+	R: [7843,7849,7859,7867,7875,7881,7887,7893,7903,7911,7917,7927,7842,7848,7858,7866,7874,7880,7886,7892,7902,7910,7916,7926],
+	X: [227,7851,7861,7869,7877,297,245,7895,7905,361,7919,7929,195,7850,7860,7868,7876,296,213,7894,7904,360,7918,7928]
+};
 
 function retKC(k) {
-	if(k == AVIMObj.S) {
-		return [225,7845,7855,233,7871,237,243,7889,7899,250,7913,253,193,7844,7854,201,7870,205,211,7888,7898,218,7912,221];
-	}
-	if(k == AVIMObj.F) {
-		return [224,7847,7857,232,7873,236,242,7891,7901,249,7915,7923,192,7846,7856,200,7872,204,210,7890,7900,217,7914,7922];
-	}
-	if(k == AVIMObj.J) {
-		return [7841,7853,7863,7865,7879,7883,7885,7897,7907,7909,7921,7925,7840,7852,7862,7864,7878,7882,7884,7896,7906,7908,7920,7924];
-	}
-	if(k == AVIMObj.R) {
-		return [7843,7849,7859,7867,7875,7881,7887,7893,7903,7911,7917,7927,7842,7848,7858,7866,7874,7880,7886,7892,7902,7910,7916,7926];
-	}
-	if(k == AVIMObj.X) {
-		return [227,7851,7861,7869,7877,297,245,7895,7905,361,7919,7929,195,7850,7860,7868,7876,296,213,7894,7904,360,7918,7928];
-	}
-	return [];
+	const tone = ["S", "F", "J", "R", "X"].find((name) => k === AVIMObj[name]);
+	return tone ? TONE_CODES[tone] : [];
 }
 
 function unV(word) {
-	var u = repSign(null), b, a;
-	for(a = 1; a <= word.length; a++) {
-		for(b = 0; b < u.length; b++) {
-			if(u[b] == word.charCodeAt(word.length - a)) {
-				word = word.slice(0, word.length - a) + fromCharCode($_skey[b % 24]) + word.slice(word.length - a + 1);
+	const u = repSign(null);
+	let result = word;
+	for (let a = 1; a <= result.length; a++) {
+		const at = result.length - a;
+		for (const [b, code] of u.entries()) {
+			if (code === result.charCodeAt(at)) {
+				result = result.slice(0, at) + fromCharCode($_skey[b % 24]) + result.slice(at + 1);
 			}
 		}
 	}
-	return word;
+	return result;
 }
 
 function unV2(word) {
-	var a, b;
-	for(a = 1; a <= word.length; a++) {
-		for(b = 0; b < $_skey.length; b++) {
-			if($_skey[b] == word.charCodeAt(word.length - a)) {
-				word = word.slice(0, word.length - a) + AVIMObj.skey2[b] + word.slice(word.length - a + 1);
+	let result = word;
+	for (let a = 1; a <= result.length; a++) {
+		const at = result.length - a;
+		for (const [b, code] of $_skey.entries()) {
+			if (code === result.charCodeAt(at)) {
+				result = result.slice(0, at) + AVIMObj.skey2[b] + result.slice(at + 1);
 			}
 		}
 	}
-	return word;
+	return result;
 }
 
+/** Every accented code point except the ones carrying tone `k`; pass null to get all of them. */
 function repSign(k) {
-	var t = [], u = [], a, b;
-	for(a = 0; a < 5; a++) {
-		if((k === null)||(AVIMObj.SFJRX.charAt(a) != upperCase(k))) {
-			t = retKC(AVIMObj.SFJRX.charAt(a));
-			for(b = 0; b < t.length; b++) u[u.length] = t[b];
+	const codes = [];
+	for (const toneKey of AVIMObj.SFJRX) {
+		if ((k === null) || (toneKey !== upperCase(k))) {
+			codes.push(...retKC(toneKey));
 		}
 	}
-	return u;
+	return codes;
 }
 
 function sr(word, k, i) {
-	var sf = getSF(), pos = findC(word, k, sf);
-	if(pos) {
-		if(pos[1]) {
-			replaceChar(AVIMObj.oc, i-pos[0], pos[1]);
+	const pos = findC(word, k, getSF());
+	if (pos) {
+		if (pos[1]) {
+			replaceChar(AVIMObj.oc, i - pos[0], pos[1]);
 		} else {
-			var c = retUni(word, k, pos);
-			replaceChar(AVIMObj.oc, i-pos, c);
+			replaceChar(AVIMObj.oc, i - pos, retUni(word, k, pos));
 		}
 	}
 	return false;
 }
 
+/** The accented code point for the vowel at `pos`, matching the case of the vowel already there. */
 function retUni(word, k, pos) {
-	var u = retKC(upperCase(k)), uC, lC, c = word.charCodeAt(word.length - pos), a, t = fromCharCode(c);
-	for(a = 0; a < $_skey.length; a++) {
-		if($_skey[a] == c) {
-			if(a < 12) {
-				lC=a;
-				uC=a+12;
-			} else {
-				lC = a - 12;
-				uC=a;
-			}
-			if(t != upperCase(t)) {
-				return u[lC];
-			}
-			return u[uC];
-		}
+	const toneCodes = retKC(upperCase(k));
+	const code = word.charCodeAt(word.length - pos);
+	const at = $_skey.indexOf(code);
+	if (at < 0) {
+		return undefined;
 	}
+	// $_skey holds the 12 lower case vowels first, then the same 12 in upper case
+	const lowerAt = at < 12 ? at : at - 12;
+	const char = fromCharCode(code);
+	return char === upperCase(char) ? toneCodes[lowerAt + 12] : toneCodes[lowerAt];
 }
 
-/*function ifInit(word) {
-	var sel = word.getSelection();
-	_range = sel ? sel.getRangeAt(0) : document.createRange();
-}/**/
-
+/** Handles a keypress inside a contenteditable or a designMode iframe, where there is no .value. */
 function ifMoz(e) {
-	// Init code for editable iframes and divs
-	var code = e.which, avim = AVIMObj.AVIM, cwi = e.target.parentNode.wi;
-	if(typeof(avim) == "undefined") avim = AVIMObj;
-	if(typeof(cwi) == "undefined") cwi = e.target.parentNode.parentNode.wi;
-	if(typeof(cwi) == "undefined") cwi = window;
-	if(e.ctrlKey || (e.altKey && (code != 92) && (code != 126))) return;
+	const code = e.which;
+	const avim = AVIMObj.AVIM ?? AVIMObj;
+	const parent = e.target.parentNode;
+	const cwi = parent.wi ?? parent.parentNode.wi ?? window;
+	if (e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
+		return;
+	}
 
-	// get current caret and its node
-	var sel = cwi.getSelection();
-	var range = sel ? sel.getRangeAt(0) : document.createRange();
+	const sel = cwi.getSelection();
+	const range = sel ? sel.getRangeAt(0) : document.createRange();
 	_range = range;
-	var node = range.endContainer, newPos;
+	const node = range.endContainer;
 
 	avim.sk = fromCharCode(code);
 	avim.saveStr = "";
-	if(checkCode(code) || !range.startOffset || (typeof(node.data) == 'undefined')) return;
+	if (checkCode(code) || !range.startOffset || (typeof node.data === "undefined")) {
+		return;
+	}
 	node.sel = false;
 
-	if(node.data) {
+	if (node.data) {
+		// Everything after the caret is cut away so the engine sees the caret as end of value
 		avim.saveStr = node.data.slice(range.endOffset);
-		if(range.startOffset != range.endOffset) {
-			node.sel=true;
+		if (range.startOffset !== range.endOffset) {
+			node.sel = true;
 		}
 		node.deleteData(range.startOffset, node.data.length);
 	}
 
-	if(!node.data) {
+	if (!node.data) {
 		range.setStart(node, 0);
 		range.setEnd(node, range.endOffset);
 		sel.removeAllRanges();
@@ -1010,107 +889,103 @@ function ifMoz(e) {
 
 	node.value = node.data;
 	node.pos = node.data.length;
-	node.which=code;
+	node.which = code;
 	start(node, e);
 	node.insertData(node.data.length, avim.saveStr);
-	newPos = node.data.length - avim.saveStr.length;
+	const newPos = node.data.length - avim.saveStr.length;
 
-	// Set caret back to node
 	range.setStart(node, newPos);
 	range.setEnd(node, newPos);
 	sel.removeAllRanges();
 	sel.addRange(range);
 
-	if(avim.specialChange) {
+	if (avim.specialChange) {
 		avim.specialChange = false;
 		avim.changed = false;
 		node.deleteData(node.pos - 1, 1);
 	}
-	if(avim.changed) {
+	if (avim.changed) {
 		avim.changed = false;
 		e.preventDefault();
 	}
 }
 
+/** Punctuation below code 45 that still starts or continues a word. */
+const TYPABLE_LOW_CODES = [32, 39, 40, 42, 43];
+
 function checkCode(code) {
-	if(((onOff === 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
+	if (onOff === 0) {
 		return true;
 	}
-	return false;
+	if ((code < 45) && !TYPABLE_LOW_CODES.includes(code)) {
+		return true;
+	}
+	return (code === 145) || (code === 255);
 }
 
+const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0";
+
 function notWord(word) {
-	var str = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]\'~|^@&\t" + fromCharCode(160);
-	return (str.indexOf(word) >= 0);
+	return NOT_WORD_CHARS.includes(word);
 }
 
 function notNumber(word) {
-	if (isNaN(word) || (word == 'e')) {
-		return true;
-	} else {
-		return false;
-	}
+	return isNaN(word) || (word === "e");
 }
 
+const LOWER_VIET = "êôơâăưếốớấắứềồờầằừễỗỡẫẵữệộợậặự";
+const UPPER_VIET = "ÊÔƠÂĂƯẾỐỚẤẮỨỀỒỜẦẰỪỄỖỠẪẴỮỆỘỢẬẶỰ";
+
 function upperCase(word) {
-	word = word.toUpperCase();
-	var str = "êôơâăưếốớấắứềồờầằừễỗỡẫẵữệộợậặự", rep="ÊÔƠÂĂƯẾỐỚẤẮỨỀỒỜẦẰỪỄỖỠẪẴỮỆỘỢẬẶỰ", io;
-	for(var i = 0; i < word.length; i++) {
-		io = str.indexOf(word.charAt(i));
-		if(io >= 0) {
-			word = word.slice(0, i) + rep.charAt(io) + word.slice(i + 1);
-		}
-	}
-	return word;
+	return [...word.toUpperCase()]
+		.map((char) => {
+			const at = LOWER_VIET.indexOf(char);
+			return at >= 0 ? UPPER_VIET.charAt(at) : char;
+		})
+		.join("");
 }
 
 
 /* ---- Chrome extension glue: prefs, event wiring, iframe scan ---- */
-var extension = chrome.runtime;
-var document = window.document;
-var sendRequest = extension.sendMessage;
-var allFrames = [];
+const extension = chrome.runtime;
+const sendRequest = extension.sendMessage;
 
-var inputTypes = ["textarea", "text", "search", "tel"];
+const INPUT_TYPES = ["textarea", "text", "search", "tel"];
 
-function AVIMInit(AVIM) {
-	allFrames = document.getElementsByTagName("iframe");
-	for(AVIM.g = 0; AVIM.g < allFrames.length; AVIM.g++) {
-		if(findIgnore(allFrames[AVIM.g])) {
+/** Attaches the contenteditable handler to every designMode iframe on the page. */
+function AVIMInit(avim) {
+	for (const frame of document.getElementsByTagName("iframe")) {
+		if (findIgnore(frame)) {
 			continue;
 		}
-		var iframedit;
 		try {
-			AVIM.wi = allFrames[AVIM.g].contentWindow;
-			iframedit = AVIM.wi.document;
-			iframedit.wi = AVIM.wi;
-			if(iframedit && (upperCase(iframedit.designMode) == "ON")) {
-				iframedit.AVIM = AVIM;
-				attachEvt(iframedit, "keypress", ifMoz, false);
+			const frameWindow = frame.contentWindow;
+			const iframedit = frameWindow.document;
+			iframedit.wi = frameWindow;
+			if (upperCase(iframedit.designMode) === "ON") {
+				iframedit.AVIM = avim;
+				iframedit.addEventListener("keypress", ifMoz, false);
 			}
-		} catch(e) {}
-	}/**/
+		} catch (e) {
+			// A cross-origin iframe throws on contentWindow.document; there is nothing to attach to
+		}
+	}
 }
 
 function findIgnore(el) {
-	var va = exclude, i;
-	for(i = 0; i < va.length; i++) {
-		if((va[i].length > 0) && (el.name == va[i] || el.id == va[i])) {
-			return true;
-		}
-	}
-	return false;
+	return exclude.some((entry) => (entry.length > 0) && ((el.name === entry) || (el.id === entry)));
 }
 
 function keyPressHandler(e) {
-	var el = e.target, code = e.which;
-	if(e.ctrlKey) {
+	const el = e.target;
+	const code = e.which;
+	if (e.ctrlKey) {
 		return;
 	}
-	if(e.altKey && (code != 92) && (code != 126)) {
+	if (e.altKey && (code !== 92) && (code !== 126)) {
 		return;
 	}
-	if(inputTypes.indexOf(el.type) < 0) {// Not contains in list of input types
+	if (!INPUT_TYPES.includes(el.type)) {
 		if (el.isContentEditable) {
 			ifMoz(e);
 		}
@@ -1120,52 +995,42 @@ function keyPressHandler(e) {
 		return;
 	}
 	AVIMObj.sk = fromCharCode(code);
-	if(findIgnore(el) || el.readOnly) {
+	if (findIgnore(el) || el.readOnly) {
 		return;
 	}
 	start(el, e);
-	if(AVIMObj.changed) {
+	if (AVIMObj.changed) {
 		AVIMObj.changed = false;
 		e.preventDefault();
 	}
 }
 
-var isPressCtrl = false;
+const CTRL_KEY_CODE = 17;
+const DOUBLE_TAP_MS = 300;
+
+let isPressCtrl = false;
+
+/** Tapping Ctrl twice within 300ms toggles AVIM off and on. */
 function keyUpHandler(evt) {
-	var code = evt.which;
-
-	// Press Ctrl twice to off/on AVIM
-	if (code == 17) {
-		if (isPressCtrl) {
-			isPressCtrl = false;
-			sendRequest({'turn_avim':'onOff'}, configAVIM);
-		} else {
-			isPressCtrl = true;
-			// Must press twice in 300ms
-			setTimeout(function(){
-				isPressCtrl = false;
-			}, 300);
-		}
-	} else {
+	if (evt.which !== CTRL_KEY_CODE) {
 		isPressCtrl = false;
+		return;
 	}
+	if (isPressCtrl) {
+		isPressCtrl = false;
+		sendRequest({ turn_avim: "onOff" }, configAVIM);
+		return;
+	}
+	isPressCtrl = true;
+	setTimeout(() => {
+		isPressCtrl = false;
+	}, DOUBLE_TAP_MS);
 }
 
-function attachEvt(obj, evt, handle, capture) {
-	obj.addEventListener(evt, handle, capture);
-}
+let ajaxCounter = 0;
 
-function removeEvt(obj, evt, handle, capture) {
-	obj.removeEventListener(evt, handle, capture);
-}
-
-var ajaxCounter = 0;
+/** Rescans for iframes every 100ms for the first 100 rounds, to catch ones added after load. */
 function AVIMAJAXFix() {
-	if (isNaN(parseInt(ajaxCounter))) {
-		ajaxCounter = 0;
-	} else {
-		ajaxCounter = parseInt(ajaxCounter);
-	}
 	AVIMInit(AVIMObj);
 	ajaxCounter++;
 	if (ajaxCounter < 100) {
@@ -1174,32 +1039,28 @@ function AVIMAJAXFix() {
 }
 
 function removeOldAVIM() {
-	// Untrigger event
-	removeEvt(document, "mouseup", AVIMAJAXFix, false);
-	removeEvt(document, "keypress", keyPressHandler, true);
-	removeEvt(document, "keyup", keyUpHandler, true);
-	
-	// Remove AVIM
+	document.removeEventListener("mouseup", AVIMAJAXFix, false);
+	document.removeEventListener("keypress", keyPressHandler, true);
+	document.removeEventListener("keyup", keyUpHandler, true);
+
 	AVIMInit(AVIMObj);
 	AVIMObj = null;
-	//delete AVIMObj;
 }
 
 function newAVIMInit() {
-	if (typeof AVIMObj != "undefined" && AVIMObj) {
+	if (AVIMObj) {
 		removeOldAVIM();
 	}
-	
-	allFrames = document.getElementsByTagName("iframe");
+
 	AVIMObj = new AVIM();
 	AVIMAJAXFix();
-	
-	// Trigger event
-	attachEvt(document, "mouseup", AVIMAJAXFix, false);
-	attachEvt(document, "keyup", keyUpHandler, true);
-	attachEvt(document, "keypress", keyPressHandler, true);
+
+	document.addEventListener("mouseup", AVIMAJAXFix, false);
+	document.addEventListener("keyup", keyUpHandler, true);
+	document.addEventListener("keypress", keyPressHandler, true);
 }
 
+/** The single entry point the background service worker uses to push prefs into a content script. */
 function configAVIM(data) {
 	if (data) {
 		method = data.method;
@@ -1211,9 +1072,7 @@ function configAVIM(data) {
 	newAVIMInit();
 }
 
-sendRequest({'get_prefs':'all'}, configAVIM);
+sendRequest({ get_prefs: "all" }, configAVIM);
 
-extension.onMessage.addListener(function(request, sender, sendResponse){
-	configAVIM(request);
-});
+extension.onMessage.addListener(configAVIM);
 

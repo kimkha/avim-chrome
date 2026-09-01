@@ -1,9 +1,7 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const { METHOD, type } = require("./helpers/avim-harness.js");
+import { METHOD, type } from "./helpers/avim-harness.js";
 
 function withSpellCheck(sequence) {
 	return type(sequence, { method: METHOD.TELEX, checkSpell: 1 });

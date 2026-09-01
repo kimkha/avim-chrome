@@ -1,15 +1,13 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const {
+import {
 	METHOD,
 	loadEngine,
 	createInput,
 	primeMethodTables,
 	type,
-} = require("./helpers/avim-harness.js");
+} from "./helpers/avim-harness.js";
 
 /**
  * Wrong-but-current behaviour, asserted so a refactor cannot change it silently.
@@ -35,7 +33,7 @@ describe("Known issue: helpers depend on main() having run first", () => {
 	// AVIMObj.SFJRX is only assigned inside main(), and repSign reads it unconditionally
 	it("unV throws on a fresh engine", () => {
 		const context = loadEngine({ method: METHOD.TELEX });
-		assert.throws(() => context.unV("ạ"), /Cannot read properties of undefined/);
+		assert.throws(() => context.unV("ạ"), /SFJRX/);
 	});
 
 	it("unV works after one keypress", () => {

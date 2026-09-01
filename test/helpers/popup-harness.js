@@ -1,16 +1,14 @@
-"use strict";
-
 /**
  * Runs the real src/chrome/popup.js in a fresh node:vm context per test. The fake DOM is built
  * from the ids actually present in src/popup.html, so a getElementById for an id the page does not
  * have returns null and fails loudly instead of silently passing.
  */
 
-const fs = require("node:fs");
-const vm = require("node:vm");
-const path = require("node:path");
+import fs from "node:fs";
+import vm from "node:vm";
+import path from "node:path";
 
-const SRC = path.join(__dirname, "..", "..", "src");
+const SRC = path.join(import.meta.dirname, "..", "..", "src");
 const POPUP_JS = path.join(SRC, "chrome", "popup.js");
 
 const popupSource = fs.readFileSync(POPUP_JS, "utf8");
@@ -23,7 +21,7 @@ const DEFAULT_PREFS = { method: 0, onOff: 1, ckSpell: 1, oldAccent: 1 };
 
 function createElement(id) {
 	return {
-		id: id,
+		id,
 		value: "",
 		checked: false,
 		innerHTML: "",
@@ -48,9 +46,8 @@ function createElement(id) {
  * @param {object} options.prefs         what the background replies to `get_prefs`
  * @param {boolean} options.clipboardFails  make navigator.clipboard.writeText reject
  */
-function loadPopup(options) {
-	const settings = Object.assign({ prefs: {}, clipboardFails: false }, options);
-	const prefs = Object.assign({}, DEFAULT_PREFS, settings.prefs);
+function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
+	const prefs = { ...DEFAULT_PREFS, ...overrides };
 
 	const elements = new Map(ELEMENT_IDS.map((id) => [id, createElement(id)]));
 	const sent = [];
@@ -62,12 +59,12 @@ function loadPopup(options) {
 
 	const sandbox = {
 		console: { log() {}, warn() {}, error() {} },
-		Promise: Promise,
+		Promise,
 		chrome: {
 			runtime: {
 				sendMessage(message, callback) {
 					// copied into this realm: a vm-created object fails deepStrictEqual on prototype
-					sent.push(Object.assign({}, message));
+					sent.push({ ...message });
 					if (message.get_prefs) {
 						callback(prefs);
 						return;
@@ -83,7 +80,7 @@ function loadPopup(options) {
 		},
 		document: {
 			getElementById(id) {
-				return elements.has(id) ? elements.get(id) : null;
+				return elements.get(id) ?? null;
 			},
 			execCommand(command) {
 				execCommands.push(command);
@@ -94,7 +91,7 @@ function loadPopup(options) {
 			clipboard: {
 				writeText(text) {
 					clipboardWrites.push(text);
-					pendingClipboard = settings.clipboardFails ? Promise.reject(rejection) : Promise.resolve();
+					pendingClipboard = clipboardFails ? Promise.reject(rejection) : Promise.resolve();
 					return pendingClipboard;
 				},
 			},
@@ -132,19 +129,19 @@ function loadPopup(options) {
 	}
 
 	return {
-		element: element,
-		fire: fire,
-		sent: sent,
-		clipboardWrites: clipboardWrites,
-		execCommands: execCommands,
-		reloads: reloads,
+		element,
+		fire,
+		sent,
+		clipboardWrites,
+		execCommands,
+		reloads,
 		// the fallback runs in a rejection handler, so tests must let the microtask queue drain
 		settled: () => pendingClipboard.catch(() => {}),
 	};
 }
 
-module.exports = {
-	loadPopup: loadPopup,
-	ELEMENT_IDS: ELEMENT_IDS,
-	enMessages: enMessages,
+export {
+	loadPopup,
+	ELEMENT_IDS,
+	enMessages,
 };

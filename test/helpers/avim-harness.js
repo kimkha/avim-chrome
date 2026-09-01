@@ -1,15 +1,13 @@
-"use strict";
-
 /**
  * Each loadEngine() evaluates the real src/scripts in a fresh node:vm context, which
  * isolates the shared engine globals per test without modifying src/.
  */
 
-const fs = require("node:fs");
-const vm = require("node:vm");
-const path = require("node:path");
+import fs from "node:fs";
+import vm from "node:vm";
+import path from "node:path";
 
-const SCRIPTS_DIR = path.join(__dirname, "..", "..", "src", "scripts");
+const SCRIPTS_DIR = path.join(import.meta.dirname, "..", "..", "src", "scripts");
 const AVIM_PATH = path.join(SCRIPTS_DIR, "avim-ext.js");
 
 const avimSource = fs.readFileSync(AVIM_PATH, "utf8");
@@ -89,7 +87,7 @@ function createSandbox() {
 	sandbox.__timers = [];
 	// AVIMAJAXFix reschedules itself up to 100 times; a real timer would outlive the test
 	sandbox.setTimeout = (callback, delay) => {
-		sandbox.__timers.push({ callback: callback, delay: delay });
+		sandbox.__timers.push({ callback, delay });
 		return sandbox.__timers.length;
 	};
 	sandbox.chrome = {
@@ -146,13 +144,13 @@ const CONFIG_KEYS = [
 	"element",
 ];
 
-function loadEngine(config) {
+function loadEngine(config = {}) {
 	// a misspelled key would otherwise be dropped and the test would silently use the default
-	const unknown = Object.keys(config || {}).filter((key) => CONFIG_KEYS.indexOf(key) < 0);
+	const unknown = Object.keys(config).filter((key) => !CONFIG_KEYS.includes(key));
 	if (unknown.length > 0) {
-		throw new Error("unknown harness config key: " + unknown.join(", "));
+		throw new Error(`unknown harness config key: ${unknown.join(", ")}`);
 	}
-	const settings = Object.assign({}, DEFAULT_CONFIG, config);
+	const settings = { ...DEFAULT_CONFIG, ...config };
 	const sandbox = createSandbox();
 	vm.createContext(sandbox);
 	vm.runInContext(avimSource, sandbox, { filename: AVIM_PATH });
@@ -174,21 +172,27 @@ function loadEngine(config) {
 	return sandbox;
 }
 
-function createInput(options) {
-	const opts = options || {};
-	const value = opts.value || "";
-	const caret = opts.caret === undefined ? value.length : opts.caret;
+function createInput({
+	type = "textarea",
+	id = "",
+	name = "",
+	readOnly = false,
+	value = "",
+	// getEditorObject falls back to innerText whenever value is "" (falsy), so this must exist
+	innerText = "",
+	caret = value.length,
+	caretEnd = caret,
+} = {}) {
 	return {
-		type: opts.type === undefined ? "textarea" : opts.type,
-		id: opts.id || "",
-		name: opts.name || "",
-		readOnly: Boolean(opts.readOnly),
+		type,
+		id,
+		name,
+		readOnly,
 		isContentEditable: false,
-		value: value,
-		// getEditorObject falls back to innerText whenever value is "" (falsy), so this must exist
-		innerText: opts.innerText || "",
+		value,
+		innerText,
 		selectionStart: caret,
-		selectionEnd: opts.caretEnd === undefined ? caret : opts.caretEnd,
+		selectionEnd: caretEnd,
 		scrollTop: 0,
 		setSelectionRange(start, end) {
 			this.selectionStart = start;
@@ -206,14 +210,13 @@ function insertChar(element, char) {
 }
 
 /** Dispatch one keypress through the real extension handler. Returns true if cancelled. */
-function pressKey(context, element, char, modifiers) {
-	const mods = modifiers || {};
+function pressKey(context, element, char, { ctrl = false, alt = false } = {}) {
 	let prevented = false;
 	context.keyPressHandler({
 		target: element,
 		which: char.charCodeAt(0),
-		ctrlKey: Boolean(mods.ctrl),
-		altKey: Boolean(mods.alt),
+		ctrlKey: ctrl,
+		altKey: alt,
 		preventDefault() {
 			prevented = true;
 		},
@@ -232,7 +235,7 @@ function countPreventDefaultCalls(context, element, char) {
 		ctrlKey: false,
 		altKey: false,
 		preventDefault() {
-			calls = calls + 1;
+			calls += 1;
 		},
 	});
 	return calls;
@@ -246,11 +249,8 @@ function typeInto(context, element, sequence) {
 }
 
 /** Type a sequence into a fresh input and return the resulting value. */
-function type(sequence, config) {
-	const cfg = config || {};
-	const context = loadEngine(cfg);
-	const element = createInput(cfg.element);
-	return typeInto(context, element, sequence);
+function type(sequence, config = {}) {
+	return typeInto(loadEngine(config), createInput(config.element), sequence);
 }
 
 /** unV/repSign/retKC throw until main() has run once, because it assigns AVIMObj.SFJRX. */
@@ -259,7 +259,7 @@ function primeMethodTables(context) {
 	return context;
 }
 
-function createEditableHost(text, caret, caretEnd) {
+function createEditableHost(text, caret, caretEnd = caret) {
 	const node = new FakeText(text);
 	// ifMoz reads target.parentNode.wi then target.parentNode.parentNode.wi, so both levels must exist
 	const host = {
@@ -268,21 +268,20 @@ function createEditableHost(text, caret, caretEnd) {
 		name: "",
 		parentNode: { wi: undefined, parentNode: { wi: undefined } },
 	};
-	const range = new FakeRange(node, caret, caretEnd === undefined ? caret : caretEnd);
+	const range = new FakeRange(node, caret, caretEnd);
 	const selection = {
 		getRangeAt: () => range,
 		removeAllRanges() {},
 		addRange() {},
 	};
-	return { node: node, host: host, range: range, selection: selection };
+	return { node, host, range, selection };
 }
 
-function typeContentEditableDetailed(sequence, config) {
-	const cfg = config || {};
-	const element = cfg.element || {};
-	const context = loadEngine(cfg);
-	let text = element.value || "";
-	let caret = element.caret === undefined ? text.length : element.caret;
+function typeContentEditableDetailed(sequence, config = {}) {
+	const context = loadEngine(config);
+	const { value = "", caret: initialCaret } = config.element ?? {};
+	let text = value;
+	let caret = initialCaret ?? text.length;
 
 	for (const char of sequence) {
 		// the keypress target is the contenteditable element; the range points at the text node inside it
@@ -303,10 +302,10 @@ function typeContentEditableDetailed(sequence, config) {
 			caret = editable.range.endOffset;
 		} else {
 			text = editable.node.data.slice(0, caret) + char + editable.node.data.slice(caret);
-			caret = caret + 1;
+			caret += 1;
 		}
 	}
-	return { text: text, caret: caret };
+	return { text, caret };
 }
 
 function typeContentEditable(sequence, config) {
@@ -315,39 +314,34 @@ function typeContentEditable(sequence, config) {
 
 /** `toneKeys` must be in TONE_TABLE order: sắc, huyền, hỏi, ngã, nặng. */
 function toneMatrixCases(baseSequences, toneKeys) {
-	const cases = [];
-	for (const vowel of Object.keys(TONE_TABLE)) {
-		const accented = TONE_TABLE[vowel];
-		for (let i = 0; i < toneKeys.length; i++) {
-			cases.push({
-				vowel: vowel,
-				sequence: baseSequences[vowel] + toneKeys[i],
-				expected: accented[i],
-			});
-		}
-	}
-	return cases;
+	return Object.entries(TONE_TABLE).flatMap(([vowel, accented]) =>
+		[...toneKeys].map((toneKey, index) => ({
+			vowel,
+			sequence: baseSequences[vowel] + toneKey,
+			expected: accented[index],
+		})),
+	);
 }
 
-module.exports = {
-	METHOD: METHOD,
-	TONE_TABLE: TONE_TABLE,
-	toneMatrixCases: toneMatrixCases,
-	AVIM_PATH: AVIM_PATH,
-	FakeText: FakeText,
-	FakeRange: FakeRange,
-	loadEngine: loadEngine,
-	createInput: createInput,
-	pressKey: pressKey,
-	countPreventDefaultCalls: countPreventDefaultCalls,
-	pressKeyUp: pressKeyUp,
-	capturedMessages: capturedMessages,
-	clearCapturedMessages: clearCapturedMessages,
-	runTimersWithDelay: runTimersWithDelay,
-	typeInto: typeInto,
-	type: type,
-	primeMethodTables: primeMethodTables,
-	createEditableHost: createEditableHost,
-	typeContentEditable: typeContentEditable,
-	typeContentEditableDetailed: typeContentEditableDetailed,
+export {
+	METHOD,
+	TONE_TABLE,
+	toneMatrixCases,
+	AVIM_PATH,
+	FakeText,
+	FakeRange,
+	loadEngine,
+	createInput,
+	pressKey,
+	countPreventDefaultCalls,
+	pressKeyUp,
+	capturedMessages,
+	clearCapturedMessages,
+	runTimersWithDelay,
+	typeInto,
+	type,
+	primeMethodTables,
+	createEditableHost,
+	typeContentEditable,
+	typeContentEditableDetailed,
 };

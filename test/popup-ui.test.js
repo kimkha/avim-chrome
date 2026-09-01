@@ -1,9 +1,7 @@
-"use strict";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
-const { describe, it } = require("node:test");
-const assert = require("node:assert/strict");
-
-const { loadPopup, enMessages } = require("./helpers/popup-harness.js");
+import { loadPopup, enMessages } from "./helpers/popup-harness.js";
 
 describe("Copy All puts the demo text on the clipboard", () => {
 	it("writes the textarea value", async () => {
@@ -98,7 +96,7 @@ describe("The popup reflects the prefs the background reports", () => {
 
 	for (const [id, method] of methods) {
 		it(`checks #${id} for method ${method}`, () => {
-			const popup = loadPopup({ prefs: { method: method, onOff: 1 } });
+			const popup = loadPopup({ prefs: { method, onOff: 1 } });
 
 			assert.equal(popup.element(id).checked, true);
 			assert.equal(popup.element("off").checked, false);
@@ -139,7 +137,7 @@ describe("Choosing an option saves it and reloads the popup", () => {
 
 			popup.fire(id, "click");
 
-			assert.deepEqual(popup.sent.at(-1), { save_prefs: "all", method: method, onOff: 1 });
+			assert.deepEqual(popup.sent.at(-1), { save_prefs: "all", method, onOff: 1 });
 			assert.deepEqual(popup.reloads, [true]);
 		});
 	}

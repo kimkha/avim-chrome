@@ -11,7 +11,11 @@ const BUILD = 'build';
 const DIST = 'dist';
 
 // `chrome` must survive mangling: the extension APIs are resolved by name at runtime.
+// ecma 2020 lets terser keep modern output instead of downlevelling to ES5.
 const TERSER_OPTIONS = {
+	ecma: 2020,
+	compress: { ecma: 2020 },
+	format: { ecma: 2020 },
 	mangle: { toplevel: true, eval: true, reserved: ['chrome'] },
 };
 
