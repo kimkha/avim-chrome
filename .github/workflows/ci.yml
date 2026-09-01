@@ -18,4 +18,4 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       # no install step: the suite runs on node:test with zero dependencies
-      - run: npm test
+      - run: yarn test

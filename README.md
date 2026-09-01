@@ -11,17 +11,20 @@ Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trì
 Bộ test chạy trên test runner có sẵn của Node (cần Node >= 20) và không cần cài dependency nào:
 
 ```sh
-npm test              # chạy toàn bộ test
-npm run test:watch    # chạy lại khi có thay đổi
-npm run test:coverage # kèm báo cáo độ phủ
+yarn test           # chạy toàn bộ test
+yarn test:watch     # chạy lại khi có thay đổi
+yarn test:coverage  # kèm báo cáo độ phủ
 ```
 
-Đóng gói extension (cần `npm install` trước):
+Đóng gói extension (cần `yarn install` trước):
 
 ```sh
-npm run lint
-npm run build         # tạo build/ và dist/avim-chrome-<version>.zip
+yarn lint
+yarn build          # tạo build/ và dist/avim-chrome-<version>.zip
 ```
+
+Repo dùng yarn, không dùng npm: `package.json` ghim vài transitive dependency có lỗ hổng
+qua `resolutions`, mà npm bỏ qua field này (npm dùng `overrides`).
 
 Test nạp `src/scripts/avim.js` và `src/scripts/extension.js` vào một context `node:vm`
 riêng cho từng test, nên không cần sửa mã nguồn và các biến toàn cục của engine không

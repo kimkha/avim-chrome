@@ -3,8 +3,8 @@
   "version": "0.7.0",
   "description": "avim-chrome ===========",
   "scripts": {
-    "build": "gulp",
-    "lint": "gulp jshint",
+    "build": "node build.mjs",
+    "lint": "jshint src/scripts",
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
@@ -23,17 +23,13 @@
   },
   "homepage": "https://github.com/kimkha/avim-chrome",
   "devDependencies": {
-    "del": "^6.0.0",
-    "gulp": "^4.0.2",
-    "gulp-cleanhtml": "^1.0.3",
-    "gulp-concat-util": "^0.5.5",
-    "gulp-jshint": "^2.1.0",
-    "gulp-json-editor": "^2.5.4",
-    "gulp-strip-debug": "^3.0.0",
-    "gulp-uglify": "^3.0.2",
-    "gulp-zip": "^5.1.0"
+    "htmlclean": "^3.0.8",
+    "jshint": "^2.13.6",
+    "terser": "^5.44.0",
+    "yazl": "^3.3.1"
   },
-  "dependencies": {
-    "jshint": "^2.12.0"
+  "resolutions": {
+    "lodash": "^4.18.0",
+    "jshint/minimatch": "^3.1.5"
   }
 }
