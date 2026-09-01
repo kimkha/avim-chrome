@@ -79,23 +79,16 @@ async function buildHtml() {
 
 async function buildManifest() {
 	const manifest = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8'));
-	// buildContentScript bundles every src/scripts file into this one output.
-	manifest.content_scripts[0].js = ['scripts/avim.js'];
 	await writeOut(path.join(BUILD, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 }
 
-async function buildChromeScripts() {
-	for (const file of await jsFiles(path.join(SRC, 'chrome'))) {
-		const relative = path.relative(path.join(SRC, 'chrome'), file);
-		await minifyTo(await readFile(file, 'utf8'), path.join(BUILD, 'chrome', relative));
+// Each file is minified on its own, so `mangle.toplevel` must never rename something another
+// file depends on: keep every script self-contained.
+async function buildScripts(tree) {
+	for (const file of await jsFiles(path.join(SRC, tree))) {
+		const relative = path.relative(path.join(SRC, tree), file);
+		await minifyTo(await readFile(file, 'utf8'), path.join(BUILD, tree, relative));
 	}
-}
-
-async function buildContentScript() {
-	// avim.js must precede extension.js, which sorting already gives us.
-	const files = await jsFiles(path.join(SRC, 'scripts'));
-	const sources = await Promise.all(files.map((file) => readFile(file, 'utf8')));
-	await minifyTo(sources.join('\n'), path.join(BUILD, 'scripts', 'avim.js'));
 }
 
 async function zipBuild() {
@@ -127,7 +120,7 @@ await Promise.all([
 	copyAssets(),
 	buildHtml(),
 	buildManifest(),
-	buildChromeScripts(),
-	buildContentScript(),
+	buildScripts('chrome'),
+	buildScripts('scripts'),
 ]);
 console.log(`built ${await zipBuild()}`);

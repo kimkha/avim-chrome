@@ -26,9 +26,9 @@ yarn build          # tạo build/ và dist/avim-chrome-<version>.zip
 Repo dùng yarn, không dùng npm: `package.json` ghim vài transitive dependency có lỗ hổng
 qua `resolutions`, mà npm bỏ qua field này (npm dùng `overrides`).
 
-Test nạp `src/scripts/avim.js` và `src/scripts/extension.js` vào một context `node:vm`
-riêng cho từng test, nên không cần sửa mã nguồn và các biến toàn cục của engine không
-rò rỉ giữa các test. Xem [`test/helpers/avim-harness.js`](test/helpers/avim-harness.js).
+Test nạp `src/scripts/avim-ext.js` vào một context `node:vm` riêng cho từng test, nên không
+cần sửa mã nguồn và các biến toàn cục của engine không rò rỉ giữa các test.
+Xem [`test/helpers/avim-harness.js`](test/helpers/avim-harness.js).
 
 ## Xem thêm
 

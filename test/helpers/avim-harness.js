@@ -10,11 +10,9 @@ const vm = require("node:vm");
 const path = require("node:path");
 
 const SCRIPTS_DIR = path.join(__dirname, "..", "..", "src", "scripts");
-const AVIM_PATH = path.join(SCRIPTS_DIR, "avim.js");
-const EXTENSION_PATH = path.join(SCRIPTS_DIR, "extension.js");
+const AVIM_PATH = path.join(SCRIPTS_DIR, "avim-ext.js");
 
 const avimSource = fs.readFileSync(AVIM_PATH, "utf8");
-const extensionSource = fs.readFileSync(EXTENSION_PATH, "utf8");
 
 const METHOD = {
 	AUTO: 0,
@@ -158,7 +156,6 @@ function loadEngine(config) {
 	const sandbox = createSandbox();
 	vm.createContext(sandbox);
 	vm.runInContext(avimSource, sandbox, { filename: AVIM_PATH });
-	vm.runInContext(extensionSource, sandbox, { filename: EXTENSION_PATH });
 
 	if (settings.exclude) {
 		sandbox.exclude = settings.exclude;
@@ -337,7 +334,6 @@ module.exports = {
 	TONE_TABLE: TONE_TABLE,
 	toneMatrixCases: toneMatrixCases,
 	AVIM_PATH: AVIM_PATH,
-	EXTENSION_PATH: EXTENSION_PATH,
 	FakeText: FakeText,
 	FakeRange: FakeRange,
 	loadEngine: loadEngine,
