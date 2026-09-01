@@ -17,5 +17,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      # no install step: the suite runs on node:test with zero dependencies
+      # no install step: the suite runs on node:test with zero dependencies, and the browser smoke
+      # test skips itself when playwright is absent
       - run: yarn test
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+      - run: yarn install --frozen-lockfile
+      - run: npx playwright install --with-deps chromium
+      - run: yarn build
+      - run: yarn test:browser

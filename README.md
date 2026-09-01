@@ -16,6 +16,19 @@ yarn test:watch     # chạy lại khi có thay đổi
 yarn test:coverage  # kèm báo cáo độ phủ
 ```
 
+Riêng `test/browser-smoke.test.js` cần Chromium thật (nó nạp extension bằng `--load-extension`
+để kiểm những thứ DOM giả không chứng minh được: content script có inject vào page hay không,
+`Selection` thật trong contenteditable, iframe, shadow DOM, và clipboard hệ thống). Nó **tự skip**
+kèm lý do khi thiếu Chromium, nên `yarn test` vẫn xanh trên máy trắng. Bật lên bằng:
+
+```sh
+yarn install
+npx playwright install chromium
+yarn test:browser   # chạy trên cả src/ và build/ nếu đã build
+```
+
+Đặt `AVIM_CHROME_PATH` nếu muốn chỉ vào một bản Chromium khác.
+
 Đóng gói extension (cần `yarn install` trước):
 
 ```sh
@@ -29,6 +42,11 @@ qua `resolutions`, mà npm bỏ qua field này (npm dùng `overrides`).
 Test nạp `src/scripts/avim-ext.js` vào một context `node:vm` riêng cho từng test, nên không
 cần sửa mã nguồn và các biến toàn cục của engine không rò rỉ giữa các test.
 Xem [`test/helpers/avim-harness.js`](test/helpers/avim-harness.js).
+
+Chrome không có test runner riêng cho extension của bên thứ ba (`chrome.test` cần một harness C++
+`ExtensionApiTest` bên trong bản build Chromium), nên cách chính thức Google hướng dẫn là điều
+khiển browser bằng Puppeteer/Playwright với `--load-extension`. Đó là những gì
+[`test/helpers/browser-harness.js`](test/helpers/browser-harness.js) làm.
 
 ## Xem thêm
 

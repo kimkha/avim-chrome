@@ -26,10 +26,13 @@
 		}
 	}
 	
-	function hightlightDemo() {
+	function copyAllDemo() {
 		var inputDemo = $g("inputDemo");
 		inputDemo.focus();
 		inputDemo.select();
+		navigator.clipboard.writeText(inputDemo.value).catch(function() {
+			document.execCommand("copy");
+		});
 	}
 
 	function removeAccent() {
@@ -91,7 +94,7 @@
 			setAVIMConfig('ckSpell', spellCheckEle.checked ? 1 : 0);
 		});
 		
-		$g("demoCopy").addEventListener("click", hightlightDemo);
+		$g("demoCopy").addEventListener("click", copyAllDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);
 	}
 	

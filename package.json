@@ -6,6 +6,7 @@
     "build": "node build.mjs",
     "lint": "jshint src/scripts",
     "test": "node --test test/*.test.js",
+    "test:browser": "node --test test/browser-smoke.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
   },
@@ -25,6 +26,7 @@
   "devDependencies": {
     "htmlclean": "^3.0.8",
     "jshint": "^2.13.6",
+    "playwright-core": "1.62.1",
     "terser": "^5.44.0",
     "yazl": "^3.3.1"
   },
