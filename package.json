@@ -4,7 +4,13 @@
   "description": "avim-chrome ===========",
   "scripts": {
     "build": "gulp",
-    "test": "gulp test"
+    "lint": "gulp jshint",
+    "test": "node --test test/*.test.js",
+    "test:watch": "node --test --watch test/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "repository": {
     "type": "git",
@@ -21,7 +27,6 @@
     "gulp": "^4.0.2",
     "gulp-cleanhtml": "^1.0.3",
     "gulp-concat-util": "^0.5.5",
-    "gulp-jasmine": "^4.0.0",
     "gulp-jshint": "^2.1.0",
     "gulp-json-editor": "^2.5.4",
     "gulp-strip-debug": "^3.0.0",

@@ -1,10 +1,31 @@
-avim-chrome [![Build Status](https://travis-ci.org/kimkha/avim-chrome.svg?branch=master)](https://travis-ci.org/kimkha/avim-chrome)
+avim-chrome [![CI](https://github.com/kimkha/avim-chrome/actions/workflows/ci.yml/badge.svg)](https://github.com/kimkha/avim-chrome/actions/workflows/ci.yml)
 ===========
 
 Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trình duyệt Google Chrome và Opera:
 
 * [Cài đặt vào Google Chrome](https://chrome.google.com/webstore/detail/opgbbffpdglhkpglnlkiclakjlpiedoh)
 * [Cài đặt vào Opera](https://addons.opera.com/extensions/details/avim-vietnamese-input-method/)
+
+## Phát triển
+
+Bộ test chạy trên test runner có sẵn của Node (cần Node >= 20) và không cần cài dependency nào:
+
+```sh
+npm test              # chạy toàn bộ test
+npm run test:watch    # chạy lại khi có thay đổi
+npm run test:coverage # kèm báo cáo độ phủ
+```
+
+Đóng gói extension (cần `npm install` trước):
+
+```sh
+npm run lint
+npm run build         # tạo build/ và dist/avim-chrome-<version>.zip
+```
+
+Test nạp `src/scripts/avim.js` và `src/scripts/extension.js` vào một context `node:vm`
+riêng cho từng test, nên không cần sửa mã nguồn và các biến toàn cục của engine không
+rò rỉ giữa các test. Xem [`test/helpers/avim-harness.js`](test/helpers/avim-harness.js).
 
 ## Xem thêm
 

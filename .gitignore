@@ -4,3 +4,4 @@ vendor
 build
 dist
 node_modules
+.omo

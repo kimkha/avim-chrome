@@ -7,7 +7,6 @@ var gulp = require('gulp'),
 	stripdebug = require('gulp-strip-debug'),
 	uglify = require('gulp-uglify'),
 	concat = require('gulp-concat-util'),
-	jasmine = require('gulp-jasmine'),
 	jeditor = require('gulp-json-editor'),
 	zip = require('gulp-zip');
 
@@ -32,12 +31,7 @@ gulp.task('jshint', function() {
 		.pipe(jshint.reporter('default'));
 });
 
-gulp.task('test', gulp.series('jshint', function () {
-	return gulp.src(['test/avim.test.js'])
-		.pipe(jasmine());
-}));
-
-gulp.task('scripts', gulp.series('test', function() {
+gulp.task('scripts', gulp.series('jshint', function() {
 	gulp.src('src/scripts/vendors/**/*.js', {allowEmpty: true})
 		.pipe(gulp.dest('build/scripts/vendors'));
 

@@ -78,7 +78,6 @@ function AVIM()	{
 	this.mocA = "ớ,ờ,ở,ỡ,ợ,ơ,ứ,ừ,ử,ữ,ự,ư,Ớ,Ờ,Ở,Ỡ,Ợ,Ơ,Ứ,Ừ,Ử,Ữ,Ự,Ư".split(',');
 	this.trangA = "ắ,ằ,ẳ,ẵ,ặ,ă,Ắ,Ằ,Ẳ,Ẵ,Ặ,Ă".split(',');
 	this.eA = "ế,ề,ể,ễ,ệ,ê,Ế,Ề,Ể,Ễ,Ệ,Ê".split(',');
-	this.oA = "ố,ồ,ổ,ỗ,ộ,ô,Ố,Ồ,Ổ,Ỗ,Ộ,Ô".split(',');
 	this.skey2 = "a,a,a,e,e,i,o,o,o,u,u,y,A,A,A,E,E,I,O,O,O,U,U,Y".split(',');
 
 	this.spellerr = (checkSpell == 1) ? ckspell : nospell;
@@ -898,6 +897,7 @@ function retKC(k) {
 	if(k == AVIMObj.X) {
 		return [227,7851,7861,7869,7877,297,245,7895,7905,361,7919,7929,195,7850,7860,7868,7876,296,213,7894,7904,360,7918,7928];
 	}
+	return [];
 }
 
 function unV(word) {
@@ -1035,6 +1035,7 @@ function checkCode(code) {
 	if(((onOff === 0) || ((code < 45) && (code != 42) && (code != 32) && (code != 39) && (code != 40) && (code != 43)) || (code == 145) || (code == 255))) {
 		return true;
 	}
+	return false;
 }
 
 function notWord(word) {
@@ -1052,7 +1053,7 @@ function notNumber(word) {
 
 function upperCase(word) {
 	word = word.toUpperCase();
-	var str = "êôơâăưếốớấắứềồờầằừễỗỡẫẵữệộợậặự", rep="ÊÔƠÂĂƯẾỐỚẤẮỨỀỒỜẦẰỪỄỖỠẪẴỮỆỘỢẶỰ", io;
+	var str = "êôơâăưếốớấắứềồờầằừễỗỡẫẵữệộợậặự", rep="ÊÔƠÂĂƯẾỐỚẤẮỨỀỒỜẦẰỪỄỖỠẪẴỮỆỘỢẬẶỰ", io;
 	for(var i = 0; i < word.length; i++) {
 		io = str.indexOf(word.substr(i, 1));
 		if(io >= 0) {

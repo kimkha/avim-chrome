@@ -100,15 +100,6 @@ function processRequest(request, sender, sendResponse) {
 	}
 }
 
-function genericOnClick() {
-	alert("demo");
-}
-
-function createMenus() {
-	var parentId = chrome.contextMenus.create({"title" : "AVIM", "contexts" : ["selection"]});
-	var demo = chrome.contextMenus.create({"title" : "AVIM Demo", "contexts" : ["selection"], "parentId": parentId, "onclick": genericOnClick});
-}
-
 chrome.runtime.onMessage.addListener(processRequest);
 
 getPrefs(updateIcon);
