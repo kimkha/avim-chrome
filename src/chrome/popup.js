@@ -7,6 +7,9 @@
 		if (key == 'onOff') {
 			obj = {'save_prefs':'all', 'onOff' : value};
 		}
+		if (key == 'ckSpell') {
+			obj = {'save_prefs':'all', 'ckSpell' : value};
+		}
 		chrome.runtime.sendMessage(obj, function(response){
 			window.location.reload();
 		});
@@ -17,7 +20,7 @@
 	}
 	
 	function loadText() {
-		var keys = ["Sel", "Auto", "Telex", "Vni", "Viqr", "ViqrStar", "Off", "Tips", "TipsCtrl", "Demo", "DemoCopy", "RemoveAccent"];
+		var keys = ["Sel", "Auto", "Telex", "Vni", "Viqr", "ViqrStar", "Off", "SpellCheck", "Tips", "TipsCtrl", "Demo", "DemoCopy", "RemoveAccent"];
 		for (var k in keys) {
 			$g("txt" + keys[k]).innerHTML = getI18n("extPopup" + keys[k]);
 		}
@@ -53,8 +56,10 @@
 		var vniEle = $g("vni");
 		var viqrEle = $g("viqr");
 		var viqrStarEle = $g("viqrStar");
+		var spellCheckEle = $g("spellCheck");
 		
 		chrome.runtime.sendMessage({'get_prefs':'all'}, function(response){
+			spellCheckEle.checked = (response.ckSpell === 1);
 			if (response.onOff === 0) {
 				offEle.checked = true;
 			} else {
@@ -82,6 +87,9 @@
 		vniEle.addEventListener("click", function(){setAVIMConfig('method', 2);});
 		viqrEle.addEventListener("click", function(){setAVIMConfig('method', 3);});
 		viqrStarEle.addEventListener("click", function(){setAVIMConfig('method', 4);});
+		spellCheckEle.addEventListener("change", function(){
+			setAVIMConfig('ckSpell', spellCheckEle.checked ? 1 : 0);
+		});
 		
 		$g("demoCopy").addEventListener("click", hightlightDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);

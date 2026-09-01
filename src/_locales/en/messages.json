@@ -39,6 +39,10 @@
 		"message" : "Turn off AVIM",
 		"description" : ""
 	},
+	"extPopupSpellCheck" : {
+		"message" : "Spell check",
+		"description" : "Label of the Vietnamese spell check toggle"
+	},
 	"extPopupTips" : {
 		"message" : "Small tips:",
 		"description" : ""

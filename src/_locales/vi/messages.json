@@ -39,6 +39,10 @@
 		"message" : "Tắt AVIM",
 		"description" : ""
 	},
+	"extPopupSpellCheck" : {
+		"message" : "Kiểm tra chính tả",
+		"description" : "Nhãn của ô bật/tắt kiểm tra chính tả tiếng Việt"
+	},
 	"extPopupTips" : {
 		"message" : "Mẹo nhỏ:",
 		"description" : ""
