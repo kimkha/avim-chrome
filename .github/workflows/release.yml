@@ -65,9 +65,17 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ASSET: dist/avim-chrome-${{ steps.version.outputs.version }}.zip
         run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            "dist/avim-chrome-${{ steps.version.outputs.version }}.zip" \
-            --title "${{ steps.version.outputs.tag }}" \
-            --notes-file /tmp/notes.md \
-            --verify-tag
+          # Idempotent so the workflow_dispatch re-run can repair a release that already exists;
+          # `gh release create` alone fails outright when the tag has been published before.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes-file /tmp/notes.md
+            gh release upload "$TAG" "$ASSET" --clobber
+          else
+            gh release create "$TAG" "$ASSET" \
+              --title "$TAG" \
+              --notes-file /tmp/notes.md \
+              --verify-tag
+          fi
