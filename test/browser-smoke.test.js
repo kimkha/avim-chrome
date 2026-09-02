@@ -114,18 +114,17 @@ for (const dir of extensionDirs()) {
 			}
 		});
 
-		describe("Known issue: an input inside a shadow root never reaches AVIM", () => {
+		describe("An input inside a shadow root converts too", () => {
 			// A document-level capture listener sees e.target retargeted to the shadow host, a DIV
-			// whose .type is undefined, so keyPressHandler bails before the engine runs. A fix means
-			// reading e.composedPath()[0] instead of e.target.
+			// whose .type is undefined, so keyPressHandler reads e.composedPath()[0] instead.
 			const cases = [
 				["a textarea in an open shadow root", "#host >> #shadowTextarea"],
 				["an input in an open shadow root", "#host >> #shadowText"],
 			];
 
 			for (const [label, target] of cases) {
-				it(`${label} stays as typed`, async () => {
-					assert.equal(await typeOnce(page, target, "chaof"), "chaof");
+				it(`${label} gives "chào"`, async () => {
+					assert.equal(await typeUntil(page, target, "chaof", "chào"), "chào");
 				});
 			}
 		});

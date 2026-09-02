@@ -1139,7 +1139,9 @@ function findIgnore(el) {
 }
 
 function keyPressHandler(e) {
-	const el = e.target;
+	// Inside a shadow root e.target is retargeted to the host element, whose .type is undefined,
+	// so the real input never reaches the engine. composedPath()[0] crosses the shadow boundary.
+	const el = e.composedPath ? e.composedPath()[0] : e.target;
 	const code = e.which;
 	if (e.ctrlKey) {
 		return;
