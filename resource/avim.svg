@@ -951,19 +951,9 @@ FXYq7FXYq7FXYq//2Q==</image>
    inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png"
    inkscape:export-xdpi="192"
    inkscape:export-ydpi="192" />
-<svg:text
-   xml:space="preserve"
-   style="font-size:71.40600586px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:url(#linearGradient4020);fill-opacity:1;stroke:none;font-family:Sans"
-   x="68.775261"
-   y="98.150856"
-   id="text4004"
-   sodipodi:linespacing="125%"
-   inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png"
-   inkscape:export-xdpi="192"
-   inkscape:export-ydpi="192"><svg:tspan
-     sodipodi:role="line"
-     id="tspan4006"
-     x="68.775261"
-     y="98.150856"
-     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;fill:url(#linearGradient4020);fill-opacity:1;font-family:Sans;-inkscape-font-specification:Sans Bold Italic">Đ</svg:tspan></svg:text>
+<svg:path
+   id="glyph"
+   inkscape:label="Đ outlined from DejaVu Sans Bold Oblique 2.37 (italicAngle -11)"
+   d="M93.0421 56.2417 91.0548 66.6667H99.6319L97.8537 75.7319H89.2766L86.836 88.0048H91.6126Q101.0614 88.0048 106.5528 82.7226Q112.0442 77.4403 112.0442 68.5146Q112.0442 62.4479 108.4356 59.3448Q104.8269 56.2417 97.7491 56.2417ZM81.5712 46.0956H95.692Q105.8032 46.0956 110.8588 47.2985Q115.9144 48.5014 119.2615 51.3255Q122.6436 54.1497 124.3869 58.1942Q126.1302 62.2387 126.1302 67.2943Q126.1302 74.3024 123.184 80.5783Q120.2378 86.8542 114.973 91.1427Q110.3707 94.9432 104.2865 96.547Q98.2023 98.1509 85.5459 98.1509H71.4251L75.7834 75.7319H68.6358L70.414 66.6667H77.5615Z"
+   style="fill:url(#linearGradient4020);fill-opacity:1;stroke:none" />
 </svg:svg>

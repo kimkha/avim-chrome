@@ -9,7 +9,11 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_icon": "icons/icon19.png",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "24": "icons/icon24.png",
+      "32": "icons/icon32.png"
+    },
     "default_title": "__MSG_extAction__",
     "default_popup": "popup.html"
   },

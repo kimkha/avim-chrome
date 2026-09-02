@@ -24,10 +24,15 @@ function scriptSrcs(html) {
 	return [...html.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
 }
 
+// MV3 accepts either a single path or a size -> path map for action.default_icon.
+function iconPaths(icon) {
+	return typeof icon === "string" ? [icon] : Object.values(icon);
+}
+
 describe("Every file the manifest points at exists", () => {
 	const referenced = [
 		...Object.values(manifest.icons),
-		manifest.action.default_icon,
+		...iconPaths(manifest.action.default_icon),
 		manifest.action.default_popup,
 		manifest.background.service_worker,
 		...manifest.content_scripts.flatMap((entry) => entry.js),
