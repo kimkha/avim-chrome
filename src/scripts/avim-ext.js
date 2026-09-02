@@ -895,11 +895,25 @@ function emitBeforeInput(host, inputType, data) {
 const revertingHosts = new WeakSet();
 const pendingEdits = new WeakMap();
 
-function noteEditOutcome(host, before) {	const pending = pendingEdits.get(host);
+/**
+ * Reverting is not enough to earn the announcement: CKEditor reverts too, but reads
+ * getTargetRanges() unconditionally, so it drops the insertion and throws on the deletes. Whether an
+ * editor survives a range-less beforeinput cannot be probed, so this is an allowlist, keyed on the
+ * attributes slate-react needs in the DOM to map it back to its own model.
+ */
+function isSlateEditor(host) {
+	if (typeof host.hasAttribute !== "function") {
+		return false;
+	}
+	return host.hasAttribute("data-slate-editor") || (host.querySelector("[data-slate-string]") !== null);
+}
+
+function noteEditOutcome(host, before) {
+	const pending = pendingEdits.get(host);
 	if (!pending || before.startsWith(pending.wrote)) {
 		return;
 	}
-	if (before.startsWith(pending.was)) {
+	if (before.startsWith(pending.was) && isSlateEditor(host)) {
 		revertingHosts.add(host);
 	}
 	pendingEdits.delete(host);

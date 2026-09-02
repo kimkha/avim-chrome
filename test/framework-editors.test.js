@@ -98,4 +98,16 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 			assert.equal(typed.model, "tiếng Việt");
 		});
 	}
+
+	// CKEditor reverts a silent DOM edit exactly like Slate, so it is tempting to announce to it as
+	// well, and it reads getTargetRanges() unconditionally: it drops the range-less insertion, keeps
+	// the deletes and throws internally, which is worse than the diacritics it loses today. This
+	// asserts the losing, so that anything that turns the announcement into a learned capability
+	// instead of an allowlist fails here rather than on someone's CMS.
+	it("Known issue: CKEditor loses the diacritics, and must not get worse than that", async () => {
+		const typed = await retype("ckeditor", ".ck-editor__editable", "tieengs Vieejt");
+
+		assert.equal(typed.dom, "tieng Viet");
+		assert.equal(typed.model, "tieng Viet");
+	});
 });

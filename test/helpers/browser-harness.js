@@ -28,7 +28,7 @@ function outerPage(altOrigin) {
 <input id="byName" name="email">
 <div id="editable" contenteditable="true"></div>
 <div id="spaced" contenteditable="true">xin </div>
-<div id="controlled" contenteditable="true"></div>
+<div id="controlled" contenteditable="true" data-slate-editor="true"></div>
 <textarea id="eventProbe"></textarea>
 <div id="host"></div>
 <div id="slot"></div>
@@ -83,10 +83,11 @@ function outerPage(altOrigin) {
 }
 
 /**
- * Four real editor frameworks on one page, pulled from a CDN at run time so the repo keeps its
- * no-install test suite. Each is here for a different reason: Slate reverts a DOM edit AVIM makes
- * silently (#30), and the other three reconcile it instead and are what a synthetic beforeinput
- * sent to everyone would break.
+ * Real editor frameworks on one page, pulled from a CDN at run time so the repo keeps its
+ * no-install test suite. Each is here for a different reason. Slate reverts a DOM edit AVIM makes
+ * silently (#30). Lexical, Quill and ProseMirror reconcile it instead, and are what a synthetic
+ * beforeinput sent to everyone would break. CKEditor reverts like Slate but corrupts that same
+ * beforeinput, which is why the announcement is an allowlist and not a learned capability.
  */
 const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
 	#lexical, .ProseMirror, .ql-editor { border: 1px solid #ccc; min-height: 32px; padding: 4px }
@@ -96,6 +97,7 @@ const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
 <div id="lexical" contenteditable="true"></div>
 <div id="quillRoot"></div>
 <div id="pmRoot"></div>
+<div id="ckRoot"></div>
 <script type="module">
 	const REACT = "react@18.3.1";
 	const DOM = "react-dom@18.3.1";
@@ -155,6 +157,15 @@ const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
 		window.__modelText.prosemirror = () => view.state.doc.textContent;
 	} catch (error) {
 		window.__loadErrors.push("prosemirror: " + error.message);
+	}
+
+	try {
+		const { default: ClassicEditor } =
+			await import("https://esm.sh/@ckeditor/ckeditor5-build-classic@41.4.2");
+		const editor = await ClassicEditor.create(document.getElementById("ckRoot"));
+		window.__modelText.ckeditor = () => editor.getData().replace(/<[^>]*>/g, "").trim();
+	} catch (error) {
+		window.__loadErrors.push("ckeditor: " + error.message);
 	}
 
 	window.__ready = true;
