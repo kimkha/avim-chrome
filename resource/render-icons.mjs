@@ -32,7 +32,7 @@ const OUT = path.join(import.meta.dirname, '..', 'src', 'icons');
 // GLYPH_SCALE_MAX was measured: rendering the key with the glyph hidden at 512px separates its light
 // face from its dark frame, and with re-centring 2.55 is the largest scale keeping half a pixel of
 // clearance at 16px. It touches the frame at 2.8.
-const SIZES = [16, 24, 32, 48, 128];
+const SIZES = [16, 24, 32, 48, 64, 128];
 const GLYPH_SCALE_MAX = 2.55;
 const GLYPH_SCALE_MIN_AT = 128;
 const GLYPH_SCALE_MAX_AT = 16;
