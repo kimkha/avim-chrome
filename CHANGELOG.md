@@ -3,6 +3,20 @@
 Notable changes per release. `0.8.5` and `0.9.0` exist in git but were never tagged, so everything
 since `v0.8.3` is collected under 0.10.0.
 
+## [0.10.1] - 2026-09-02
+
+### Fixed
+
+- Four ungrammatical strings in the English popup: "Select an options:", "Small tips:" next to a
+  single tip, "You can turn on/off AVIM by press Ctrl twice.", and a singular "Remove accent" on a
+  button that removes all of them. The Vietnamese strings were already correct.
+
+### Development
+
+- `resource/store/make-screenshots.mjs` renders the Chrome Web Store screenshots by driving the
+  packed extension in real Chromium and typing Telex, then asserting the engine produced the
+  expected Vietnamese, so a shot cannot ship showing raw keystrokes.
+
 ## [0.10.0] - 2026-09-02
 
 First tagged release since `v0.8.3`, covering roughly eleven years of commits.
