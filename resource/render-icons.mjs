@@ -20,17 +20,31 @@ import { pathToFileURL } from 'node:url';
 const SVG = path.join(import.meta.dirname, 'avim.svg');
 const OUT = path.join(import.meta.dirname, '..', 'src', 'icons');
 
-// 1.2 at 16px is where the Đ crossbar separates from the stem without crowding the keycap edge;
-// 128px has pixels to spare, so the glyph stays at its drawn size. Sizes between are interpolated.
-// Retune these if the glyph is ever re-outlined from a different face: the real Bold Oblique is
-// wider than a sheared Bold, and needed 1.2 where the sheared one needed 1.3.
-const SIZES = [
-	{ size: 16, crop: 1.25, glyphScale: 1.2 },
-	{ size: 24, crop: 1.25, glyphScale: 1.12 },
-	{ size: 32, crop: 1.25, glyphScale: 1.06 },
-	{ size: 48, crop: 1.25, glyphScale: 1.02 },
-	{ size: 128, crop: 1, glyphScale: 1 },
-];
+// Optical sizing is derived, not hand-tuned. The glyph keeps its drawn size at 128px and grows as
+// the icon shrinks, reaching GLYPH_SCALE_MAX at 16px where the Đ fills the keycap face.
+//
+// GLYPH_SCALE_MAX was measured, not guessed: rendering the keycap without the glyph at 512px and
+// classifying its light inner face against its dark frame, 1.5 is the largest scale whose glyph ink
+// still lands entirely on the face. 1.55 puts 60 pixels through the frame.
+//
+// The ramp is linear in 1/size, so each halving of the icon adds roughly the same amount of glyph.
+const SIZES = [16, 24, 32, 48, 128];
+const GLYPH_SCALE_MAX = 1.5;
+const GLYPH_SCALE_MIN_AT = 128;
+const GLYPH_SCALE_MAX_AT = 16;
+
+// 1.25 reproduces the framing Inkscape produced when exporting the drawing rather than the page;
+// 128 was exported as the page, so it stays at 1.
+function cropFor(size) {
+	return size === 128 ? 1 : 1.25;
+}
+
+function glyphScaleFor(size) {
+	const span = 1 / GLYPH_SCALE_MAX_AT - 1 / GLYPH_SCALE_MIN_AT;
+	const t = (1 / size - 1 / GLYPH_SCALE_MIN_AT) / span;
+	const clamped = Math.min(Math.max(t, 0), 1);
+	return Number((1 + clamped * (GLYPH_SCALE_MAX - 1)).toFixed(4));
+}
 
 function resolveChromium() {
 	const override = process.env.AVIM_CHROME_PATH;
@@ -85,7 +99,7 @@ const browser = await chromium.launch({
 	headless: true,
 	args: ['--no-sandbox'],
 });
-for (const entry of SIZES) {
-	console.log(await render(browser, entry));
+for (const size of SIZES) {
+	console.log(await render(browser, { size, crop: cropFor(size), glyphScale: glyphScaleFor(size) }));
 }
 await browser.close();
