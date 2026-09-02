@@ -87,7 +87,9 @@ function outerPage(altOrigin) {
  * no-install test suite. Each is here for a different reason. Slate reverts a DOM edit AVIM makes
  * silently (#30). Lexical, Quill and ProseMirror reconcile it instead, and are what a synthetic
  * beforeinput sent to everyone would break. CKEditor reverts like Slate but corrupts that same
- * beforeinput, which is why the announcement is an allowlist and not a learned capability.
+ * beforeinput, which is why the announcement is an allowlist and not a learned capability. The
+ * controlled React input is here because a plain field has the same divergence: what the page reads
+ * is the component's state, not the DOM value AVIM wrote.
  */
 const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
 	#lexical, .ProseMirror, .ql-editor { border: 1px solid #ccc; min-height: 32px; padding: 4px }
@@ -98,6 +100,7 @@ const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
 <div id="quillRoot"></div>
 <div id="pmRoot"></div>
 <div id="ckRoot"></div>
+<div id="reactRoot"></div>
 <script type="module">
 	const REACT = "react@18.3.1";
 	const DOM = "react-dom@18.3.1";
@@ -166,6 +169,22 @@ const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
 		window.__modelText.ckeditor = () => editor.getData().replace(/<[^>]*>/g, "").trim();
 	} catch (error) {
 		window.__loadErrors.push("ckeditor: " + error.message);
+	}
+
+	try {
+		const React = (await import(\`https://esm.sh/\${REACT}\`)).default;
+		const { createRoot } = await import(\`https://esm.sh/\${DOM}/client\`);
+		const Controlled = () => {
+			const [value, setValue] = React.useState("");
+			window.__modelText.reactField = () => value;
+			const bind = { value, onChange: (event) => setValue(event.target.value) };
+			return React.createElement("div", null,
+				React.createElement("input", { id: "reactInput", ...bind }),
+				React.createElement("textarea", { id: "reactArea", ...bind }));
+		};
+		createRoot(document.getElementById("reactRoot")).render(React.createElement(Controlled));
+	} catch (error) {
+		window.__loadErrors.push("react: " + error.message);
 	}
 
 	window.__ready = true;

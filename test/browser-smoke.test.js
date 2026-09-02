@@ -198,17 +198,19 @@ for (const dir of extensionDirs()) {
 			});
 		});
 
-		describe("Known issue: a converted keystroke in an input fires no input event", () => {
-			// The input and textarea path still assigns el.value, which dispatches nothing.
-			// Frameworks that track state from input events therefore never see the Vietnamese text.
-			it("reports 4 input events for the 5 keystrokes of chaof", async () => {
+		describe("A converted keystroke in an input fires an input event", () => {
+			// Assigning el.value fires nothing, so a controlled component kept the raw keystrokes.
+			// React is worse than silent about it: its value tracker swallows an input event
+			// dispatched after the assignment, because the assignment already moved the value it
+			// compares against. Going through execCommand is what makes the edit real.
+			it("reports 5 input events for the 5 keystrokes of chaof", async () => {
 				await page.locator("#eventProbe").evaluate((element) => {
 					element.value = "";
 					window.__inputEvents = 0;
 				});
 
 				assert.equal(await typeOnce(page, "#eventProbe", "chaof"), "chào");
-				assert.equal(await page.evaluate(() => window.__inputEvents), 4);
+				assert.equal(await page.evaluate(() => window.__inputEvents), 5);
 			});
 		});
 	});

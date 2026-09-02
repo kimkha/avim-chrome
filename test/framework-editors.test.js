@@ -71,7 +71,7 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 		await page.waitForTimeout(300);
 
 		return {
-			dom: await locator.evaluate((element) => element.textContent),
+			dom: await locator.evaluate((element) => element.value ?? element.textContent),
 			model: await page.evaluate((key) => window.__modelText[key](), name),
 		};
 	}
@@ -96,6 +96,20 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 
 			assert.equal(typed.dom, "tiếng Việt");
 			assert.equal(typed.model, "tiếng Việt");
+		});
+	}
+
+	// A controlled input diverges the same way a model-backed editor does, just without an editor:
+	// the page reads the component's state, so assigning el.value showed the user "chào" while the
+	// form submitted "chao". React makes it worse than silent — its value tracker swallows an input
+	// event dispatched after the assignment, so the obvious fix does not work and execCommand is
+	// what does.
+	for (const [label, selector] of [["input", "#reactInput"], ["textarea", "#reactArea"]]) {
+		it(`a controlled React ${label} gets the diacritics in its own state`, async () => {
+			const typed = await retype("reactField", selector, "tieengs Vieejt");
+
+			assert.equal(typed.dom, "tiếng Việt");
+			assert.equal(typed.model, "tiếng Việt", "the DOM can be right while the app reads this");
 		});
 	}
 

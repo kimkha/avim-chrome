@@ -46,7 +46,6 @@ globalThis.AVIMAutoConfig = [
  */
 const $_alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
 const $_skey = [97,226,259,101,234,105,111,244,417,117,432,121,65,194,258,69,202,73,79,212,416,85,431,89]; // a,â,ă,e,ê,i,o,ô,ơ,u,ư,y,A,Â,Ă,E,Ê,I,O,Ô,Ơ,U,Ư,Y
-let _range = null; // Range object, maybe from Document.createRange()
 let _whit = false; // Set while a moc key is in flight, so a following o can also horn a bare u
 
 /**
@@ -56,7 +55,6 @@ let _whit = false; // Set while a moc key is in flight, so a following o can als
 class AVIM {
 	constructor() {
 		this.changed = false;
-		this.specialChange = false;
 		this.db1 = [273,272];
 		this.ds1 = ['d','D'];
 		this.os1 = "o,O,ơ,Ơ,ó,Ó,ò,Ò,ọ,Ọ,ỏ,Ỏ,õ,Õ,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ".split(",");
@@ -247,15 +245,11 @@ function ckspell(word, k) {
 }
 
 function getEditorObject(ele) {
-	// Falls back to innerText only when both data and value are empty, not merely absent
-	const value = ele.data || ele.value || ele.innerText;
-	if (!ele.data) {
-		if (!ele.setSelectionRange) {
-			return false;
-		}
-		return { v: value, s: ele.selectionStart, e: ele.selectionEnd };
+	if (!ele.setSelectionRange) {
+		return false;
 	}
-	return { v: value, s: ele.pos, e: ele.pos };
+	// Falls back to innerText only when the value is empty, not merely absent
+	return { v: ele.value || ele.innerText, s: ele.selectionStart, e: ele.selectionEnd };
 }
 
 /** The word immediately before the caret, plus the caret offset. */
@@ -526,43 +520,24 @@ function replaceChar(o, pos, c) {
 	} else if ((upperCase(c) === "O") && _whit) {
 		addsHorn = true;
 	}
-	if (!o.data) {
-		const savePos = o.selectionStart;
-		const scrollTop = o.scrollTop;
-		let hornedU = "";
-		if ((upperCase(o.value.charAt(pos - 1)) === "U") && (pos < savePos - 1) && (upperCase(o.value.charAt(pos - 2)) !== "Q")) {
-			if ((wfix === "Ơ") || addsHorn) {
-				hornedU = fromCharCode(o.value.charAt(pos - 1) === "u" ? 432 : 431);
-			}
-			if (addsHorn) {
-				AVIMObj.changed = true;
-				replaceBy = c === "o" ? "ơ" : "Ơ";
-			}
+	const savePos = o.selectionStart;
+	const scrollTop = o.scrollTop;
+	let hornedU = "";
+	if ((upperCase(o.value.charAt(pos - 1)) === "U") && (pos < savePos - 1) && (upperCase(o.value.charAt(pos - 2)) !== "Q")) {
+		if ((wfix === "Ơ") || addsHorn) {
+			hornedU = fromCharCode(o.value.charAt(pos - 1) === "u" ? 432 : 431);
 		}
-		o.value = o.value.slice(0, pos) + replaceBy + o.value.slice(pos + 1);
-		if (hornedU) {
-			o.value = o.value.slice(0, pos - 1) + hornedU + o.value.slice(pos);
-		}
-		o.setSelectionRange(savePos, savePos);
-		o.scrollTop = scrollTop;
-	} else {
-		let hornedU = "";
-		if ((upperCase(o.data.charAt(pos - 1)) === "U") && (pos < o.pos - 1)) {
-			if ((wfix === "Ơ") || addsHorn) {
-				hornedU = fromCharCode(o.data.charAt(pos - 1) === "u" ? 432 : 431);
-			}
-			if (addsHorn) {
-				AVIMObj.changed = true;
-				replaceBy = c === "o" ? "ơ" : "Ơ";
-			}
-		}
-		o.deleteData(pos, 1);
-		o.insertData(pos, replaceBy);
-		if (hornedU) {
-			o.deleteData(pos - 1, 1);
-			o.insertData(pos - 1, hornedU);
+		if (addsHorn) {
+			AVIMObj.changed = true;
+			replaceBy = c === "o" ? "ơ" : "Ơ";
 		}
 	}
+	o.value = o.value.slice(0, pos) + replaceBy + o.value.slice(pos + 1);
+	if (hornedU) {
+		o.value = o.value.slice(0, pos - 1) + hornedU + o.value.slice(pos);
+	}
+	o.setSelectionRange(savePos, savePos);
+	o.scrollTop = scrollTop;
 	_whit = false;
 }
 
@@ -718,29 +693,15 @@ function normC(word, k, i) {
 			let pos = start;
 			if (!AVIMObj.changed) {
 				pos += k.length;
-				if (!editor.data) {
-					const scrollTop = editor.scrollTop;
-					editor.value = editor.value.slice(0, start) + k + editor.value.slice(editor.selectionEnd);
-					AVIMObj.changed = true;
-					editor.scrollTop = scrollTop;
-				} else {
-					editor.insertData(editor.pos, k);
-					editor.pos++;
-					_range.setEnd(editor, editor.pos);
-					AVIMObj.specialChange = true;
-				}
+				const scrollTop = editor.scrollTop;
+				editor.value = editor.value.slice(0, start) + k + editor.value.slice(editor.selectionEnd);
+				AVIMObj.changed = true;
+				editor.scrollTop = scrollTop;
 			}
-			if (!editor.data) {
-				editor.setSelectionRange(pos, pos);
-			}
+			editor.setSelectionRange(pos, pos);
 			if (!ckspell(current, toneKey)) {
 				replaceChar(editor, i - j, base);
-				if (!editor.data) {
-					main(current, toneKey, pos, [AVIMObj.D], false);
-				} else {
-					const reread = mozGetText(getEditorObject(editor));
-					main(reread[0], toneKey, reread[1], [AVIMObj.D], false);
-				}
+				main(current, toneKey, pos, [AVIMObj.D], false);
 			}
 		}
 	}
@@ -919,6 +880,32 @@ function noteEditOutcome(host, before) {
 	pendingEdits.delete(host);
 }
 
+function commonPrefixLength(before, after) {
+	let head = 0;
+	while ((head < before.length) && (head < after.length) && (before.charAt(head) === after.charAt(head))) {
+		head++;
+	}
+	return head;
+}
+
+/**
+ * Replaces value[head..caret) so the text before the caret becomes `after`, through execCommand.
+ * Assigning .value instead fires nothing, and a controlled component then keeps the raw keystrokes:
+ * React's _valueTracker even swallows an input event dispatched afterwards, because the assignment
+ * already moved the value it compares against.
+ */
+function replaceValueBeforeCaret(el, before, after, caret) {
+	const head = commonPrefixLength(before, after);
+	const scrollTop = el.scrollTop;
+	el.setSelectionRange(head, caret);
+	const doc = el.ownerDocument ?? document;
+	if (!doc.execCommand("insertText", false, after.slice(head))) {
+		el.value = after + el.value.slice(caret);
+		el.setSelectionRange(after.length, after.length);
+	}
+	el.scrollTop = scrollTop;
+}
+
 /**
  * Rewrites the text before the caret to `after`, from the first changed character on.
  *
@@ -927,10 +914,7 @@ function noteEditOutcome(host, before) {
  * Everyone else gets the edit itself, through execCommand, which fires input but not beforeinput.
  */
 function replaceBeforeCaret(host, sel, range, node, before, after, caret) {
-	let head = 0;
-	while ((head < before.length) && (head < after.length) && (before.charAt(head) === after.charAt(head))) {
-		head++;
-	}
+	const head = commonPrefixLength(before, after);
 	const replacement = after.slice(head);
 
 	if (revertingHosts.has(host)) {
@@ -979,7 +963,6 @@ function ifMoz(e) {
 
 	const sel = cwi.getSelection();
 	const range = sel ? sel.getRangeAt(0) : document.createRange();
-	_range = range;
 	const node = range.endContainer;
 
 	avim.sk = fromCharCode(code);
@@ -999,12 +982,16 @@ function ifMoz(e) {
 
 	const editor = createTextEditor(before);
 	start(editor, e);
-	if (!avim.changed) {
-		return;
-	}
+	// changed only decides who types the key. An escape sequence such as telex "aaa" rewrites the
+	// word and leaves the key to the browser, so the rewrite has to be applied either way.
+	const changed = avim.changed;
 	avim.changed = false;
-	e.preventDefault();
-	replaceBeforeCaret(host, sel, range, node, before, editor.value, caret);
+	if (editor.value !== before) {
+		replaceBeforeCaret(host, sel, range, node, before, editor.value, caret);
+	}
+	if (changed) {
+		e.preventDefault();
+	}
 }
 
 /** Punctuation below code 45 that still starts or continues a word. */
@@ -1095,9 +1082,24 @@ function keyPressHandler(e) {
 	if (findIgnore(el) || el.readOnly) {
 		return;
 	}
-	start(el, e);
-	if (AVIMObj.changed) {
-		AVIMObj.changed = false;
+	// The keystroke replaces a non-empty selection, so there is no word in front of it to transform
+	if (el.selectionStart !== el.selectionEnd) {
+		return;
+	}
+
+	const caret = el.selectionStart;
+	if (!caret) {
+		return;
+	}
+	const before = el.value.slice(0, caret);
+	const editor = createTextEditor(before);
+	start(editor, e);
+	const changed = AVIMObj.changed;
+	AVIMObj.changed = false;
+	if (editor.value !== before) {
+		replaceValueBeforeCaret(el, before, editor.value, caret);
+	}
+	if (changed) {
 		e.preventDefault();
 	}
 }

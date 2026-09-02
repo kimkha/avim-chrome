@@ -233,13 +233,6 @@ describe("getEditorObject", () => {
 		assert.equal(result.e, 3);
 	});
 
-	it("reads data and pos from a text node", () => {
-		const result = engine().getEditorObject({ data: "xy", pos: 1 });
-		assert.equal(result.v, "xy");
-		assert.equal(result.s, 1);
-		assert.equal(result.e, 1);
-	});
-
 	it("returns false for an element without setSelectionRange", () => {
 		assert.equal(engine().getEditorObject({ value: "abc" }), false);
 	});

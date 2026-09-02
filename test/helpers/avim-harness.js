@@ -104,9 +104,21 @@ function createSandbox() {
 		addEventListener() {},
 		removeEventListener() {},
 		createRange: () => new FakeRange(new FakeText(""), 0, 0),
-		// ifMoz applies its edit through execCommand, so the fake DOM has to honour insertText
+		activeElement: null,
+		// Both apply paths go through execCommand, so the fake DOM has to honour insertText: on the
+		// focused field for an input, on the current range for a contenteditable's text node.
 		execCommand(command, ui, text) {
-			if ((command !== "insertText") || !sandbox.__selection) {
+			if (command !== "insertText") {
+				return false;
+			}
+			const field = sandbox.document.activeElement;
+			if (field && (typeof field.value === "string")) {
+				const start = field.selectionStart;
+				field.value = field.value.slice(0, start) + text + field.value.slice(field.selectionEnd);
+				field.setSelectionRange(start + text.length, start + text.length);
+				return true;
+			}
+			if (!sandbox.__selection) {
 				return false;
 			}
 			const range = sandbox.__selection.getRangeAt(0);
@@ -232,6 +244,7 @@ function insertChar(element, char) {
 /** Dispatch one keypress through the real extension handler. Returns true if cancelled. */
 function pressKey(context, element, char, { ctrl = false, alt = false } = {}) {
 	let prevented = false;
+	context.document.activeElement = element;
 	context.keyPressHandler({
 		target: element,
 		which: char.charCodeAt(0),
@@ -249,6 +262,7 @@ function pressKey(context, element, char, { ctrl = false, alt = false } = {}) {
 
 function countPreventDefaultCalls(context, element, char) {
 	let calls = 0;
+	context.document.activeElement = element;
 	context.keyPressHandler({
 		target: element,
 		which: char.charCodeAt(0),
@@ -309,6 +323,7 @@ function typeContentEditableDetailed(sequence, config = {}) {
 		// the keypress target is the contenteditable element; the range points at the text node inside it
 		const editable = createEditableHost(text, caret);
 		context.__selection = editable.selection;
+		context.document.activeElement = editable.host;
 		let prevented = false;
 		context.keyPressHandler({
 			target: editable.host,

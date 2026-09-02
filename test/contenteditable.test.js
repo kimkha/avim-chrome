@@ -99,6 +99,23 @@ describe("contenteditable: caret is restored before the trailing text", () => {
 	}
 });
 
+describe("contenteditable: repeating a key escapes the transform", () => {
+	// These rewrite the word without cancelling the keystroke, so the browser adds the key on top.
+	// The textarea path has covered them since the start; this side had nothing.
+	const cases = [
+		["aaa", "aa"],
+		["ddd", "dd"],
+		["ass", "as"],
+		["oooo", "ooo"],
+	];
+
+	for (const [sequence, expected] of cases) {
+		it(`"${sequence}" produces "${expected}"`, () => {
+			assert.equal(typeEditable(sequence), expected);
+		});
+	}
+});
+
 describe("contenteditable: preferences are respected", () => {
 	it("types nothing special when AVIM is off", () => {
 		assert.equal(typeEditable("as", { onOff: 0 }), "as");
