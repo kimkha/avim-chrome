@@ -12,7 +12,7 @@
 		"description" : "Default title of browser action"
 	},
 	"extPopupSel" : {
-		"message" : "Select an options:",
+		"message" : "Select an option:",
 		"description" : ""
 	},
 	"extPopupAuto" : {
@@ -44,11 +44,11 @@
 		"description" : "Label of the Vietnamese spell check toggle"
 	},
 	"extPopupTips" : {
-		"message" : "Small tips:",
+		"message" : "Small tip:",
 		"description" : ""
 	},
 	"extPopupTipsCtrl" : {
-		"message" : "You can turn on/off AVIM by press Ctrl twice.",
+		"message" : "Press Ctrl twice to turn AVIM on or off.",
 		"description" : ""
 	},
 	"extPopupDemo" : {
@@ -60,7 +60,7 @@
 		"description" : ""
 	},
 	"extPopupRemoveAccent" : {
-		"message" : "Remove accent",
+		"message" : "Remove accents",
 		"description" : "Strip Vietnamese diacritics from the demo text"
 	}
 }
