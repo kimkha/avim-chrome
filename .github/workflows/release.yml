@@ -70,8 +70,10 @@ jobs:
         run: |
           # Idempotent so the workflow_dispatch re-run can repair a release that already exists;
           # `gh release create` alone fails outright when the tag has been published before.
+          # --draft=false matters: deleting a tag demotes its release to a draft, and `edit`
+          # would otherwise leave it hidden.
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "$TAG" --notes-file /tmp/notes.md
+            gh release edit "$TAG" --title "$TAG" --notes-file /tmp/notes.md --draft=false
             gh release upload "$TAG" "$ASSET" --clobber
           else
             gh release create "$TAG" "$ASSET" \
