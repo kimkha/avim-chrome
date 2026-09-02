@@ -22,6 +22,10 @@ const TERSER_OPTIONS = {
 // Copied verbatim into build/ under the same relative path. Absent trees are skipped.
 const ASSET_TREES = ['icons', '_locales', 'fonts', 'styles', 'scripts/vendors'];
 
+// Store-listing logos: kept in src/icons for the render pipeline and manual upload (Opera 64,
+// Edge 300), but the manifest never references them, so they are dead weight inside the package.
+const STORE_ONLY_ICONS = new Set(['icon64.png', 'icon300.png']);
+
 async function walkEntries(dir) {
 	const entries = await readdir(dir, { withFileTypes: true });
 	const nested = await Promise.all(
@@ -68,7 +72,10 @@ async function minifyTo(source, target) {
 async function copyAssets() {
 	for (const tree of ASSET_TREES) {
 		if (existsSync(path.join(SRC, tree))) {
-			await cp(path.join(SRC, tree), path.join(BUILD, tree), { recursive: true });
+			await cp(path.join(SRC, tree), path.join(BUILD, tree), {
+				recursive: true,
+				filter: (source) => !STORE_ONLY_ICONS.has(path.basename(source)),
+			});
 		}
 	}
 }
