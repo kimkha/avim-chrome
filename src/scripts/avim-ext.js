@@ -835,6 +835,73 @@ function editingHost(node) {
 	return host;
 }
 
+/** Tags an editor uses for a line: the word before the caret never reaches back past one. */
+const BLOCK_TAGS = ["DIV", "P", "LI", "TD", "TH", "BLOCKQUOTE", "PRE", "SECTION", "ARTICLE", "DD", "DT", "H1", "H2", "H3", "H4", "H5", "H6"];
+
+function blockOf(node, host) {
+	let element = node.parentNode;
+	while (element && (element !== host) && !BLOCK_TAGS.includes(element.nodeName)) {
+		element = element.parentNode;
+	}
+	return element ?? host;
+}
+
+/** The text node before `node`, in the same line of `host`. Walks with plain DOM links, so the
+ * fake DOM the unit tests run on simply finds nothing and the caret's own node is all there is. */
+function previousTextNode(host, node, block) {
+	let current = node;
+	while (current && (current !== host)) {
+		if (!current.previousSibling) {
+			current = current.parentNode;
+			continue;
+		}
+		current = current.previousSibling;
+		while (current.lastChild) {
+			current = current.lastChild;
+		}
+		if (current.nodeName === "BR") {
+			return null;
+		}
+		if (current.nodeType === 3) {
+			return blockOf(current, host) === block ? current : null;
+		}
+	}
+	return null;
+}
+
+/**
+ * The text before the caret, in the pieces it is stored in. An editor splits a word across elements
+ * for anything inline — bold, a mention, an emoji — and Slate, Lexical and ProseMirror wrap every
+ * leaf in its own span, so reading the caret's text node alone loses the start of the word.
+ */
+function partsBeforeCaret(host, node, caret) {
+	const parts = [{ node, text: node.data.slice(0, caret) }];
+	const block = blockOf(node, host);
+	let text = parts[0].text;
+	while (![...text].some(notWord)) {
+		const previous = previousTextNode(host, parts[0].node, block);
+		if (!previous) {
+			break;
+		}
+		parts.unshift({ node: previous, text: previous.data });
+		text = previous.data + text;
+	}
+	return parts;
+}
+
+/** Where `offset` into the joined text sits: the piece holding it, and how far into that piece. */
+function locate(parts, offset) {
+	let remaining = offset;
+	for (const part of parts) {
+		if (remaining <= part.text.length) {
+			return { node: part.node, offset: remaining };
+		}
+		remaining -= part.text.length;
+	}
+	const last = parts[parts.length - 1];
+	return { node: last.node, offset: last.text.length };
+}
+
 /** Fires beforeinput on the editable. False when a listener claimed the edit for its own model. */
 function emitBeforeInput(host, inputType, data) {
 	return host.dispatchEvent(new InputEvent("beforeinput", {
@@ -913,13 +980,15 @@ function replaceValueBeforeCaret(el, before, after, caret) {
  * no getTargetRanges() and such an editor would otherwise apply the change at a stale caret.
  * Everyone else gets the edit itself, through execCommand, which fires input but not beforeinput.
  */
-function replaceBeforeCaret(host, sel, range, node, before, after, caret) {
+function replaceBeforeCaret(host, sel, range, parts, before, after) {
 	const head = commonPrefixLength(before, after);
 	const replacement = after.slice(head);
+	const from = locate(parts, head);
+	const to = locate(parts, before.length);
 
 	if (revertingHosts.has(host)) {
 		let claimed = false;
-		for (let left = caret - head; left > 0; left--) {
+		for (let left = before.length - head; left > 0; left--) {
 			claimed = !emitBeforeInput(host, "deleteContentBackward", null) || claimed;
 		}
 		if (replacement) {
@@ -930,17 +999,25 @@ function replaceBeforeCaret(host, sel, range, node, before, after, caret) {
 		}
 	}
 
-	range.setStart(node, head);
-	range.setEnd(node, caret);
+	range.setStart(from.node, from.offset);
+	range.setEnd(to.node, to.offset);
 	sel.removeAllRanges();
 	sel.addRange(range);
-	const doc = node.ownerDocument ?? document;
+	const doc = from.node.ownerDocument ?? document;
 	if (!doc.execCommand("insertText", false, replacement)) {
 		// Silent, so a reverting host discards it; still better than losing the keystroke
-		node.deleteData(head, caret - head);
-		node.insertData(head, replacement);
-		range.setStart(node, after.length);
-		range.setEnd(node, after.length);
+		for (let at = parts.length - 1; at >= 0; at--) {
+			const part = parts[at];
+			if (part.node === from.node) {
+				part.node.deleteData(from.offset, part.text.length - from.offset);
+				part.node.insertData(from.offset, replacement);
+				break;
+			}
+			part.node.deleteData(0, part.text.length);
+		}
+		const caret = from.offset + replacement.length;
+		range.setStart(from.node, caret);
+		range.setEnd(from.node, caret);
 		sel.removeAllRanges();
 		sel.addRange(range);
 	}
@@ -975,9 +1052,10 @@ function ifMoz(e) {
 	}
 
 	const caret = range.endOffset;
-	// Text after the caret is left out, so the engine sees the caret as the end of the value
-	const before = node.data.slice(0, caret);
 	const host = editingHost(node);
+	// Text after the caret is left out, so the engine sees the caret as the end of the value
+	const parts = partsBeforeCaret(host, node, caret);
+	const before = parts.map((part) => part.text).join("");
 	noteEditOutcome(host, before);
 
 	const editor = createTextEditor(before);
@@ -987,7 +1065,7 @@ function ifMoz(e) {
 	const changed = avim.changed;
 	avim.changed = false;
 	if (editor.value !== before) {
-		replaceBeforeCaret(host, sel, range, node, before, editor.value, caret);
+		replaceBeforeCaret(host, sel, range, parts, before, editor.value);
 	}
 	if (changed) {
 		e.preventDefault();

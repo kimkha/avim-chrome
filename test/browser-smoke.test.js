@@ -130,6 +130,39 @@ for (const dir of extensionDirs()) {
 			}
 		});
 
+		describe("A word split across elements is still one word", () => {
+			// An editor splits a word for anything inline — bold, a mention, an emoji — and Slate,
+			// Lexical and ProseMirror wrap every leaf in its own span. Reading only the caret's text
+			// node loses the start of the word, and with it the modifier: ngu<b>oi</b> came out
+			// "nguời" because the engine never saw a u to horn.
+			const cases = [
+				["bold in the middle", "#splitBold"],
+				["two sibling spans", "#splitSpans"],
+			];
+
+			for (const [label, target] of cases) {
+				it(`${label} gives "người"`, async () => {
+					const editable = page.locator(target);
+					await editable.click();
+					await page.keyboard.press("Control+End");
+					await page.keyboard.type("wf", { delay: 15 });
+
+					assert.equal(await editable.evaluate((element) => element.textContent), "người");
+				});
+			}
+
+			it("does not reach back into the previous block", async () => {
+				const editable = page.locator("#blocks");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				const lines = await editable.evaluate((element) =>
+					[...element.children].map((child) => child.textContent));
+				assert.deepEqual(lines, ["xin", "chào"], 'joining the blocks would spell-check "xinchao"');
+			});
+		});
+
 		describe("Known issue: a contenteditable ending in a space loses it", () => {
 			// ifMoz stashes everything after the caret, deletes to the end of the text node, then
 			// re-inserts. Chrome puts the caret before a trailing collapsed space, so that space is

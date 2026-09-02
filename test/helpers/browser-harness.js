@@ -28,6 +28,9 @@ function outerPage(altOrigin) {
 <input id="byName" name="email">
 <div id="editable" contenteditable="true"></div>
 <div id="spaced" contenteditable="true">xin </div>
+<div id="splitBold" contenteditable="true">ngu<b>oi</b></div>
+<div id="splitSpans" contenteditable="true"><span>ngu</span><span>oi</span></div>
+<div id="blocks" contenteditable="true"><div>xin</div><div>chao</div></div>
 <div id="controlled" contenteditable="true" data-slate-editor="true"></div>
 <textarea id="eventProbe"></textarea>
 <div id="host"></div>
