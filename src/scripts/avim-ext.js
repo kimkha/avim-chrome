@@ -848,7 +848,112 @@ function retUni(word, k, pos) {
 	return char === upperCase(char) ? toneCodes[lowerAt + 12] : toneCodes[lowerAt];
 }
 
-/** Handles a keypress inside a contenteditable or a designMode iframe, where there is no .value. */
+/** A stand-in for an <input>: replaceChar and normC read .scrollTop and .setSelectionRange. */
+function createTextEditor(value) {
+	return {
+		value,
+		selectionStart: value.length,
+		selectionEnd: value.length,
+		scrollTop: 0,
+		setSelectionRange(start, end) {
+			this.selectionStart = start;
+			this.selectionEnd = end;
+		}
+	};
+}
+
+/** The outermost editable ancestor: where an editor with its own model listens, and it survives
+ * that editor re-rendering the text node out from under us between two dispatches. */
+function editingHost(node) {
+	let element = node.parentNode;
+	let host = element;
+	while (element && element.isContentEditable) {
+		host = element;
+		element = element.parentNode;
+	}
+	return host;
+}
+
+/** Fires beforeinput on the editable. False when a listener claimed the edit for its own model. */
+function emitBeforeInput(host, inputType, data) {
+	return host.dispatchEvent(new InputEvent("beforeinput", {
+		inputType,
+		data,
+		bubbles: true,
+		cancelable: true,
+		composed: true
+	}));
+}
+
+/**
+ * Editors that re-render from their own model revert a DOM edit they never saw (Slate, so Discord).
+ * Ones with a MutationObserver reconciler keep it (Lexical, Quill, ProseMirror) and mangle a
+ * synthetic beforeinput instead, so the channel has to be chosen per host. Nothing in the DOM says
+ * which is which; the only honest signal is watching one edit get reverted, which costs the first
+ * conversion in a host and nothing after it.
+ */
+const revertingHosts = new WeakSet();
+const pendingEdits = new WeakMap();
+
+function noteEditOutcome(host, before) {	const pending = pendingEdits.get(host);
+	if (!pending || before.startsWith(pending.wrote)) {
+		return;
+	}
+	if (before.startsWith(pending.was)) {
+		revertingHosts.add(host);
+	}
+	pendingEdits.delete(host);
+}
+
+/**
+ * Rewrites the text before the caret to `after`, from the first changed character on.
+ *
+ * A reverting host is told in backspaces plus one insertion, because a synthetic InputEvent carries
+ * no getTargetRanges() and such an editor would otherwise apply the change at a stale caret.
+ * Everyone else gets the edit itself, through execCommand, which fires input but not beforeinput.
+ */
+function replaceBeforeCaret(host, sel, range, node, before, after, caret) {
+	let head = 0;
+	while ((head < before.length) && (head < after.length) && (before.charAt(head) === after.charAt(head))) {
+		head++;
+	}
+	const replacement = after.slice(head);
+
+	if (revertingHosts.has(host)) {
+		let claimed = false;
+		for (let left = caret - head; left > 0; left--) {
+			claimed = !emitBeforeInput(host, "deleteContentBackward", null) || claimed;
+		}
+		if (replacement) {
+			claimed = !emitBeforeInput(host, "insertText", replacement) || claimed;
+		}
+		if (claimed) {
+			return;
+		}
+	}
+
+	range.setStart(node, head);
+	range.setEnd(node, caret);
+	sel.removeAllRanges();
+	sel.addRange(range);
+	const doc = node.ownerDocument ?? document;
+	if (!doc.execCommand("insertText", false, replacement)) {
+		// Silent, so a reverting host discards it; still better than losing the keystroke
+		node.deleteData(head, caret - head);
+		node.insertData(head, replacement);
+		range.setStart(node, after.length);
+		range.setEnd(node, after.length);
+		sel.removeAllRanges();
+		sel.addRange(range);
+	}
+	pendingEdits.set(host, { was: before, wrote: after });
+}
+
+/**
+ * Handles a keypress inside a contenteditable or a designMode iframe, where there is no .value.
+ * Editing the text node directly fires no events, so editors that re-render from their own model
+ * (Slate, Draft, ProseMirror; Discord's message box is Slate) drop the diacritics (#30).
+ */
 function ifMoz(e) {
 	const code = e.which;
 	const avim = AVIMObj.AVIM ?? AVIMObj;
@@ -864,50 +969,28 @@ function ifMoz(e) {
 	const node = range.endContainer;
 
 	avim.sk = fromCharCode(code);
-	avim.saveStr = "";
 	if (checkCode(code) || !range.startOffset || (typeof node.data === "undefined")) {
 		return;
 	}
-	node.sel = false;
-
-	if (node.data) {
-		// Everything after the caret is cut away so the engine sees the caret as end of value
-		avim.saveStr = node.data.slice(range.endOffset);
-		if (range.startOffset !== range.endOffset) {
-			node.sel = true;
-		}
-		node.deleteData(range.startOffset, node.data.length);
-	}
-
-	if (!node.data) {
-		range.setStart(node, 0);
-		range.setEnd(node, range.endOffset);
-		sel.removeAllRanges();
-		sel.addRange(range);
+	// The keystroke replaces a non-empty selection, so there is no word in front of it to transform
+	if (range.startOffset !== range.endOffset) {
 		return;
 	}
 
-	node.value = node.data;
-	node.pos = node.data.length;
-	node.which = code;
-	start(node, e);
-	node.insertData(node.data.length, avim.saveStr);
-	const newPos = node.data.length - avim.saveStr.length;
+	const caret = range.endOffset;
+	// Text after the caret is left out, so the engine sees the caret as the end of the value
+	const before = node.data.slice(0, caret);
+	const host = editingHost(node);
+	noteEditOutcome(host, before);
 
-	range.setStart(node, newPos);
-	range.setEnd(node, newPos);
-	sel.removeAllRanges();
-	sel.addRange(range);
-
-	if (avim.specialChange) {
-		avim.specialChange = false;
-		avim.changed = false;
-		node.deleteData(node.pos - 1, 1);
+	const editor = createTextEditor(before);
+	start(editor, e);
+	if (!avim.changed) {
+		return;
 	}
-	if (avim.changed) {
-		avim.changed = false;
-		e.preventDefault();
-	}
+	avim.changed = false;
+	e.preventDefault();
+	replaceBeforeCaret(host, sel, range, node, before, editor.value, caret);
 }
 
 /** Punctuation below code 45 that still starts or continues a word. */

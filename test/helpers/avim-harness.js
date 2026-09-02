@@ -104,6 +104,26 @@ function createSandbox() {
 		addEventListener() {},
 		removeEventListener() {},
 		createRange: () => new FakeRange(new FakeText(""), 0, 0),
+		// ifMoz applies its edit through execCommand, so the fake DOM has to honour insertText
+		execCommand(command, ui, text) {
+			if ((command !== "insertText") || !sandbox.__selection) {
+				return false;
+			}
+			const range = sandbox.__selection.getRangeAt(0);
+			const node = range.startContainer;
+			node.deleteData(range.startOffset, range.endOffset - range.startOffset);
+			node.insertData(range.startOffset, text);
+			const caret = range.startOffset + text.length;
+			range.setStart(node, caret);
+			range.setEnd(node, caret);
+			return true;
+		},
+	};
+	// ifMoz announces its rewrite as beforeinput before applying it; nothing here claims the edit
+	sandbox.InputEvent = class {
+		constructor(type, init) {
+			Object.assign(this, { type }, init);
+		}
 	};
 	sandbox.window = {
 		document: sandbox.document,
@@ -267,7 +287,9 @@ function createEditableHost(text, caret, caretEnd = caret) {
 		id: "",
 		name: "",
 		parentNode: { wi: undefined, parentNode: { wi: undefined } },
+		dispatchEvent: () => true,
 	};
+	node.parentNode = host;
 	const range = new FakeRange(node, caret, caretEnd);
 	const selection = {
 		getRangeAt: () => range,

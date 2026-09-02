@@ -46,28 +46,33 @@ function outerPage(altOrigin) {
 	document.getElementById("eventProbe").addEventListener("input", () => {
 		window.__inputEvents++;
 	});
+	window.__editableInputEvents = 0;
+	document.getElementById("editable").addEventListener("input", () => {
+		window.__editableInputEvents++;
+	});
 
-	// #controlled stands in for Slate/Draft-style editors such as Discord's message box: it keeps
-	// its own model and re-renders the DOM from it on every input event.
+	// #controlled stands in for Slate/Draft-style editors such as Discord's message box: it owns
+	// beforeinput, applies each one to its own model, and re-renders the DOM from that model.
 	const controlled = document.getElementById("controlled");
 	let model = "";
 	controlled.addEventListener("beforeinput", (event) => {
-		if (event.data) {
+		event.preventDefault();
+		if (event.inputType === "deleteContentBackward") {
+			model = model.slice(0, -1);
+		} else if ((event.inputType === "insertText") && (event.data != null)) {
 			model += event.data;
 		}
-	});
-	controlled.addEventListener("input", () => {
-		if (controlled.textContent !== model) {
-			controlled.textContent = model;
-		}
+		controlled.textContent = model;
+		const range = document.createRange();
 		if (controlled.firstChild) {
-			const range = document.createRange();
 			range.setStart(controlled.firstChild, controlled.firstChild.data.length);
-			range.collapse(true);
-			const selection = getSelection();
-			selection.removeAllRanges();
-			selection.addRange(range);
+		} else {
+			range.setStart(controlled, 0);
 		}
+		range.collapse(true);
+		const selection = getSelection();
+		selection.removeAllRanges();
+		selection.addRange(range);
 	});
 	window.__resetControlled = () => {
 		model = "";
@@ -76,6 +81,85 @@ function outerPage(altOrigin) {
 </script>
 </body></html>`;
 }
+
+/**
+ * Four real editor frameworks on one page, pulled from a CDN at run time so the repo keeps its
+ * no-install test suite. Each is here for a different reason: Slate reverts a DOM edit AVIM makes
+ * silently (#30), and the other three reconcile it instead and are what a synthetic beforeinput
+ * sent to everyone would break.
+ */
+const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
+	#lexical, .ProseMirror, .ql-editor { border: 1px solid #ccc; min-height: 32px; padding: 4px }
+</style></head><body>
+<textarea id="ready"></textarea>
+<div id="slateRoot"></div>
+<div id="lexical" contenteditable="true"></div>
+<div id="quillRoot"></div>
+<div id="pmRoot"></div>
+<script type="module">
+	const REACT = "react@18.3.1";
+	const DOM = "react-dom@18.3.1";
+	window.__loadErrors = [];
+	window.__modelText = {};
+
+	try {
+		const React = (await import(\`https://esm.sh/\${REACT}\`)).default;
+		const { createRoot } = await import(\`https://esm.sh/\${DOM}/client\`);
+		const { createEditor } = await import("https://esm.sh/slate@0.112.0");
+		const { Slate, Editable, withReact } =
+			await import(\`https://esm.sh/slate-react@0.112.1?deps=\${REACT},\${DOM},slate@0.112.0\`);
+		const App = () => {
+			const editor = React.useMemo(() => withReact(createEditor()), []);
+			const [value, setValue] = React.useState([{ type: "p", children: [{ text: "" }] }]);
+			window.__modelText.slate = () =>
+				value.map((block) => block.children.map((child) => child.text).join("")).join("\\n");
+			return React.createElement(Slate, { editor, initialValue: value, onChange: setValue },
+				React.createElement(Editable, { id: "slate" }));
+		};
+		createRoot(document.getElementById("slateRoot")).render(React.createElement(App));
+	} catch (error) {
+		window.__loadErrors.push("slate: " + error.message);
+	}
+
+	try {
+		const { createEditor, $getRoot } = await import("https://esm.sh/lexical@0.21.0");
+		const { registerPlainText } =
+			await import("https://esm.sh/@lexical/plain-text@0.21.0?deps=lexical@0.21.0");
+		const editor = createEditor({
+			namespace: "avim",
+			onError: (error) => window.__loadErrors.push("lexical: " + error.message),
+		});
+		editor.setRootElement(document.getElementById("lexical"));
+		registerPlainText(editor);
+		window.__modelText.lexical = () =>
+			editor.getEditorState().read(() => $getRoot().getTextContent());
+	} catch (error) {
+		window.__loadErrors.push("lexical: " + error.message);
+	}
+
+	try {
+		const Quill = (await import("https://esm.sh/quill@2.0.3")).default;
+		const quill = new Quill("#quillRoot");
+		window.__modelText.quill = () => quill.getText().replace(/\\n+$/, "");
+	} catch (error) {
+		window.__loadErrors.push("quill: " + error.message);
+	}
+
+	try {
+		const { EditorState } = await import("https://esm.sh/prosemirror-state@1.4.3");
+		const { EditorView } = await import(
+			"https://esm.sh/prosemirror-view@1.34.3?deps=prosemirror-state@1.4.3,prosemirror-model@1.22.3");
+		const { schema } = await import(
+			"https://esm.sh/prosemirror-schema-basic@1.2.3?deps=prosemirror-model@1.22.3");
+		const view = new EditorView(document.getElementById("pmRoot"), { state: EditorState.create({ schema }) });
+		window.__modelText.prosemirror = () => view.state.doc.textContent;
+	} catch (error) {
+		window.__loadErrors.push("prosemirror: " + error.message);
+	}
+
+	window.__ready = true;
+</script>
+</body></html>`;
 
 async function resolveChromium() {
 	let chromium;
@@ -130,6 +214,12 @@ async function startFixtureServer() {
 			await new Promise((resolve) => alt.close(resolve));
 		},
 	};
+}
+
+async function startFrameworkEditorServer() {
+	const server = serve(() => FRAMEWORK_EDITORS_PAGE);
+	const origin = await listen(server);
+	return { origin, close: () => new Promise((resolve) => server.close(resolve)) };
 }
 
 async function launchExtension(launcher, dir) {
@@ -202,6 +292,7 @@ export {
 	resolveChromium,
 	extensionDirs,
 	startFixtureServer,
+	startFrameworkEditorServer,
 	launchExtension,
 	typeUntil,
 	typeOnce,

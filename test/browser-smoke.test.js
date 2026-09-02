@@ -160,27 +160,47 @@ for (const dir of extensionDirs()) {
 			});
 		});
 
-		describe("Known issue: a framework-controlled contenteditable loses every diacritic", () => {
-			// Reproduces #30 (Discord, Slate.js). AVIM cancels the keypress and writes the DOM
-			// without dispatching input, so the editor's own model only ever holds the raw keys, and
-			// its next re-render throws the accents away. Space is when it becomes obvious.
-			it('typing "tieengs " leaves "tieng "', async () => {
+		describe("A framework-controlled contenteditable keeps the diacritics (#30)", () => {
+			// Discord's message box is Slate, which re-renders from its own model and so reverts a
+			// DOM edit it never saw. AVIM cannot ask which editors do that, so it watches for one
+			// revert and switches that host to announcing its rewrite as backspaces plus an
+			// insertion. The revert is only visible one keystroke late, which costs the conversion
+			// that exposed it. Space is when a lost accent used to become obvious.
+			it("loses only the conversion that exposes the host, then stays correct", async () => {
+				const textOf = () => page.locator("#controlled").evaluate((element) => element.textContent);
+
 				await page.evaluate(() => window.__resetControlled());
 				await page.locator("#controlled").click();
 				await page.keyboard.type("tieengs ", { delay: 15 });
+				assert.equal(await textOf(), "tiéng ", "the ê is lost while the host is still unknown");
 
-				assert.equal(await page.locator("#controlled").evaluate((element) => element.textContent), "tieng ");
+				await page.evaluate(() => window.__resetControlled());
+				await page.locator("#controlled").click();
+				await page.keyboard.type("tieengs ", { delay: 15 });
+				assert.equal(await textOf(), "tiếng ", "the same host is now announced to");
 			});
 
 			it("the same keystrokes in a plain contenteditable keep the diacritics", async () => {
 				// Chrome stores a trailing space in a contenteditable as &nbsp; so it stays visible.
 				assert.equal(await typeUntil(page, "#editable", "tieengs ", "tiếng\u00a0"), "tiếng\u00a0");
 			});
+
+			it("fires an input event for the converted keystroke, for editors that read the DOM", async () => {
+				await page.locator("#editable").evaluate((element) => {
+					element.textContent = "";
+					window.__editableInputEvents = 0;
+				});
+				await page.locator("#editable").click();
+				await page.keyboard.type("chaof", { delay: 15 });
+
+				assert.equal(await page.locator("#editable").evaluate((element) => element.textContent), "chào");
+				assert.equal(await page.evaluate(() => window.__editableInputEvents), 5);
+			});
 		});
 
-		describe("Known issue: a converted keystroke fires no input event", () => {
-			// AVIM cancels the keypress and assigns el.value, which dispatches nothing. Frameworks
-			// that track state from input events therefore never see the Vietnamese text.
+		describe("Known issue: a converted keystroke in an input fires no input event", () => {
+			// The input and textarea path still assigns el.value, which dispatches nothing.
+			// Frameworks that track state from input events therefore never see the Vietnamese text.
 			it("reports 4 input events for the 5 keystrokes of chaof", async () => {
 				await page.locator("#eventProbe").evaluate((element) => {
 					element.value = "";
