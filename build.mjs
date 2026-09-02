@@ -95,8 +95,23 @@ async function buildScripts(tree) {
 	}
 }
 
+async function readVersion() {
+	const [manifest, pkg] = await Promise.all([
+		readFile(path.join(SRC, 'manifest.json'), 'utf8').then(JSON.parse),
+		readFile('package.json', 'utf8').then(JSON.parse),
+	]);
+	// The release workflow derives the tag and asset name from the manifest, so a silent drift
+	// would publish a wrongly named artifact.
+	if (manifest.version !== pkg.version) {
+		throw new Error(
+			`version drift: src/manifest.json is ${manifest.version}, package.json is ${pkg.version}`,
+		);
+	}
+	return manifest.version;
+}
+
 async function zipBuild() {
-	const { version } = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8'));
+	const version = await readVersion();
 	const target = path.join(DIST, `avim-chrome-${version}.zip`);
 	const archive = new yazl.ZipFile();
 	// Directory entries are emitted too, matching what a plain `zip -r` of build/ produces.
