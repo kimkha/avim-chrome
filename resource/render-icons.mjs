@@ -20,18 +20,25 @@ import { pathToFileURL } from 'node:url';
 const SVG = path.join(import.meta.dirname, 'avim.svg');
 const OUT = path.join(import.meta.dirname, '..', 'src', 'icons');
 
-// Optical sizing is derived, not hand-tuned. The glyph keeps its drawn size at 128px and grows as
-// the icon shrinks, reaching GLYPH_SCALE_MAX at 16px where the Đ fills the keycap face.
+// Optical sizing is derived, not hand-tuned. At 128px the glyph is left exactly as drawn. As the
+// icon shrinks it both grows and slides onto the centre of the key's face, reaching GLYPH_SCALE_MAX
+// fully centred at 16px, where the Đ fills the key.
 //
-// GLYPH_SCALE_MAX was measured, not guessed: rendering the keycap without the glyph at 512px and
-// classifying its light inner face against its dark frame, 1.5 is the largest scale whose glyph ink
-// still lands entirely on the face. 1.55 puts 60 pixels through the frame.
+// Re-centring is the part that matters: as drawn, the glyph sits 30.6 units left and 34.4 units
+// above the centre of the face (in the 256 viewBox) and covers only 38% x 35% of it. Scaling about
+// its own centre therefore drives it into the top-left frame while it is still small — that is why
+// an earlier attempt measured a ceiling of 1.5 and left the 16px glyph looking undersized.
 //
-// The ramp is linear in 1/size, so each halving of the icon adds roughly the same amount of glyph.
+// GLYPH_SCALE_MAX was measured: rendering the key with the glyph hidden at 512px separates its light
+// face from its dark frame, and with re-centring 2.55 is the largest scale keeping half a pixel of
+// clearance at 16px. It touches the frame at 2.8.
 const SIZES = [16, 24, 32, 48, 128];
-const GLYPH_SCALE_MAX = 1.5;
+const GLYPH_SCALE_MAX = 2.55;
 const GLYPH_SCALE_MIN_AT = 128;
 const GLYPH_SCALE_MAX_AT = 16;
+
+// Bounding box of the key's top face in viewBox units, taken from the path196/path221 pair.
+const FACE = { x: 52.4, y: 32.0, width: 151.1, height: 149.1 };
 
 // 1.25 reproduces the framing Inkscape produced when exporting the drawing rather than the page;
 // 128 was exported as the page, so it stays at 1.
@@ -39,11 +46,11 @@ function cropFor(size) {
 	return size === 128 ? 1 : 1.25;
 }
 
-function glyphScaleFor(size) {
+// 0 at 128px, 1 at 16px, linear in 1/size so each halving of the icon adds about the same amount.
+function rampFor(size) {
 	const span = 1 / GLYPH_SCALE_MAX_AT - 1 / GLYPH_SCALE_MIN_AT;
 	const t = (1 / size - 1 / GLYPH_SCALE_MIN_AT) / span;
-	const clamped = Math.min(Math.max(t, 0), 1);
-	return Number((1 + clamped * (GLYPH_SCALE_MAX - 1)).toFixed(4));
+	return Math.min(Math.max(t, 0), 1);
 }
 
 function resolveChromium() {
@@ -55,32 +62,36 @@ function resolveChromium() {
 	return executablePath;
 }
 
-async function render(browser, { size, crop, glyphScale }) {
+async function render(browser, { size, crop, ramp }) {
 	const box = Math.round(size * crop);
 	const page = await browser.newPage({ viewport: { width: box, height: box }, deviceScaleFactor: 1 });
 	await page.goto(pathToFileURL(SVG).href, { waitUntil: 'load' });
 
+	const scale = 1 + ramp * (GLYPH_SCALE_MAX - 1);
 	await page.evaluate(
-		({ box, glyphScale }) => {
+		({ box, scale, ramp, FACE }) => {
 			const root = document.documentElement;
 			root.setAttribute('width', String(box));
 			root.setAttribute('height', String(box));
-			if (glyphScale === 1) {
+			if (ramp === 0) {
 				return;
 			}
 			const glyph = document.getElementById('glyph');
-			const { x, y, width, height } = glyph.getBBox();
-			const cx = x + width / 2;
-			const cy = y + height / 2;
-			const scale = `translate(${cx} ${cy}) scale(${glyphScale}) translate(${-cx} ${-cy})`;
-			glyph.setAttribute('transform', scale);
+			const bbox = glyph.getBBox();
+			const cx = bbox.x + bbox.width / 2;
+			const cy = bbox.y + bbox.height / 2;
+			const shiftX = (FACE.x + FACE.width / 2 - cx) * ramp;
+			const shiftY = (FACE.y + FACE.height / 2 - cy) * ramp;
+			const transform =
+				`translate(${shiftX} ${shiftY}) translate(${cx} ${cy}) scale(${scale}) translate(${-cx} ${-cy})`;
+			glyph.setAttribute('transform', transform);
 			// linearGradient4020 is userSpaceOnUse, so it lives in the glyph's user space: without
 			// the same transform premultiplied onto it the fill collapses to a flat colour.
 			const gradient = document.getElementById('linearGradient4020');
 			const existing = gradient.getAttribute('gradientTransform') ?? '';
-			gradient.setAttribute('gradientTransform', `${scale} ${existing}`.trim());
+			gradient.setAttribute('gradientTransform', `${transform} ${existing}`.trim());
 		},
-		{ box, glyphScale },
+		{ box, scale, ramp, FACE },
 	);
 
 	const offset = (box - size) / 2;
@@ -91,7 +102,7 @@ async function render(browser, { size, crop, glyphScale }) {
 	});
 	await writeFile(path.join(OUT, `icon${size}.png`), png);
 	await page.close();
-	return `icon${size}.png ${size}x${size} (rendered ${box}px, crop ${crop}, glyph ${glyphScale})`;
+	return `icon${size}.png ${size}x${size} (rendered ${box}px, crop ${crop}, glyph x${scale.toFixed(3)}, centred ${(ramp * 100).toFixed(0)}%)`;
 }
 
 const browser = await chromium.launch({
@@ -100,6 +111,6 @@ const browser = await chromium.launch({
 	args: ['--no-sandbox'],
 });
 for (const size of SIZES) {
-	console.log(await render(browser, { size, crop: cropFor(size), glyphScale: glyphScaleFor(size) }));
+	console.log(await render(browser, { size, crop: cropFor(size), ramp: rampFor(size) }));
 }
 await browser.close();
