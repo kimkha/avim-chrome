@@ -282,7 +282,8 @@ async function launchExtension(launcher, dir) {
 
 function locate(page, target) {
 	const spec = typeof target === "string" ? { selector: target } : target;
-	const scope = spec.frame ? page.frameLocator(spec.frame) : page;
+	const scope = [].concat(spec.frame ?? [])
+		.reduce((parent, frame) => parent.frameLocator(frame), page);
 	return scope.locator(spec.selector);
 }
 

@@ -129,6 +129,35 @@ for (const dir of extensionDirs()) {
 			}
 		});
 
+		describe("An iframe added after load still converts", () => {
+			it("a designMode iframe inserted dynamically", async () => {
+				await page.evaluate(() => {
+					const frame = document.createElement("iframe");
+					frame.id = "lateDesignMode";
+					document.body.append(frame);
+					frame.contentDocument.designMode = "on";
+				});
+
+				const target = { frame: "#lateDesignMode", selector: "body" };
+				assert.equal(await typeUntil(page, target, "chaof", "chào"), "chào");
+			});
+
+			it("a designMode iframe inserted inside another iframe, a second later", async () => {
+				// The observer does not cross document boundaries; this lands on the child frame's
+				// own content script instance (all_frames), long after its initial scan.
+				await page.waitForTimeout(1000);
+				await page.frameLocator("#sameOrigin").locator("body").evaluate(() => {
+					const frame = document.createElement("iframe");
+					frame.id = "nestedDesignMode";
+					document.body.append(frame);
+					frame.contentDocument.designMode = "on";
+				});
+
+				const target = { frame: ["#sameOrigin", "#nestedDesignMode"], selector: "body" };
+				assert.equal(await typeUntil(page, target, "chaof", "chào"), "chào");
+			});
+		});
+
 		describe("A word split across elements is still one word", () => {
 			// An editor splits a word for anything inline — bold, a mention, an emoji — and Slate,
 			// Lexical and ProseMirror wrap every leaf in its own span. Reading only the caret's text

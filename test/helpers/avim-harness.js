@@ -85,10 +85,27 @@ function createSandbox() {
 	sandbox.__selection = null;
 	sandbox.__messages = [];
 	sandbox.__timers = [];
-	// AVIMAJAXFix reschedules itself up to 100 times; a real timer would outlive the test
+	// Timers are captured, not run: a real timer would outlive the test
 	sandbox.setTimeout = (callback, delay) => {
 		sandbox.__timers.push({ callback, delay });
 		return sandbox.__timers.length;
+	};
+	sandbox.__observers = [];
+	sandbox.MutationObserver = class {
+		constructor(callback) {
+			this.callback = callback;
+			this.target = null;
+			this.options = null;
+			this.disconnected = false;
+			sandbox.__observers.push(this);
+		}
+		observe(target, options) {
+			this.target = target;
+			this.options = options;
+		}
+		disconnect() {
+			this.disconnected = true;
+		}
 	};
 	sandbox.chrome = {
 		runtime: {
@@ -101,6 +118,7 @@ function createSandbox() {
 	};
 	sandbox.document = {
 		getElementsByTagName: () => [],
+		documentElement: { id: "documentElement" },
 		addEventListener() {},
 		removeEventListener() {},
 		createRange: () => new FakeRange(new FakeText(""), 0, 0),

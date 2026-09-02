@@ -1120,6 +1120,9 @@ function AVIMInit(avim) {
 		if (findIgnore(frame)) {
 			continue;
 		}
+		// The document inside is often not ready (or not yet designMode) when the frame is first
+		// seen; each load is another chance to attach. Re-adding the same listener is a no-op.
+		frame.addEventListener("load", rescanIframes);
 		try {
 			const frameWindow = frame.contentWindow;
 			const iframedit = frameWindow.document;
@@ -1206,19 +1209,30 @@ function keyUpHandler(evt) {
 	}, DOUBLE_TAP_MS);
 }
 
-let ajaxCounter = 0;
-
-/** Rescans for iframes every 100ms for the first 100 rounds, to catch ones added after load. */
-function AVIMAJAXFix() {
+function rescanIframes() {
 	AVIMInit(AVIMObj);
-	ajaxCounter++;
-	if (ajaxCounter < 100) {
-		setTimeout(AVIMAJAXFix, 100);
-	}
+}
+
+let iframeObserver = null;
+
+/** Rescans when a new iframe lands anywhere in the page, replacing 10 seconds of polling. */
+function watchForIframes() {
+	iframeObserver = new MutationObserver((mutations) => {
+		const brought = (node) =>
+			(upperCase(node.tagName ?? "") === "IFRAME") || Boolean(node.querySelector?.("iframe"));
+		if (mutations.some((mutation) => [...mutation.addedNodes].some(brought))) {
+			rescanIframes();
+		}
+	});
+	iframeObserver.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 function removeOldAVIM() {
-	document.removeEventListener("mouseup", AVIMAJAXFix, false);
+	if (iframeObserver) {
+		iframeObserver.disconnect();
+		iframeObserver = null;
+	}
+	document.removeEventListener("mouseup", rescanIframes, false);
 	document.removeEventListener("keypress", keyPressHandler, true);
 	document.removeEventListener("keyup", keyUpHandler, true);
 
@@ -1232,9 +1246,10 @@ function newAVIMInit() {
 	}
 
 	AVIMObj = new AVIM();
-	AVIMAJAXFix();
+	rescanIframes();
+	watchForIframes();
 
-	document.addEventListener("mouseup", AVIMAJAXFix, false);
+	document.addEventListener("mouseup", rescanIframes, false);
 	document.addEventListener("keyup", keyUpHandler, true);
 	document.addEventListener("keypress", keyPressHandler, true);
 }
