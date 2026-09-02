@@ -191,12 +191,34 @@ for (const dir of extensionDirs()) {
 			});
 		});
 
-		describe("Known issue: a contenteditable ending in a space loses it", () => {
-			// ifMoz stashes everything after the caret, deletes to the end of the text node, then
-			// re-inserts. Chrome puts the caret before a trailing collapsed space, so that space is
-			// what gets stashed and it does not survive the round trip. Losing it also merges the two
-			// words, which then fails the spell check and blocks the tone.
-			it('typing "chaof" after "xin " gives "xinchaof", not "xin chào"', async () => {
+		describe("A word after a trailing space", () => {
+			// Chrome cannot place the caret after a trailing collapsed plain space, so new text lands
+			// before it and Chrome drops the space — measured identically with the extension removed.
+			// Not an AVIM bug: a space the user types becomes an NBSP and both realistic flows work.
+			it('typing the space yourself: "xin chaof" gives "xin chào"', async () => {
+				const editable = page.locator("#spaced");
+				await editable.evaluate((element) => {
+					element.textContent = "";
+				});
+				await editable.click();
+				await page.keyboard.type("xin chaof", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "xin chào");
+			});
+
+			it('after a preset NBSP: "chaof" gives "xin chào"', async () => {
+				const editable = page.locator("#spaced");
+				await editable.evaluate((element) => {
+					element.textContent = "xin\u00a0";
+				});
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("chaof", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "xin chào");
+			});
+
+			it("after a preset plain space, Chrome itself eats the space and merges the words", async () => {
 				const editable = page.locator("#spaced");
 				await editable.evaluate((element) => {
 					element.textContent = "xin ";

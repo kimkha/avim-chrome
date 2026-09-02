@@ -88,6 +88,11 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 		const adapted = await retype("slate", "#slate", "tieengs Vieejt");
 		assert.equal(adapted.dom, "tiếng Việt");
 		assert.equal(adapted.model, "tiếng Việt");
+
+		// the exact report in #30: on Discord the diacritics vanished at the space AFTER the word
+		const spaced = await retype("slate", "#slate", "chaof anh");
+		assert.equal(spaced.dom, "chào anh");
+		assert.equal(spaced.model, "chào anh");
 	});
 
 	for (const [label, name, selector] of RECONCILING) {
