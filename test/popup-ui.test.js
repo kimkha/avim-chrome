@@ -179,7 +179,7 @@ describe("Labels come from the locale file, not the hardcoded fallbacks", () => 
 		it(`#${elementId} shows "${enMessages[messageKey].message}"`, () => {
 			const popup = loadPopup({});
 
-			assert.equal(popup.element(elementId).innerHTML, enMessages[messageKey].message);
+			assert.equal(popup.element(elementId).textContent, enMessages[messageKey].message);
 		});
 	}
 });

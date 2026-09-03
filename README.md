@@ -1,14 +1,14 @@
 avim-chrome [![CI](https://github.com/kimkha/avim-chrome/actions/workflows/ci.yml/badge.svg)](https://github.com/kimkha/avim-chrome/actions/workflows/ci.yml)
 ===========
 
-Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trình duyệt Google Chrome và Opera:
+Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trình duyệt Google Chrome và các trình duyệt khác dùng WebExtension:
 
 * [Cài đặt vào Google Chrome](https://chrome.google.com/webstore/detail/opgbbffpdglhkpglnlkiclakjlpiedoh)
-* [Cài đặt vào Opera](https://addons.opera.com/extensions/details/avim-vietnamese-input-method/)
+* [Cài đặt vào Edge](https://microsoftedge.microsoft.com/addons/detail/avim-vietnamese-input-m/mgoacbmfohepgebnedihminjdkbgbpcc/)
 
 ## Phát triển
 
-Bộ test chạy trên test runner có sẵn của Node (cần Node >= 20) và không cần cài dependency nào:
+Bộ test chạy trên test runner có sẵn của Node (cần Node >= 24) và không cần cài dependency nào:
 
 ```sh
 yarn test           # chạy toàn bộ test
@@ -53,7 +53,3 @@ Chrome không có test runner riêng cho extension của bên thứ ba (`chrome.
 khiển browser bằng Puppeteer/Playwright với `--load-extension`. Đó là những gì
 [`test/helpers/browser-harness.js`](test/helpers/browser-harness.js) làm.
 
-## Xem thêm
-
-* [AVIM cho Firefox](http://avim.1ec5.org/) tương tích với các trình duyệt Firefox và SeaMonkey, chương trình thư điện tử Thunderbird, trình soạn thảo mã Komodo, và trình soạn thảo BlueGriffon.
-* [Brackets-AVIM](https://github.com/baivong/brackets-avim) tương thích với trình soạn thảo Brackets.

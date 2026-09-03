@@ -1,6 +1,6 @@
 {
   "name": "__MSG_extName__",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "manifest_version": 3,
   "description": "__MSG_extDescription__",
   "icons": {
@@ -24,9 +24,17 @@
     "all_frames": true
   }],
   "default_locale": "en",
-  "offline_enabled": true,
   "permissions": ["storage"],
   "background": {
     "service_worker": "chrome/background.js"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "mozilla@kimkha.com",
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
   }
 }

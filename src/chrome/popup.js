@@ -38,7 +38,7 @@
 
 	function loadText() {
 		for (const key of LABEL_KEYS) {
-			$g(`txt${key}`).innerHTML = chrome.i18n.getMessage(`extPopup${key}`);
+			$g(`txt${key}`).textContent = chrome.i18n.getMessage(`extPopup${key}`);
 		}
 	}
 

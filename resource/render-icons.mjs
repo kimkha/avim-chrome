@@ -20,9 +20,10 @@ import { pathToFileURL } from 'node:url';
 const SVG = path.join(import.meta.dirname, 'avim.svg');
 const OUT = path.join(import.meta.dirname, '..', 'src', 'icons');
 
-// Optical sizing is derived, not hand-tuned. At 128px the glyph is left exactly as drawn. As the
-// icon shrinks it both grows and slides onto the centre of the key's face, reaching GLYPH_SCALE_MAX
-// fully centred at 16px, where the Đ fills the key.
+// Optical sizing is derived, not hand-tuned. At 128px and above the glyph is left exactly as drawn,
+// so it scales in proportion with the icon. As the icon shrinks below 128 it both grows and slides
+// onto the centre of the key's face, reaching GLYPH_SCALE_MAX fully centred at 32px and below, where
+// the Đ fills the key.
 //
 // Re-centring is the part that matters: as drawn, the glyph sits 30.6 units left and 34.4 units
 // above the centre of the face (in the 256 viewBox) and covers only 38% x 35% of it. Scaling about
@@ -32,21 +33,22 @@ const OUT = path.join(import.meta.dirname, '..', 'src', 'icons');
 // GLYPH_SCALE_MAX was measured: rendering the key with the glyph hidden at 512px separates its light
 // face from its dark frame, and with re-centring 2.55 is the largest scale keeping half a pixel of
 // clearance at 16px. It touches the frame at 2.8.
-const SIZES = [16, 24, 32, 48, 128];
+const SIZES = [16, 24, 32, 48, 64, 128, 300];
 const GLYPH_SCALE_MAX = 2.55;
 const GLYPH_SCALE_MIN_AT = 128;
-const GLYPH_SCALE_MAX_AT = 16;
+const GLYPH_SCALE_MAX_AT = 32;
 
 // Bounding box of the key's top face in viewBox units, taken from the path196/path221 pair.
 const FACE = { x: 52.4, y: 32.0, width: 151.1, height: 149.1 };
 
 // 1.25 reproduces the framing Inkscape produced when exporting the drawing rather than the page;
-// 128 was exported as the page, so it stays at 1.
+// 128 and larger are framed as the page, so they stay at 1.
 function cropFor(size) {
-	return size === 128 ? 1 : 1.25;
+	return size >= 128 ? 1 : 1.25;
 }
 
-// 0 at 128px, 1 at 16px, linear in 1/size so each halving of the icon adds about the same amount.
+// 0 at 128px and above (glyph as drawn), 1 at 32px and below (fully grown + centred), linear in
+// 1/size between so each halving of the icon adds about the same amount.
 function rampFor(size) {
 	const span = 1 / GLYPH_SCALE_MAX_AT - 1 / GLYPH_SCALE_MIN_AT;
 	const t = (1 / size - 1 / GLYPH_SCALE_MIN_AT) / span;
