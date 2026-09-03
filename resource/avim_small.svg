@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vector rebuild of resource/avim_small.psd (Edge/Opera promo tile, 440x280).
+     Keycap+Đ reused verbatim from resource/avim.svg (pure vector, metadata stripped).
+     Fonts EMBEDDED (subset, base64): Open Sans Medium (AVIM); Josefin Sans Light for
+     "Vietnamese" - a thin sans whose lowercase is ~half the cap height in ONE uniform
+     size/weight; TeX Gyre Chorus (Zapf Chancery clone) for "for" as the Monotype Corsiva
+     substitute. Josefin is primary for Vietnamese so the low-x-height look is preserved. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="440" height="280" viewBox="0 0 440 280">
+  <defs>
+    <radialGradient id="tileBg" cx="42%" cy="38%" r="78%" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#C7E3FE"/>
+      <stop offset="0.6" stop-color="#B4D8FD"/>
+      <stop offset="1" stop-color="#99CCFF"/>
+    </radialGradient>
+    <filter id="textShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2.4" flood-color="#41537a" flood-opacity="0.24"/>
+    </filter>
+  </defs>
+  <style>
+    @font-face { font-family:"AVIMSansMed"; font-weight:500; font-style:normal;
+      src:url(data:font/ttf;base64,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) format("truetype"); }
+    @font-face { font-family:"AVIMLowX"; font-weight:300; font-style:normal;
+      src:url(data:font/ttf;base64,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) format("truetype"); }
+    @font-face { font-family:"AVIMScript"; font-weight:400; font-style:normal;
+      src:url(data:font/ttf;base64,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) format("truetype"); }
+  </style>
+  <rect x="0" y="0" width="440" height="280" fill="url(#tileBg)"/>
+<svg x="6.4" y="61.4" width="159.3" height="159.3" viewBox="0 0 256 256"
+       preserveAspectRatio="xMidYMid meet"
+       xmlns:svg="http://www.w3.org/2000/svg"
+       xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg:defs xmlns:svg="http://www.w3.org/2000/svg" id="defs311"><svg:linearGradient x1="74.31543" y1="78.248535" x2="119.12988" y2="78.248535" id="linearGradient4008" gradientUnits="userSpaceOnUse">
+          <svg:stop id="stop4010" style="stop-color:#7d7d99;stop-opacity:1" offset="0"/>
+          <svg:stop id="stop4012" style="stop-color:#585868;stop-opacity:1" offset="1"/>
+          <midPointStop id="midPointStop298" style="stop-color:#7D7D99" offset="0"/>
+          <midPointStop id="midPointStop300" style="stop-color:#7D7D99" offset="0.5"/>
+          <midPointStop id="midPointStop302" style="stop-color:#585868" offset="1"/>
+        </svg:linearGradient>
+    
+    
+  
+      <svg:linearGradient x1="213.1709" y1="213.1709" x2="42.809952" y2="42.809956" id="XMLID_11_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop107" style="stop-color:#ff0000;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop109" style="stop-color:#ffb0b0;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop111" style="stop-color:#FF0000" offset="0"/>
+        <midPointStop id="midPointStop113" style="stop-color:#FF0000" offset="0.5"/>
+        <midPointStop id="midPointStop115" style="stop-color:#FFB0B0" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="213.17871" y1="213.17871" x2="42.822601" y2="42.822601" id="XMLID_12_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop122" style="stop-color:#f8310e;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop124" style="stop-color:#990000;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop126" style="stop-color:#F8310E" offset="0"/>
+        <midPointStop id="midPointStop128" style="stop-color:#F8310E" offset="0.5"/>
+        <midPointStop id="midPointStop130" style="stop-color:#990000" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="206.11816" y1="206.11816" x2="49.883472" y2="49.883472" id="XMLID_13_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop137" style="stop-color:#585868;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop139" style="stop-color:#333366;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop141" style="stop-color:#585868" offset="0"/>
+        <midPointStop id="midPointStop143" style="stop-color:#585868" offset="0.5"/>
+        <midPointStop id="midPointStop145" style="stop-color:#333366" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="128.00049" y1="211.93945" x2="128.00049" y2="44.060547" id="XMLID_14_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop152" style="stop-color:#666699;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop154" style="stop-color:#bdbdcf;stop-opacity:1" offset="0.32584301"/>
+        <svg:stop id="stop156" style="stop-color:#ffffff;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop158" style="stop-color:#666699" offset="0"/>
+        <midPointStop id="midPointStop160" style="stop-color:#666699" offset="0.5"/>
+        <midPointStop id="midPointStop162" style="stop-color:#BDBDCF" offset="0.325843"/>
+        <midPointStop id="midPointStop164" style="stop-color:#BDBDCF" offset="0.5"/>
+        <midPointStop id="midPointStop166" style="stop-color:#FFFFFF" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="128.00049" y1="174.43555" x2="128.00049" y2="44.060547" id="XMLID_15_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop173" style="stop-color:#ffffff;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop175" style="stop-color:#e9e9ef;stop-opacity:1" offset="0.162921"/>
+        <svg:stop id="stop177" style="stop-color:#cecedb;stop-opacity:1" offset="0.73033702"/>
+        <svg:stop id="stop179" style="stop-color:#b1b1c5;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop181" style="stop-color:#FFFFFF" offset="0"/>
+        <midPointStop id="midPointStop183" style="stop-color:#FFFFFF" offset="0.5"/>
+        <midPointStop id="midPointStop185" style="stop-color:#E9E9EF" offset="0.162921"/>
+        <midPointStop id="midPointStop187" style="stop-color:#E9E9EF" offset="0.5"/>
+        <midPointStop id="midPointStop189" style="stop-color:#CECEDB" offset="0.730337"/>
+        <midPointStop id="midPointStop191" style="stop-color:#CECEDB" offset="0.5"/>
+        <midPointStop id="midPointStop193" style="stop-color:#B1B1C5" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="128.00049" y1="174.43555" x2="128.00049" y2="44.060547" id="XMLID_16_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop200" style="stop-color:#ffffff;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop202" style="stop-color:#fafafb;stop-opacity:1" offset="0.15989269"/>
+        <svg:stop id="stop204" style="stop-color:#ededf1;stop-opacity:1" offset="0.33909991"/>
+        <svg:stop id="stop206" style="stop-color:#d6d6df;stop-opacity:1" offset="0.52763522"/>
+        <svg:stop id="stop208" style="stop-color:#b7b7c7;stop-opacity:1" offset="0.72270828"/>
+        <svg:stop id="stop210" style="stop-color:#8f8fa7;stop-opacity:1" offset="0.92086339"/>
+        <svg:stop id="stop212" style="stop-color:#7d7d99;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop214" style="stop-color:#FFFFFF" offset="0"/>
+        <midPointStop id="midPointStop216" style="stop-color:#FFFFFF" offset="0.6836159"/>
+        <midPointStop id="midPointStop218" style="stop-color:#7D7D99" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="66.087402" y1="173.5293" x2="66.087402" y2="206.86816" id="XMLID_17_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop225" style="stop-color:#ffffff;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop227" style="stop-color:#fafafb;stop-opacity:1" offset="0.1836116"/>
+        <svg:stop id="stop229" style="stop-color:#ededf1;stop-opacity:1" offset="0.3894237"/>
+        <svg:stop id="stop231" style="stop-color:#d6d6e0;stop-opacity:1" offset="0.60593331"/>
+        <svg:stop id="stop233" style="stop-color:#b7b7c8;stop-opacity:1" offset="0.82835269"/>
+        <svg:stop id="stop235" style="stop-color:#9a9ab1;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop237" style="stop-color:#FFFFFF" offset="0"/>
+        <midPointStop id="midPointStop239" style="stop-color:#FFFFFF" offset="0.6836159"/>
+        <midPointStop id="midPointStop241" style="stop-color:#9A9AB1" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="534.42188" y1="173.5293" x2="534.42188" y2="206.86816" id="XMLID_18_" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-1,0,0,1,724.334,0)">
+        <svg:stop id="stop248" style="stop-color:#ffffff;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop250" style="stop-color:#fafafb;stop-opacity:1" offset="0.1836116"/>
+        <svg:stop id="stop252" style="stop-color:#ededf1;stop-opacity:1" offset="0.3894237"/>
+        <svg:stop id="stop254" style="stop-color:#d6d6e0;stop-opacity:1" offset="0.60593331"/>
+        <svg:stop id="stop256" style="stop-color:#b7b7c8;stop-opacity:1" offset="0.82835269"/>
+        <svg:stop id="stop258" style="stop-color:#9a9ab1;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop260" style="stop-color:#FFFFFF" offset="0"/>
+        <midPointStop id="midPointStop262" style="stop-color:#FFFFFF" offset="0.6836159"/>
+        <midPointStop id="midPointStop264" style="stop-color:#9A9AB1" offset="1"/>
+      </svg:linearGradient>
+      
+      <svg:linearGradient x1="128.00049" y1="216.79883" x2="128.00049" y2="173.5986" id="XMLID_19_" gradientUnits="userSpaceOnUse">
+        <svg:stop id="stop271" style="stop-color:#b1b1c5;stop-opacity:1" offset="0"/>
+        <svg:stop id="stop273" style="stop-color:#a3a3ba;stop-opacity:1" offset="0.16451059"/>
+        <svg:stop id="stop275" style="stop-color:#7e7e9e;stop-opacity:1" offset="0.4760384"/>
+        <svg:stop id="stop277" style="stop-color:#424272;stop-opacity:1" offset="0.89851779"/>
+        <svg:stop id="stop279" style="stop-color:#333366;stop-opacity:1" offset="1"/>
+        <midPointStop id="midPointStop281" style="stop-color:#B1B1C5" offset="0"/>
+        <midPointStop id="midPointStop283" style="stop-color:#B1B1C5" offset="0.564972"/>
+        <midPointStop id="midPointStop285" style="stop-color:#333366" offset="1"/>
+      </svg:linearGradient>
+      
+      
+    <svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#XMLID_19_" id="linearGradient3202" gradientUnits="userSpaceOnUse" x1="128.00049" y1="216.79883" x2="128.00049" y2="173.5986" gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)"/><svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#XMLID_18_" id="linearGradient3205" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-1.14365,0,0,1.14365,809.99737,-18.387199)" x1="534.42188" y1="173.5293" x2="534.42188" y2="206.86816"/><svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#XMLID_17_" id="linearGradient3208" gradientUnits="userSpaceOnUse" x1="66.087402" y1="173.5293" x2="66.087402" y2="206.86816" gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)"/><svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#XMLID_16_" id="linearGradient3211" gradientUnits="userSpaceOnUse" x1="128.00049" y1="174.43555" x2="128.00049" y2="44.060547" gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)"/><svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#XMLID_15_" id="linearGradient3214" gradientUnits="userSpaceOnUse" x1="128.00049" y1="174.43555" x2="128.00049" y2="44.060547" gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)"/><svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#XMLID_14_" id="linearGradient3217" gradientUnits="userSpaceOnUse" x1="128.00049" y1="211.93945" x2="128.00049" y2="44.060547" gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)"/><svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#XMLID_13_" id="linearGradient3220" gradientUnits="userSpaceOnUse" x1="206.11816" y1="206.11816" x2="49.883472" y2="49.883472" gradientTransform="matrix(1.14365,0,0,1.14365,-18.387199,-18.387199)"/>
+        <svg:linearGradient gradientUnits="userSpaceOnUse" id="XMLID_20_" y2="78.248535" x2="119.12988" y1="78.248535" x1="74.31543">
+          <svg:stop offset="0" style="stop-color:#7d7d99;stop-opacity:1" id="stop294"/>
+          <svg:stop offset="1" style="stop-color:#585868;stop-opacity:1" id="stop296"/>
+          <midPointStop offset="0" style="stop-color:#7D7D99" id="midPointStop298"/>
+          <midPointStop offset="0.5" style="stop-color:#7D7D99" id="midPointStop300"/>
+          <midPointStop offset="1" style="stop-color:#585868" id="midPointStop302"/>
+        </svg:linearGradient>
+        
+      <svg:linearGradient xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:collect="always" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#linearGradient4008" id="linearGradient4020" x1="118.75899" y1="81.676826" x2="174.63171" y2="81.676826" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.0290245,0,0,1.0290245,-53.570118,-11.924229)"/></svg:defs>
+  
+  <svg:polyline xmlns:svg="http://www.w3.org/2000/svg" style="fill:none" points="0,256 0,0 256,0 256,256 " id="_x3C_Slice_x3E_" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/><svg:path xmlns:svg="http://www.w3.org/2000/svg" d="m 59.254797,26.094531 c -11.588949,0 -21.016802,10.51622 -21.016802,23.442033 l 0,156.926316 c 0,12.92637 9.427853,23.44259 21.016802,23.44259 l 137.491523,0 c 11.58839,0 21.01568,-10.51622 21.01568,-23.44259 l 0,-156.926316 c 0,-12.925813 -9.42729,-23.442033 -21.01568,-23.442033 l -137.491523,0 0,0 z" id="path148" style="fill:url(#linearGradient3220)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:connector-curvature="0" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/><svg:path xmlns:svg="http://www.w3.org/2000/svg" d="m 211.85501,206.46288 c 0,9.68528 -6.76585,17.53447 -15.10869,17.53447 l -137.491523,0 c -8.342837,0 -15.109246,-7.84919 -15.109246,-17.53447 l 0,-156.926316 c 0,-9.684169 6.766409,-17.534478 15.109246,-17.534478 l 137.491523,0 c 8.34284,0 15.10869,7.850309 15.10869,17.534478 l 0,156.926316 0,0 z" id="path169" style="fill:url(#linearGradient3217)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:connector-curvature="0" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/><svg:path xmlns:svg="http://www.w3.org/2000/svg" d="m 203.57248,167.48943 c 0,7.51861 -6.09797,13.61659 -13.61658,13.61659 l -123.910681,0 c -7.520839,0 -13.617699,-6.09798 -13.617699,-13.61659 l 0,-121.869644 c 0,-7.52028 6.09686,-13.617699 13.617699,-13.617699 l 123.910681,0 c 7.51861,0 13.61658,6.097419 13.61658,13.617699 l 0,121.869644 0,0 z" id="path196" style="fill:url(#linearGradient3214)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:connector-curvature="0" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/><svg:path xmlns:svg="http://www.w3.org/2000/svg" d="m 189.9559,32.002087 -2.5464,0 c 7.21034,0 13.05815,5.846128 13.05815,13.057601 l 0,116.861152 c 0,7.21035 -16.56505,13.05704 -23.77541,13.05704 l -97.591095,0 c -7.21203,0 -23.568236,-5.84669 -23.568236,-13.05704 l 0,-116.861152 c 0,-7.211473 5.847246,-13.057601 13.058718,-13.057601 l -2.546408,0 c -7.520838,0 -13.617699,6.097419 -13.617699,13.617699 l 0,121.869644 c 0,7.51861 6.096861,13.61659 13.617699,13.61659 l 123.910681,0 c 7.51861,0 13.61658,-6.09798 13.61658,-13.61659 l 0,-121.869644 c 0,-7.52028 -6.09797,-13.617699 -13.61658,-13.617699 z" id="path221" style="fill:url(#linearGradient3211)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:connector-curvature="0" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/><svg:path xmlns:svg="http://www.w3.org/2000/svg" d="m 53.334957,180.06958 c 0,0 3.177425,5.89806 8.624841,5.89806 l -9.532278,32.22993 0.907437,-38.12799 z" id="path244" style="fill:url(#linearGradient3208)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:connector-curvature="0" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/><svg:path xmlns:svg="http://www.w3.org/2000/svg" d="m 202.6656,180.06958 c 0,0 -3.17742,5.89806 -8.62539,5.89806 l 9.53227,32.22993 -0.90688,-38.12799 z" id="path267" style="fill:url(#linearGradient3205)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:connector-curvature="0" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/><svg:path xmlns:svg="http://www.w3.org/2000/svg" d="m 176.6565,188.0997 -97.314674,0 c -5.561334,0 -14.927202,18.64909 -22.325188,35.68546 0.732651,0.12731 1.476471,0.21219 2.238159,0.21219 l 137.491523,0 c 0.76168,0 1.5055,-0.0849 2.23704,-0.21219 -7.39799,-17.03637 -16.76608,-35.68546 -22.32686,-35.68546 z" id="path288" style="opacity:0.2;fill:url(#linearGradient3202)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:connector-curvature="0" inkscape:export-filename="/home/kimkha/Projects/addon/avim/icon128.png" inkscape:export-xdpi="192" inkscape:export-ydpi="192"/>
+<svg:path xmlns:svg="http://www.w3.org/2000/svg" id="glyph" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:label="Đ outlined from DejaVu Sans Bold Oblique 2.37 (italicAngle -11)" d="M93.0421 56.2417 91.0548 66.6667H99.6319L97.8537 75.7319H89.2766L86.836 88.0048H91.6126Q101.0614 88.0048 106.5528 82.7226Q112.0442 77.4403 112.0442 68.5146Q112.0442 62.4479 108.4356 59.3448Q104.8269 56.2417 97.7491 56.2417ZM81.5712 46.0956H95.692Q105.8032 46.0956 110.8588 47.2985Q115.9144 48.5014 119.2615 51.3255Q122.6436 54.1497 124.3869 58.1942Q126.1302 62.2387 126.1302 67.2943Q126.1302 74.3024 123.184 80.5783Q120.2378 86.8542 114.973 91.1427Q110.3707 94.9432 104.2865 96.547Q98.2023 98.1509 85.5459 98.1509H71.4251L75.7834 75.7319H68.6358L70.414 66.6667H77.5615Z" style="fill:url(#linearGradient4020);fill-opacity:1;stroke:none"/>
+  </svg>
+  <g filter="url(#textShadow)">
+    <text x="187" y="142" textLength="228" lengthAdjust="spacingAndGlyphs"
+          font-family="'Segoe UI', AVIMSansMed, 'DejaVu Sans', sans-serif"
+          font-weight="500" font-size="85" fill="#6D6D85">AVIM</text>
+    <text x="161" y="193" textLength="62" lengthAdjust="spacingAndGlyphs"
+          font-family="'Monotype Corsiva', AVIMScript, cursive"
+          font-size="54" fill="#9B9BC0">for</text>
+    <text x="231" y="193" textLength="199" lengthAdjust="spacingAndGlyphs"
+          font-family="AVIMLowX, sans-serif" font-weight="300" font-size="52" fill="#373737">Vietnamese</text>
+  </g>
+</svg>

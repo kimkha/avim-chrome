@@ -88,9 +88,24 @@ async function buildHtml() {
 	}
 }
 
-async function buildManifest() {
+// Firefox MV3 runs background.scripts (it ignores service_worker) and needs the gecko id; the
+// Chrome Web Store and Edge Partner Center reject background.scripts under MV3, and Chromium
+// ignores browser_specific_settings. One source manifest, shaped per store here.
+function manifestFor(target, manifest) {
+	const shaped = structuredClone(manifest);
+	if (target === 'firefox') {
+		// Same file, loaded as a non-persistent event page rather than a service worker.
+		shaped.background = { scripts: [manifest.background.service_worker] };
+		return shaped;
+	}
+	delete shaped.browser_specific_settings;
+	return shaped;
+}
+
+async function writeManifest(target) {
 	const manifest = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8'));
-	await writeOut(path.join(BUILD, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+	const shaped = manifestFor(target, manifest);
+	await writeOut(path.join(BUILD, 'manifest.json'), JSON.stringify(shaped, null, 2) + '\n');
 }
 
 // Each file is minified on its own, so `mangle.toplevel` must never rename something another
@@ -117,9 +132,8 @@ async function readVersion() {
 	return manifest.version;
 }
 
-async function zipBuild() {
-	const version = await readVersion();
-	const target = path.join(DIST, `avim-chrome-${version}.zip`);
+async function zipBuild(prefix, version) {
+	const target = path.join(DIST, `${prefix}-${version}.zip`);
 	const archive = new yazl.ZipFile();
 	// Directory entries are emitted too, matching what a plain `zip -r` of build/ produces.
 	for (const entry of await walkEntries(BUILD)) {
@@ -145,8 +159,15 @@ await rm(BUILD, { recursive: true, force: true });
 await Promise.all([
 	copyAssets(),
 	buildHtml(),
-	buildManifest(),
 	buildScripts('chrome'),
 	buildScripts('scripts'),
 ]);
-console.log(`built ${await zipBuild()}`);
+const version = await readVersion();
+// Firefox first, Chromium last: test:browser loads build/ via --load-extension in Chromium,
+// which rejects background.scripts, so build/ must be left holding the Chromium manifest.
+await writeManifest('firefox');
+const firefox = await zipBuild('avim-firefox', version);
+await writeManifest('chromium');
+const chromium = await zipBuild('avim-chrome', version);
+console.log(`built ${chromium}`);
+console.log(`built ${firefox}`);
