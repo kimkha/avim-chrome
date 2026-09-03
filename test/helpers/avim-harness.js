@@ -324,6 +324,7 @@ function createEditableHost(text, caret, caretEnd = caret) {
 	node.parentNode = host;
 	const range = new FakeRange(node, caret, caretEnd);
 	const selection = {
+		rangeCount: 1,
 		getRangeAt: () => range,
 		removeAllRanges() {},
 		addRange() {},

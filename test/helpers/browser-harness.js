@@ -31,6 +31,10 @@ function outerPage(altOrigin) {
 <div id="splitBold" contenteditable="true">ngu<b>oi</b></div>
 <div id="splitSpans" contenteditable="true"><span>ngu</span><span>oi</span></div>
 <div id="blocks" contenteditable="true"><div>xin</div><div>chao</div></div>
+<div id="softBreak" contenteditable="true">xin<br>chao</div>
+<div id="emojiSplit" contenteditable="true">hi<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">chao</div>
+<div id="chipSplit" contenteditable="true">hi<span contenteditable="false">@token</span>chao</div>
+<div id="midWord" contenteditable="true">chaoX</div>
 <div id="controlled" contenteditable="true" data-slate-editor="true"></div>
 <textarea id="eventProbe"></textarea>
 <div id="host"></div>
@@ -40,7 +44,8 @@ function outerPage(altOrigin) {
 <iframe id="designMode"></iframe>
 <script>
 	document.getElementById("host").attachShadow({ mode: "open" }).innerHTML =
-		'<textarea id="shadowTextarea"></textarea><input id="shadowText" type="text">';
+		'<textarea id="shadowTextarea"></textarea><input id="shadowText" type="text">' +
+		'<div id="shadowEditable" contenteditable="true"></div>';
 	const dynamic = document.createElement("textarea");
 	dynamic.id = "dynamic";
 	document.getElementById("slot").appendChild(dynamic);
@@ -287,7 +292,7 @@ function locate(page, target) {
 	return scope.locator(spec.selector);
 }
 
-function readEditable(element) {
+export function readEditable(element) {
 	return element.value ?? element.textContent;
 }
 

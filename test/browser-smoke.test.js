@@ -8,6 +8,7 @@ import {
 	launchExtension,
 	typeUntil,
 	typeOnce,
+	readEditable,
 } from "./helpers/browser-harness.js";
 
 const CONVERTS = [
@@ -120,6 +121,7 @@ for (const dir of extensionDirs()) {
 			const cases = [
 				["a textarea in an open shadow root", "#host >> #shadowTextarea"],
 				["an input in an open shadow root", "#host >> #shadowText"],
+				["a contenteditable in an open shadow root", "#host >> #shadowEditable"],
 			];
 
 			for (const [label, target] of cases) {
@@ -189,6 +191,80 @@ for (const dir of extensionDirs()) {
 					[...element.children].map((child) => child.textContent));
 				assert.deepEqual(lines, ["xin", "chào"], 'joining the blocks would spell-check "xinchao"');
 			});
+
+			it("does not reach back across a soft line break", async () => {
+				const editable = page.locator("#softBreak");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.innerHTML), "xin<br>chào");
+			});
+
+			it("does not reach back across an emoji image, and the emoji survives", async () => {
+				const editable = page.locator("#emojiSplit");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "hichào",
+					'joining the words would spell-check "hichao" and lose the tone');
+				assert.equal(await editable.evaluate((element) => element.querySelectorAll("img").length), 1);
+			});
+
+			it("does not reach back into an uneditable chip, and the chip survives", async () => {
+				const editable = page.locator("#chipSplit");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "hi@tokenchào");
+				assert.equal(await editable.evaluate((element) => element.querySelector("span").textContent), "@token");
+			});
+		});
+
+		describe("A tone typed with the caret in the middle of a word", () => {
+			it('"chaoX" with the caret after "chao" becomes "chàoX"', async () => {
+				await page.locator("#midWord").evaluate((element) => {
+					const range = document.createRange();
+					range.setStart(element.firstChild, 4);
+					range.collapse(true);
+					const sel = window.getSelection();
+					sel.removeAllRanges();
+					sel.addRange(range);
+					element.focus();
+				});
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await page.locator("#midWord").evaluate((element) => element.textContent), "chàoX");
+			});
+
+			// Fixing a missed letter after the fact: "khong em", arrow back to after the o, add the
+			// o. The rewrite lands inside the word, with "ng em" still after the caret.
+			const surfaces = [
+				["a textarea", "#textarea"],
+				["a text input", "#text"],
+				["a contenteditable div", "#editable"],
+			];
+
+			for (const [label, selector] of surfaces) {
+				it(`arrowing back into "khong em" and adding the o gives "không em" in ${label}`, async () => {
+					const editable = page.locator(selector);
+					await editable.click();
+					await page.keyboard.press("Control+A");
+					await page.keyboard.press("Delete");
+					await page.keyboard.type("khong em", { delay: 15 });
+					for (let i = 0; i < 5; i++) {
+						await page.keyboard.press("ArrowLeft");
+					}
+					await page.keyboard.type("o", { delay: 15 });
+					assert.equal(await editable.evaluate(readEditable), "không em");
+
+					await page.keyboard.type("o", { delay: 15 });
+					assert.equal(await editable.evaluate(readEditable), "khoong em",
+						"repeating the key mid-word escapes the transform");
+				});
+			}
 		});
 
 		describe("A word after a trailing space", () => {
@@ -245,22 +321,20 @@ for (const dir of extensionDirs()) {
 
 		describe("A framework-controlled contenteditable keeps the diacritics (#30)", () => {
 			// Discord's message box is Slate, which re-renders from its own model and so reverts a
-			// DOM edit it never saw. AVIM cannot ask which editors do that, so it watches for one
-			// revert and switches that host to announcing its rewrite as backspaces plus an
-			// insertion. The revert is only visible one keystroke late, which costs the conversion
-			// that exposed it. Space is when a lost accent used to become obvious.
-			it("loses only the conversion that exposes the host, then stays correct", async () => {
+			// DOM edit it never saw. Slate hosts are recognised by their DOM attributes and
+			// announced to as backspaces plus an insertion, so the model applies the rewrite itself.
+			it("announces to a Slate host from the very first conversion", async () => {
 				const textOf = () => page.locator("#controlled").evaluate((element) => element.textContent);
 
 				await page.evaluate(() => window.__resetControlled());
 				await page.locator("#controlled").click();
 				await page.keyboard.type("tieengs ", { delay: 15 });
-				assert.equal(await textOf(), "tiéng ", "the ê is lost while the host is still unknown");
+				assert.equal(await textOf(), "tiếng ", "correct from the first conversion in the host");
 
 				await page.evaluate(() => window.__resetControlled());
 				await page.locator("#controlled").click();
 				await page.keyboard.type("tieengs ", { delay: 15 });
-				assert.equal(await textOf(), "tiếng ", "the same host is now announced to");
+				assert.equal(await textOf(), "tiếng ");
 			});
 
 			it("the same keystrokes in a plain contenteditable keep the diacritics", async () => {

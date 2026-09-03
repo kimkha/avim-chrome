@@ -846,6 +846,11 @@ function blockOf(node, host) {
 	return element ?? host;
 }
 
+/** An embedded widget (emoji image, mention chip): part of the line but not of any word. */
+function isUneditableIsland(element) {
+	return (element.nodeType === 1) && (element.getAttribute("contenteditable") === "false");
+}
+
 /** The text node before `node`, in the same line of `host`. Walks with plain DOM links, so the
  * fake DOM the unit tests run on simply finds nothing and the caret's own node is all there is. */
 function previousTextNode(host, node, block) {
@@ -856,15 +861,15 @@ function previousTextNode(host, node, block) {
 			continue;
 		}
 		current = current.previousSibling;
-		while (current.lastChild) {
+		while (current.lastChild && !isUneditableIsland(current)) {
 			current = current.lastChild;
-		}
-		if (current.nodeName === "BR") {
-			return null;
 		}
 		if (current.nodeType === 3) {
 			return blockOf(current, host) === block ? current : null;
 		}
+		// Anything that is not text — a <br>, an emoji <img>, an uneditable chip — ends the word.
+		// Walking past one used to join the words around it and the diacritics stopped landing.
+		return null;
 	}
 	return null;
 }
@@ -916,18 +921,11 @@ function emitBeforeInput(host, inputType, data) {
 /**
  * Editors that re-render from their own model revert a DOM edit they never saw (Slate, so Discord).
  * Ones with a MutationObserver reconciler keep it (Lexical, Quill, ProseMirror) and mangle a
- * synthetic beforeinput instead, so the channel has to be chosen per host. Nothing in the DOM says
- * which is which; the only honest signal is watching one edit get reverted, which costs the first
- * conversion in a host and nothing after it.
- */
-const revertingHosts = new WeakSet();
-const pendingEdits = new WeakMap();
-
-/**
- * Reverting is not enough to earn the announcement: CKEditor reverts too, but reads
- * getTargetRanges() unconditionally, so it drops the insertion and throws on the deletes. Whether an
- * editor survives a range-less beforeinput cannot be probed, so this is an allowlist, keyed on the
- * attributes slate-react needs in the DOM to map it back to its own model.
+ * synthetic beforeinput instead, so the channel has to be chosen per host. Reverting is not enough
+ * to earn the announcement either: CKEditor reverts too, but reads getTargetRanges()
+ * unconditionally, so it drops the insertion and throws on the deletes. Whether an editor survives
+ * a range-less beforeinput cannot be probed, so this is an allowlist, keyed on the attributes
+ * slate-react needs in the DOM to map it back to its own model.
  */
 function isSlateEditor(host) {
 	if (typeof host.hasAttribute !== "function") {
@@ -936,15 +934,18 @@ function isSlateEditor(host) {
 	return host.hasAttribute("data-slate-editor") || (host.querySelector("[data-slate-string]") !== null);
 }
 
-function noteEditOutcome(host, before) {
-	const pending = pendingEdits.get(host);
-	if (!pending || before.startsWith(pending.wrote)) {
-		return;
+/** Announces a rewrite as backspaces plus an insertion. True when a listener claimed it. */
+function announceRewrite(host, before, after) {
+	const head = commonPrefixLength(before, after);
+	let claimed = false;
+	for (let left = before.length - head; left > 0; left--) {
+		claimed = !emitBeforeInput(host, "deleteContentBackward", null) || claimed;
 	}
-	if (before.startsWith(pending.was) && isSlateEditor(host)) {
-		revertingHosts.add(host);
+	const replacement = after.slice(head);
+	if (replacement) {
+		claimed = !emitBeforeInput(host, "insertText", replacement) || claimed;
 	}
-	pendingEdits.delete(host);
+	return claimed;
 }
 
 function commonPrefixLength(before, after) {
@@ -976,8 +977,8 @@ function replaceValueBeforeCaret(el, before, after, caret) {
 /**
  * Rewrites the text before the caret to `after`, from the first changed character on.
  *
- * A reverting host is told in backspaces plus one insertion, because a synthetic InputEvent carries
- * no getTargetRanges() and such an editor would otherwise apply the change at a stale caret.
+ * A Slate host is told in backspaces plus one insertion, because a synthetic InputEvent carries
+ * no getTargetRanges() and such an editor would otherwise revert an edit it never saw.
  * Everyone else gets the edit itself, through execCommand, which fires input but not beforeinput.
  */
 function replaceBeforeCaret(host, sel, range, parts, before, after) {
@@ -986,17 +987,8 @@ function replaceBeforeCaret(host, sel, range, parts, before, after) {
 	const from = locate(parts, head);
 	const to = locate(parts, before.length);
 
-	if (revertingHosts.has(host)) {
-		let claimed = false;
-		for (let left = before.length - head; left > 0; left--) {
-			claimed = !emitBeforeInput(host, "deleteContentBackward", null) || claimed;
-		}
-		if (replacement) {
-			claimed = !emitBeforeInput(host, "insertText", replacement) || claimed;
-		}
-		if (claimed) {
-			return;
-		}
+	if (isSlateEditor(host) && announceRewrite(host, before, after)) {
+		return;
 	}
 
 	range.setStart(from.node, from.offset);
@@ -1005,7 +997,7 @@ function replaceBeforeCaret(host, sel, range, parts, before, after) {
 	sel.addRange(range);
 	const doc = from.node.ownerDocument ?? document;
 	if (!doc.execCommand("insertText", false, replacement)) {
-		// Silent, so a reverting host discards it; still better than losing the keystroke
+		// Silent, so a model-backed editor discards it; still better than losing the keystroke
 		for (let at = parts.length - 1; at >= 0; at--) {
 			const part = parts[at];
 			if (part.node === from.node) {
@@ -1021,7 +1013,6 @@ function replaceBeforeCaret(host, sel, range, parts, before, after) {
 		sel.removeAllRanges();
 		sel.addRange(range);
 	}
-	pendingEdits.set(host, { was: before, wrote: after });
 }
 
 /**
@@ -1032,14 +1023,18 @@ function replaceBeforeCaret(host, sel, range, parts, before, after) {
 function ifMoz(e) {
 	const code = e.which;
 	const avim = AVIMObj.AVIM ?? AVIMObj;
-	const parent = e.target.parentNode;
-	const cwi = parent.wi ?? parent.parentNode.wi ?? window;
+	const target = e.composedPath ? e.composedPath()[0] : e.target;
+	const parent = target.parentNode;
+	// A shadow root's parentNode is null, so the walk to the iframe marker must not explode there
+	const cwi = parent.wi ?? parent.parentNode?.wi ?? window;
 	if (e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
 		return;
 	}
 
-	const sel = cwi.getSelection();
-	const range = sel ? sel.getRangeAt(0) : document.createRange();
+	// Inside a shadow root the document selection ends at the host; the root holds the real one
+	const root = target.getRootNode ? target.getRootNode() : document;
+	const sel = (typeof root.getSelection === "function") ? root.getSelection() : cwi.getSelection();
+	const range = (sel && sel.rangeCount) ? sel.getRangeAt(0) : document.createRange();
 	const node = range.endContainer;
 
 	avim.sk = fromCharCode(code);
@@ -1056,7 +1051,6 @@ function ifMoz(e) {
 	// Text after the caret is left out, so the engine sees the caret as the end of the value
 	const parts = partsBeforeCaret(host, node, caret);
 	const before = parts.map((part) => part.text).join("");
-	noteEditOutcome(host, before);
 
 	const editor = createTextEditor(before);
 	start(editor, e);
@@ -1085,7 +1079,7 @@ function checkCode(code) {
 	return (code === 145) || (code === 255);
 }
 
-const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0";
+const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0\u200b\ufeff";
 
 function notWord(word) {
 	return NOT_WORD_CHARS.includes(word);

@@ -61,13 +61,20 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 		}
 	});
 
-	async function retype(name, selector, sequence) {
+	async function retype(name, selector, sequence, delay = 30) {
 		const locator = page.locator(selector);
 		await locator.click();
-		await page.keyboard.press("Control+A");
-		await page.keyboard.press("Delete");
-		await page.waitForTimeout(150);
-		await page.keyboard.type(sequence, { delay: 30 });
+		// One Ctrl+A/Delete round is not always enough: the editor applies it asynchronously, and
+		// typing into a half-cleared model produced garbage measurements. Poll until truly empty.
+		for (let round = 0; round < 5; round++) {
+			await page.keyboard.press("Control+A");
+			await page.keyboard.press("Delete");
+			await page.waitForTimeout(150);
+			if (await page.evaluate((key) => window.__modelText[key](), name) === "") {
+				break;
+			}
+		}
+		await page.keyboard.type(sequence, { delay });
 		await page.waitForTimeout(300);
 
 		return {
@@ -76,23 +83,86 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 		};
 	}
 
-	// Slate re-renders from its own model, so it reverts the edit AVIM applies to the DOM. AVIM
-	// cannot ask which editors do that, so it watches for one revert and then announces its rewrite
-	// to that host as backspaces plus an insertion. A revert only shows up one keystroke late, so
-	// the conversion that exposes the host is the one that pays for it.
-	it("Slate loses only the conversion that exposes it, then stays correct", async () => {
-		const learning = await retype("slate", "#slate", "tieengs Vieejt");
-		assert.equal(learning.dom, "tiéng Việt", "the ê is lost while the host is still unknown");
-		assert.equal(learning.model, "tiéng Việt", "and the model agrees, which is the point of #30");
+	// Slate re-renders from its own model, so a DOM edit it never saw would be reverted. Slate
+	// hosts are recognised by their DOM attributes and announced to as backspaces plus an
+	// insertion from the very first conversion, so the model always agrees and nothing is lost.
+	it("Slate keeps every conversion, in the DOM and in its model", async () => {
+		const first = await retype("slate", "#slate", "tieengs Vieejt");
+		assert.equal(first.dom, "tiếng Việt", "correct from the very first conversion in the host");
+		assert.equal(first.model, "tiếng Việt", "and the model agrees, which is the point of #30");
 
-		const adapted = await retype("slate", "#slate", "tieengs Vieejt");
-		assert.equal(adapted.dom, "tiếng Việt");
-		assert.equal(adapted.model, "tiếng Việt");
+		const again = await retype("slate", "#slate", "tieengs Vieejt");
+		assert.equal(again.dom, "tiếng Việt");
+		assert.equal(again.model, "tiếng Việt");
 
 		// the exact report in #30: on Discord the diacritics vanished at the space AFTER the word
 		const spaced = await retype("slate", "#slate", "chaof anh");
 		assert.equal(spaced.dom, "chào anh");
 		assert.equal(spaced.model, "chào anh");
+
+		// Enter right after the tone: what a chat box sends must already carry the diacritics
+		const entered = await retype("slate", "#slate", "chaof\n");
+		assert.equal(entered.model, "chào\n");
+	});
+
+	it("Slate survives everyday typing around the happy path", async () => {
+		// escape sequences: repeating the modifier key takes the transform back (memory of #3810)
+		const escaped = await retype("slate", "#slate", "vaof ddd");
+		assert.equal(escaped.model, "vào dd");
+		const doubled = await retype("slate", "#slate", "aaa");
+		assert.equal(doubled.model, "aa");
+
+		// correcting a typo with backspace, then finishing the word
+		await retype("slate", "#slate", "chao");
+		await page.keyboard.press("Backspace");
+		await page.keyboard.type("of", { delay: 30 });
+		await page.waitForTimeout(300);
+		assert.equal(await page.evaluate(() => window.__modelText.slate()), "chào");
+
+		// clicking back into the middle of a line to add a missing tone
+		await retype("slate", "#slate", "chao xin");
+		for (let i = 0; i < 4; i++) {
+			await page.keyboard.press("ArrowLeft");
+		}
+		await page.keyboard.type("f", { delay: 30 });
+		await page.waitForTimeout(300);
+		assert.equal(await page.evaluate(() => window.__modelText.slate()), "chào xin");
+
+		// arrowing back inside a word to add a missed letter: kho|ng + o -> không
+		await retype("slate", "#slate", "khong em");
+		for (let i = 0; i < 5; i++) {
+			await page.keyboard.press("ArrowLeft");
+		}
+		await page.keyboard.type("o", { delay: 30 });
+		await page.waitForTimeout(300);
+		assert.equal(await page.evaluate(() => window.__modelText.slate()), "không em");
+		await page.keyboard.type("o", { delay: 30 });
+		await page.waitForTimeout(300);
+		assert.equal(await page.evaluate(() => window.__modelText.slate()), "khoong em",
+			"repeating the key mid-word escapes the transform");
+
+		// VNI: the default method is auto, so digit modifiers must work too
+		const vni = await retype("slate", "#slate", "chao2 anh");
+		assert.equal(vni.model, "chào anh");
+
+		// pasting a bare word, then adding the tone by keyboard
+		await retype("slate", "#slate", "");
+		await page.evaluate(() => {
+			const data = new DataTransfer();
+			data.setData("text/plain", "chao");
+			document.getElementById("slate").dispatchEvent(new ClipboardEvent("paste", {
+				clipboardData: data, bubbles: true, cancelable: true,
+			}));
+		});
+		await page.waitForTimeout(200);
+		await page.keyboard.type("f", { delay: 30 });
+		await page.waitForTimeout(300);
+		assert.equal(await page.evaluate(() => window.__modelText.slate()), "chào");
+	});
+
+	it("Slate keeps up with typing at full speed", async () => {
+		const rushed = await retype("slate", "#slate", "tieengs Vieejt", 0);
+		assert.equal(rushed.model, "tiếng Việt");
 	});
 
 	for (const [label, name, selector] of RECONCILING) {
