@@ -28,7 +28,14 @@ function outerPage(altOrigin) {
 <input id="byName" name="email">
 <div id="editable" contenteditable="true"></div>
 <div id="spaced" contenteditable="true">xin </div>
-<div id="controlled" contenteditable="true"></div>
+<div id="splitBold" contenteditable="true">ngu<b>oi</b></div>
+<div id="splitSpans" contenteditable="true"><span>ngu</span><span>oi</span></div>
+<div id="blocks" contenteditable="true"><div>xin</div><div>chao</div></div>
+<div id="softBreak" contenteditable="true">xin<br>chao</div>
+<div id="emojiSplit" contenteditable="true">hi<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">chao</div>
+<div id="chipSplit" contenteditable="true">hi<span contenteditable="false">@token</span>chao</div>
+<div id="midWord" contenteditable="true">chaoX</div>
+<div id="controlled" contenteditable="true" data-slate-editor="true"></div>
 <textarea id="eventProbe"></textarea>
 <div id="host"></div>
 <div id="slot"></div>
@@ -37,7 +44,8 @@ function outerPage(altOrigin) {
 <iframe id="designMode"></iframe>
 <script>
 	document.getElementById("host").attachShadow({ mode: "open" }).innerHTML =
-		'<textarea id="shadowTextarea"></textarea><input id="shadowText" type="text">';
+		'<textarea id="shadowTextarea"></textarea><input id="shadowText" type="text">' +
+		'<div id="shadowEditable" contenteditable="true"></div>';
 	const dynamic = document.createElement("textarea");
 	dynamic.id = "dynamic";
 	document.getElementById("slot").appendChild(dynamic);
@@ -46,28 +54,37 @@ function outerPage(altOrigin) {
 	document.getElementById("eventProbe").addEventListener("input", () => {
 		window.__inputEvents++;
 	});
+	window.__editableInputEvents = 0;
+	document.getElementById("editable").addEventListener("input", () => {
+		window.__editableInputEvents++;
+	});
 
-	// #controlled stands in for Slate/Draft-style editors such as Discord's message box: it keeps
-	// its own model and re-renders the DOM from it on every input event.
+	// #controlled stands in for Slate/Draft-style editors such as Discord's message box: it owns
+	// beforeinput, applies each one to its own model, and re-renders the DOM from that model.
+	// Like the real ones, it applies an event to the range it targets, not to the caret.
 	const controlled = document.getElementById("controlled");
 	let model = "";
 	controlled.addEventListener("beforeinput", (event) => {
-		if (event.data) {
-			model += event.data;
+		event.preventDefault();
+		const targets = event.getTargetRanges();
+		const from = targets.length ? targets[0].startOffset : model.length;
+		const to = targets.length ? targets[0].endOffset : model.length;
+		if (event.inputType === "deleteContentBackward") {
+			model = targets.length ? model.slice(0, from) + model.slice(to) : model.slice(0, -1);
+		} else if ((event.inputType === "insertText") && (event.data != null)) {
+			model = model.slice(0, from) + event.data + model.slice(to);
 		}
-	});
-	controlled.addEventListener("input", () => {
-		if (controlled.textContent !== model) {
-			controlled.textContent = model;
-		}
+		controlled.textContent = model;
+		const range = document.createRange();
 		if (controlled.firstChild) {
-			const range = document.createRange();
 			range.setStart(controlled.firstChild, controlled.firstChild.data.length);
-			range.collapse(true);
-			const selection = getSelection();
-			selection.removeAllRanges();
-			selection.addRange(range);
+		} else {
+			range.setStart(controlled, 0);
 		}
+		range.collapse(true);
+		const selection = getSelection();
+		selection.removeAllRanges();
+		selection.addRange(range);
 	});
 	window.__resetControlled = () => {
 		model = "";
@@ -76,6 +93,114 @@ function outerPage(altOrigin) {
 </script>
 </body></html>`;
 }
+
+/**
+ * Real editor frameworks on one page, pulled from a CDN at run time so the repo keeps its
+ * no-install test suite. Each is here for a different reason. Slate and CKEditor revert a DOM edit
+ * AVIM makes silently (#30), and are announced to instead. Lexical, Quill and ProseMirror reconcile
+ * the DOM edit, and are what a synthetic beforeinput sent to everyone would break. The controlled
+ * React input is here because a plain field has the same divergence: what the page reads
+ * is the component's state, not the DOM value AVIM wrote.
+ */
+const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
+	#lexical, .ProseMirror, .ql-editor { border: 1px solid #ccc; min-height: 32px; padding: 4px }
+</style></head><body>
+<textarea id="ready"></textarea>
+<div id="slateRoot"></div>
+<div id="lexical" contenteditable="true"></div>
+<div id="quillRoot"></div>
+<div id="pmRoot"></div>
+<div id="ckRoot"></div>
+<div id="reactRoot"></div>
+<script type="module">
+	const REACT = "react@18.3.1";
+	const DOM = "react-dom@18.3.1";
+	window.__loadErrors = [];
+	window.__modelText = {};
+
+	try {
+		const React = (await import(\`https://esm.sh/\${REACT}\`)).default;
+		const { createRoot } = await import(\`https://esm.sh/\${DOM}/client\`);
+		const { createEditor } = await import("https://esm.sh/slate@0.112.0");
+		const { Slate, Editable, withReact } =
+			await import(\`https://esm.sh/slate-react@0.112.1?deps=\${REACT},\${DOM},slate@0.112.0\`);
+		const App = () => {
+			const editor = React.useMemo(() => withReact(createEditor()), []);
+			const [value, setValue] = React.useState([{ type: "p", children: [{ text: "" }] }]);
+			window.__modelText.slate = () =>
+				value.map((block) => block.children.map((child) => child.text).join("")).join("\\n");
+			return React.createElement(Slate, { editor, initialValue: value, onChange: setValue },
+				React.createElement(Editable, { id: "slate" }));
+		};
+		createRoot(document.getElementById("slateRoot")).render(React.createElement(App));
+	} catch (error) {
+		window.__loadErrors.push("slate: " + error.message);
+	}
+
+	try {
+		const { createEditor, $getRoot } = await import("https://esm.sh/lexical@0.21.0");
+		const { registerPlainText } =
+			await import("https://esm.sh/@lexical/plain-text@0.21.0?deps=lexical@0.21.0");
+		const editor = createEditor({
+			namespace: "avim",
+			onError: (error) => window.__loadErrors.push("lexical: " + error.message),
+		});
+		editor.setRootElement(document.getElementById("lexical"));
+		registerPlainText(editor);
+		window.__modelText.lexical = () =>
+			editor.getEditorState().read(() => $getRoot().getTextContent());
+	} catch (error) {
+		window.__loadErrors.push("lexical: " + error.message);
+	}
+
+	try {
+		const Quill = (await import("https://esm.sh/quill@2.0.3")).default;
+		const quill = new Quill("#quillRoot");
+		window.__modelText.quill = () => quill.getText().replace(/\\n+$/, "");
+	} catch (error) {
+		window.__loadErrors.push("quill: " + error.message);
+	}
+
+	try {
+		const { EditorState } = await import("https://esm.sh/prosemirror-state@1.4.3");
+		const { EditorView } = await import(
+			"https://esm.sh/prosemirror-view@1.34.3?deps=prosemirror-state@1.4.3,prosemirror-model@1.22.3");
+		const { schema } = await import(
+			"https://esm.sh/prosemirror-schema-basic@1.2.3?deps=prosemirror-model@1.22.3");
+		const view = new EditorView(document.getElementById("pmRoot"), { state: EditorState.create({ schema }) });
+		window.__modelText.prosemirror = () => view.state.doc.textContent;
+	} catch (error) {
+		window.__loadErrors.push("prosemirror: " + error.message);
+	}
+
+	try {
+		const { default: ClassicEditor } =
+			await import("https://esm.sh/@ckeditor/ckeditor5-build-classic@41.4.2");
+		const editor = await ClassicEditor.create(document.getElementById("ckRoot"));
+		window.__modelText.ckeditor = () => editor.getData().replace(/<[^>]*>/g, "").trim();
+	} catch (error) {
+		window.__loadErrors.push("ckeditor: " + error.message);
+	}
+
+	try {
+		const React = (await import(\`https://esm.sh/\${REACT}\`)).default;
+		const { createRoot } = await import(\`https://esm.sh/\${DOM}/client\`);
+		const Controlled = () => {
+			const [value, setValue] = React.useState("");
+			window.__modelText.reactField = () => value;
+			const bind = { value, onChange: (event) => setValue(event.target.value) };
+			return React.createElement("div", null,
+				React.createElement("input", { id: "reactInput", ...bind }),
+				React.createElement("textarea", { id: "reactArea", ...bind }));
+		};
+		createRoot(document.getElementById("reactRoot")).render(React.createElement(Controlled));
+	} catch (error) {
+		window.__loadErrors.push("react: " + error.message);
+	}
+
+	window.__ready = true;
+</script>
+</body></html>`;
 
 async function resolveChromium() {
 	let chromium;
@@ -132,6 +257,12 @@ async function startFixtureServer() {
 	};
 }
 
+async function startFrameworkEditorServer() {
+	const server = serve(() => FRAMEWORK_EDITORS_PAGE);
+	const origin = await listen(server);
+	return { origin, close: () => new Promise((resolve) => server.close(resolve)) };
+}
+
 async function launchExtension(launcher, dir) {
 	const profile = fs.mkdtempSync(path.join(os.tmpdir(), "avim-browser-"));
 	const extension = path.join(ROOT, dir);
@@ -159,11 +290,12 @@ async function launchExtension(launcher, dir) {
 
 function locate(page, target) {
 	const spec = typeof target === "string" ? { selector: target } : target;
-	const scope = spec.frame ? page.frameLocator(spec.frame) : page;
+	const scope = [].concat(spec.frame ?? [])
+		.reduce((parent, frame) => parent.frameLocator(frame), page);
 	return scope.locator(spec.selector);
 }
 
-function readEditable(element) {
+export function readEditable(element) {
 	return element.value ?? element.textContent;
 }
 
@@ -202,6 +334,7 @@ export {
 	resolveChromium,
 	extensionDirs,
 	startFixtureServer,
+	startFrameworkEditorServer,
 	launchExtension,
 	typeUntil,
 	typeOnce,

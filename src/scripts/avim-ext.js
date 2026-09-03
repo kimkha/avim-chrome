@@ -46,7 +46,6 @@ globalThis.AVIMAutoConfig = [
  */
 const $_alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM ";
 const $_skey = [97,226,259,101,234,105,111,244,417,117,432,121,65,194,258,69,202,73,79,212,416,85,431,89]; // a,â,ă,e,ê,i,o,ô,ơ,u,ư,y,A,Â,Ă,E,Ê,I,O,Ô,Ơ,U,Ư,Y
-let _range = null; // Range object, maybe from Document.createRange()
 let _whit = false; // Set while a moc key is in flight, so a following o can also horn a bare u
 
 /**
@@ -56,7 +55,6 @@ let _whit = false; // Set while a moc key is in flight, so a following o can als
 class AVIM {
 	constructor() {
 		this.changed = false;
-		this.specialChange = false;
 		this.db1 = [273,272];
 		this.ds1 = ['d','D'];
 		this.os1 = "o,O,ơ,Ơ,ó,Ó,ò,Ò,ọ,Ọ,ỏ,Ỏ,õ,Õ,ớ,Ớ,ờ,Ờ,ợ,Ợ,ở,Ở,ỡ,Ỡ".split(",");
@@ -247,15 +245,11 @@ function ckspell(word, k) {
 }
 
 function getEditorObject(ele) {
-	// Falls back to innerText only when both data and value are empty, not merely absent
-	const value = ele.data || ele.value || ele.innerText;
-	if (!ele.data) {
-		if (!ele.setSelectionRange) {
-			return false;
-		}
-		return { v: value, s: ele.selectionStart, e: ele.selectionEnd };
+	if (!ele.setSelectionRange) {
+		return false;
 	}
-	return { v: value, s: ele.pos, e: ele.pos };
+	// Falls back to innerText only when the value is empty, not merely absent
+	return { v: ele.value || ele.innerText, s: ele.selectionStart, e: ele.selectionEnd };
 }
 
 /** The word immediately before the caret, plus the caret offset. */
@@ -526,43 +520,24 @@ function replaceChar(o, pos, c) {
 	} else if ((upperCase(c) === "O") && _whit) {
 		addsHorn = true;
 	}
-	if (!o.data) {
-		const savePos = o.selectionStart;
-		const scrollTop = o.scrollTop;
-		let hornedU = "";
-		if ((upperCase(o.value.charAt(pos - 1)) === "U") && (pos < savePos - 1) && (upperCase(o.value.charAt(pos - 2)) !== "Q")) {
-			if ((wfix === "Ơ") || addsHorn) {
-				hornedU = fromCharCode(o.value.charAt(pos - 1) === "u" ? 432 : 431);
-			}
-			if (addsHorn) {
-				AVIMObj.changed = true;
-				replaceBy = c === "o" ? "ơ" : "Ơ";
-			}
+	const savePos = o.selectionStart;
+	const scrollTop = o.scrollTop;
+	let hornedU = "";
+	if ((upperCase(o.value.charAt(pos - 1)) === "U") && (pos < savePos - 1) && (upperCase(o.value.charAt(pos - 2)) !== "Q")) {
+		if ((wfix === "Ơ") || addsHorn) {
+			hornedU = fromCharCode(o.value.charAt(pos - 1) === "u" ? 432 : 431);
 		}
-		o.value = o.value.slice(0, pos) + replaceBy + o.value.slice(pos + 1);
-		if (hornedU) {
-			o.value = o.value.slice(0, pos - 1) + hornedU + o.value.slice(pos);
-		}
-		o.setSelectionRange(savePos, savePos);
-		o.scrollTop = scrollTop;
-	} else {
-		let hornedU = "";
-		if ((upperCase(o.data.charAt(pos - 1)) === "U") && (pos < o.pos - 1)) {
-			if ((wfix === "Ơ") || addsHorn) {
-				hornedU = fromCharCode(o.data.charAt(pos - 1) === "u" ? 432 : 431);
-			}
-			if (addsHorn) {
-				AVIMObj.changed = true;
-				replaceBy = c === "o" ? "ơ" : "Ơ";
-			}
-		}
-		o.deleteData(pos, 1);
-		o.insertData(pos, replaceBy);
-		if (hornedU) {
-			o.deleteData(pos - 1, 1);
-			o.insertData(pos - 1, hornedU);
+		if (addsHorn) {
+			AVIMObj.changed = true;
+			replaceBy = c === "o" ? "ơ" : "Ơ";
 		}
 	}
+	o.value = o.value.slice(0, pos) + replaceBy + o.value.slice(pos + 1);
+	if (hornedU) {
+		o.value = o.value.slice(0, pos - 1) + hornedU + o.value.slice(pos);
+	}
+	o.setSelectionRange(savePos, savePos);
+	o.scrollTop = scrollTop;
 	_whit = false;
 }
 
@@ -718,29 +693,15 @@ function normC(word, k, i) {
 			let pos = start;
 			if (!AVIMObj.changed) {
 				pos += k.length;
-				if (!editor.data) {
-					const scrollTop = editor.scrollTop;
-					editor.value = editor.value.slice(0, start) + k + editor.value.slice(editor.selectionEnd);
-					AVIMObj.changed = true;
-					editor.scrollTop = scrollTop;
-				} else {
-					editor.insertData(editor.pos, k);
-					editor.pos++;
-					_range.setEnd(editor, editor.pos);
-					AVIMObj.specialChange = true;
-				}
+				const scrollTop = editor.scrollTop;
+				editor.value = editor.value.slice(0, start) + k + editor.value.slice(editor.selectionEnd);
+				AVIMObj.changed = true;
+				editor.scrollTop = scrollTop;
 			}
-			if (!editor.data) {
-				editor.setSelectionRange(pos, pos);
-			}
+			editor.setSelectionRange(pos, pos);
 			if (!ckspell(current, toneKey)) {
 				replaceChar(editor, i - j, base);
-				if (!editor.data) {
-					main(current, toneKey, pos, [AVIMObj.D], false);
-				} else {
-					const reread = mozGetText(getEditorObject(editor));
-					main(reread[0], toneKey, reread[1], [AVIMObj.D], false);
-				}
+				main(current, toneKey, pos, [AVIMObj.D], false);
 			}
 		}
 	}
@@ -848,64 +809,267 @@ function retUni(word, k, pos) {
 	return char === upperCase(char) ? toneCodes[lowerAt + 12] : toneCodes[lowerAt];
 }
 
-/** Handles a keypress inside a contenteditable or a designMode iframe, where there is no .value. */
+/** A stand-in for an <input>: replaceChar and normC read .scrollTop and .setSelectionRange. */
+function createTextEditor(value) {
+	return {
+		value,
+		selectionStart: value.length,
+		selectionEnd: value.length,
+		scrollTop: 0,
+		setSelectionRange(start, end) {
+			this.selectionStart = start;
+			this.selectionEnd = end;
+		}
+	};
+}
+
+/** The outermost editable ancestor: where an editor with its own model listens, and it survives
+ * that editor re-rendering the text node out from under us between two dispatches. */
+function editingHost(node) {
+	let element = node.parentNode;
+	let host = element;
+	while (element && element.isContentEditable) {
+		host = element;
+		element = element.parentNode;
+	}
+	return host;
+}
+
+/** Tags an editor uses for a line: the word before the caret never reaches back past one. */
+const BLOCK_TAGS = ["DIV", "P", "LI", "TD", "TH", "BLOCKQUOTE", "PRE", "SECTION", "ARTICLE", "DD", "DT", "H1", "H2", "H3", "H4", "H5", "H6"];
+
+function blockOf(node, host) {
+	let element = node.parentNode;
+	while (element && (element !== host) && !BLOCK_TAGS.includes(element.nodeName)) {
+		element = element.parentNode;
+	}
+	return element ?? host;
+}
+
+/** An embedded widget (emoji image, mention chip): part of the line but not of any word. */
+function isUneditableIsland(element) {
+	return (element.nodeType === 1) && (element.getAttribute("contenteditable") === "false");
+}
+
+/** The text node before `node`, in the same line of `host`. Walks with plain DOM links, so the
+ * fake DOM the unit tests run on simply finds nothing and the caret's own node is all there is. */
+function previousTextNode(host, node, block) {
+	let current = node;
+	while (current && (current !== host)) {
+		if (!current.previousSibling) {
+			current = current.parentNode;
+			continue;
+		}
+		current = current.previousSibling;
+		while (current.lastChild && !isUneditableIsland(current)) {
+			current = current.lastChild;
+		}
+		if (current.nodeType === 3) {
+			return blockOf(current, host) === block ? current : null;
+		}
+		// Anything that is not text — a <br>, an emoji <img>, an uneditable chip — ends the word.
+		// Walking past one used to join the words around it and the diacritics stopped landing.
+		return null;
+	}
+	return null;
+}
+
+/**
+ * The text before the caret, in the pieces it is stored in. An editor splits a word across elements
+ * for anything inline — bold, a mention, an emoji — and Slate, Lexical and ProseMirror wrap every
+ * leaf in its own span, so reading the caret's text node alone loses the start of the word.
+ */
+function partsBeforeCaret(host, node, caret) {
+	const parts = [{ node, text: node.data.slice(0, caret) }];
+	const block = blockOf(node, host);
+	let text = parts[0].text;
+	while (![...text].some(notWord)) {
+		const previous = previousTextNode(host, parts[0].node, block);
+		if (!previous) {
+			break;
+		}
+		parts.unshift({ node: previous, text: previous.data });
+		text = previous.data + text;
+	}
+	return parts;
+}
+
+/** Where `offset` into the joined text sits: the piece holding it, and how far into that piece. */
+function locate(parts, offset) {
+	let remaining = offset;
+	for (const part of parts) {
+		if (remaining <= part.text.length) {
+			return { node: part.node, offset: remaining };
+		}
+		remaining -= part.text.length;
+	}
+	const last = parts[parts.length - 1];
+	return { node: last.node, offset: last.text.length };
+}
+
+/** Fires beforeinput on the editable. False when a listener claimed the edit for its own model. */
+function emitBeforeInput(host, inputType, data, target) {
+	return host.dispatchEvent(new InputEvent("beforeinput", {
+		inputType,
+		data,
+		bubbles: true,
+		cancelable: true,
+		composed: true,
+		targetRanges: target ? [target] : []
+	}));
+}
+
+/**
+ * Editors that re-render from their own model revert a DOM edit they never saw (Slate, so Discord;
+ * CKEditor, so many a CMS). Ones with a MutationObserver reconciler keep it (Lexical, Quill,
+ * ProseMirror) and mangle a synthetic beforeinput instead, so the channel has to be chosen per
+ * host, and whether an editor survives one cannot be probed. An allowlist, keyed on what each
+ * editor leaves in the DOM.
+ */
+function expectsAnnouncement(host) {
+	if (typeof host.hasAttribute !== "function") {
+		return false;
+	}
+	return host.hasAttribute("data-slate-editor") ||
+		(host.querySelector("[data-slate-string]") !== null) ||
+		!!host.classList?.contains("ck-editor__editable");
+}
+
+/**
+ * Announces a rewrite as one insertText whose target range spans the rewritten tail. One event,
+ * because a model-backed editor applies it asynchronously: anything dispatched after it aims at a
+ * caret the editor has not moved yet. True when a listener claimed it.
+ */
+function announceRewrite(host, parts, before, after) {
+	const head = commonPrefixLength(before, after);
+	const from = locate(parts, head);
+	const to = locate(parts, before.length);
+	let target;
+	try {
+		target = new StaticRange({
+			startContainer: from.node, startOffset: from.offset,
+			endContainer: to.node, endOffset: to.offset
+		});
+	} catch (error) {
+		return false;
+	}
+	return !emitBeforeInput(host, "insertText", after.slice(head), target);
+}
+
+function commonPrefixLength(before, after) {
+	let head = 0;
+	while ((head < before.length) && (head < after.length) && (before.charAt(head) === after.charAt(head))) {
+		head++;
+	}
+	return head;
+}
+
+/**
+ * Replaces value[head..caret) so the text before the caret becomes `after`, through execCommand.
+ * Assigning .value instead fires nothing, and a controlled component then keeps the raw keystrokes:
+ * React's _valueTracker even swallows an input event dispatched afterwards, because the assignment
+ * already moved the value it compares against.
+ */
+function replaceValueBeforeCaret(el, before, after, caret) {
+	const head = commonPrefixLength(before, after);
+	const scrollTop = el.scrollTop;
+	el.setSelectionRange(head, caret);
+	const doc = el.ownerDocument ?? document;
+	if (!doc.execCommand("insertText", false, after.slice(head))) {
+		el.value = after + el.value.slice(caret);
+		el.setSelectionRange(after.length, after.length);
+	}
+	el.scrollTop = scrollTop;
+}
+
+/**
+ * Rewrites the text before the caret to `after`, from the first changed character on.
+ *
+ * A model-backed editor (Slate, CKEditor) is told in one targeted insertText beforeinput, which it
+ * applies to its own model. Everyone else gets the edit itself, through execCommand, which fires
+ * input but not beforeinput.
+ */
+function replaceBeforeCaret(host, sel, range, parts, before, after) {
+	const head = commonPrefixLength(before, after);
+	const replacement = after.slice(head);
+	const from = locate(parts, head);
+	const to = locate(parts, before.length);
+
+	if (expectsAnnouncement(host) && announceRewrite(host, parts, before, after)) {
+		return;
+	}
+
+	range.setStart(from.node, from.offset);
+	range.setEnd(to.node, to.offset);
+	sel.removeAllRanges();
+	sel.addRange(range);
+	const doc = from.node.ownerDocument ?? document;
+	if (!doc.execCommand("insertText", false, replacement)) {
+		// Silent, so a model-backed editor discards it; still better than losing the keystroke
+		for (let at = parts.length - 1; at >= 0; at--) {
+			const part = parts[at];
+			if (part.node === from.node) {
+				part.node.deleteData(from.offset, part.text.length - from.offset);
+				part.node.insertData(from.offset, replacement);
+				break;
+			}
+			part.node.deleteData(0, part.text.length);
+		}
+		const caret = from.offset + replacement.length;
+		range.setStart(from.node, caret);
+		range.setEnd(from.node, caret);
+		sel.removeAllRanges();
+		sel.addRange(range);
+	}
+}
+
+/**
+ * Handles a keypress inside a contenteditable or a designMode iframe, where there is no .value.
+ * Editing the text node directly fires no events, so editors that re-render from their own model
+ * (Slate, Draft, ProseMirror; Discord's message box is Slate) drop the diacritics (#30).
+ */
 function ifMoz(e) {
 	const code = e.which;
 	const avim = AVIMObj.AVIM ?? AVIMObj;
-	const parent = e.target.parentNode;
-	const cwi = parent.wi ?? parent.parentNode.wi ?? window;
+	const target = e.composedPath ? e.composedPath()[0] : e.target;
+	const parent = target.parentNode;
+	// A shadow root's parentNode is null, so the walk to the iframe marker must not explode there
+	const cwi = parent.wi ?? parent.parentNode?.wi ?? window;
 	if (e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
 		return;
 	}
 
-	const sel = cwi.getSelection();
-	const range = sel ? sel.getRangeAt(0) : document.createRange();
-	_range = range;
+	// Inside a shadow root the document selection ends at the host; the root holds the real one
+	const root = target.getRootNode ? target.getRootNode() : document;
+	const sel = (typeof root.getSelection === "function") ? root.getSelection() : cwi.getSelection();
+	const range = (sel && sel.rangeCount) ? sel.getRangeAt(0) : document.createRange();
 	const node = range.endContainer;
 
 	avim.sk = fromCharCode(code);
-	avim.saveStr = "";
 	if (checkCode(code) || !range.startOffset || (typeof node.data === "undefined")) {
 		return;
 	}
-	node.sel = false;
-
-	if (node.data) {
-		// Everything after the caret is cut away so the engine sees the caret as end of value
-		avim.saveStr = node.data.slice(range.endOffset);
-		if (range.startOffset !== range.endOffset) {
-			node.sel = true;
-		}
-		node.deleteData(range.startOffset, node.data.length);
-	}
-
-	if (!node.data) {
-		range.setStart(node, 0);
-		range.setEnd(node, range.endOffset);
-		sel.removeAllRanges();
-		sel.addRange(range);
+	// The keystroke replaces a non-empty selection, so there is no word in front of it to transform
+	if (range.startOffset !== range.endOffset) {
 		return;
 	}
 
-	node.value = node.data;
-	node.pos = node.data.length;
-	node.which = code;
-	start(node, e);
-	node.insertData(node.data.length, avim.saveStr);
-	const newPos = node.data.length - avim.saveStr.length;
+	const caret = range.endOffset;
+	const host = editingHost(node);
+	// Text after the caret is left out, so the engine sees the caret as the end of the value
+	const parts = partsBeforeCaret(host, node, caret);
+	const before = parts.map((part) => part.text).join("");
 
-	range.setStart(node, newPos);
-	range.setEnd(node, newPos);
-	sel.removeAllRanges();
-	sel.addRange(range);
-
-	if (avim.specialChange) {
-		avim.specialChange = false;
-		avim.changed = false;
-		node.deleteData(node.pos - 1, 1);
+	const editor = createTextEditor(before);
+	start(editor, e);
+	// changed only decides who types the key. An escape sequence such as telex "aaa" rewrites the
+	// word and leaves the key to the browser, so the rewrite has to be applied either way.
+	const changed = avim.changed;
+	avim.changed = false;
+	if (editor.value !== before) {
+		replaceBeforeCaret(host, sel, range, parts, before, editor.value);
 	}
-	if (avim.changed) {
-		avim.changed = false;
+	if (changed) {
 		e.preventDefault();
 	}
 }
@@ -923,7 +1087,7 @@ function checkCode(code) {
 	return (code === 145) || (code === 255);
 }
 
-const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0";
+const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0\u200b\ufeff";
 
 function notWord(word) {
 	return NOT_WORD_CHARS.includes(word);
@@ -958,6 +1122,9 @@ function AVIMInit(avim) {
 		if (findIgnore(frame)) {
 			continue;
 		}
+		// The document inside is often not ready (or not yet designMode) when the frame is first
+		// seen; each load is another chance to attach. Re-adding the same listener is a no-op.
+		frame.addEventListener("load", rescanIframes);
 		try {
 			const frameWindow = frame.contentWindow;
 			const iframedit = frameWindow.document;
@@ -977,7 +1144,9 @@ function findIgnore(el) {
 }
 
 function keyPressHandler(e) {
-	const el = e.target;
+	// Inside a shadow root e.target is retargeted to the host element, whose .type is undefined,
+	// so the real input never reaches the engine. composedPath()[0] crosses the shadow boundary.
+	const el = e.composedPath ? e.composedPath()[0] : e.target;
 	const code = e.which;
 	if (e.ctrlKey) {
 		return;
@@ -998,9 +1167,24 @@ function keyPressHandler(e) {
 	if (findIgnore(el) || el.readOnly) {
 		return;
 	}
-	start(el, e);
-	if (AVIMObj.changed) {
-		AVIMObj.changed = false;
+	// The keystroke replaces a non-empty selection, so there is no word in front of it to transform
+	if (el.selectionStart !== el.selectionEnd) {
+		return;
+	}
+
+	const caret = el.selectionStart;
+	if (!caret) {
+		return;
+	}
+	const before = el.value.slice(0, caret);
+	const editor = createTextEditor(before);
+	start(editor, e);
+	const changed = AVIMObj.changed;
+	AVIMObj.changed = false;
+	if (editor.value !== before) {
+		replaceValueBeforeCaret(el, before, editor.value, caret);
+	}
+	if (changed) {
 		e.preventDefault();
 	}
 }
@@ -1027,19 +1211,30 @@ function keyUpHandler(evt) {
 	}, DOUBLE_TAP_MS);
 }
 
-let ajaxCounter = 0;
-
-/** Rescans for iframes every 100ms for the first 100 rounds, to catch ones added after load. */
-function AVIMAJAXFix() {
+function rescanIframes() {
 	AVIMInit(AVIMObj);
-	ajaxCounter++;
-	if (ajaxCounter < 100) {
-		setTimeout(AVIMAJAXFix, 100);
-	}
+}
+
+let iframeObserver = null;
+
+/** Rescans when a new iframe lands anywhere in the page, replacing 10 seconds of polling. */
+function watchForIframes() {
+	iframeObserver = new MutationObserver((mutations) => {
+		const brought = (node) =>
+			(upperCase(node.tagName ?? "") === "IFRAME") || Boolean(node.querySelector?.("iframe"));
+		if (mutations.some((mutation) => [...mutation.addedNodes].some(brought))) {
+			rescanIframes();
+		}
+	});
+	iframeObserver.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 function removeOldAVIM() {
-	document.removeEventListener("mouseup", AVIMAJAXFix, false);
+	if (iframeObserver) {
+		iframeObserver.disconnect();
+		iframeObserver = null;
+	}
+	document.removeEventListener("mouseup", rescanIframes, false);
 	document.removeEventListener("keypress", keyPressHandler, true);
 	document.removeEventListener("keyup", keyUpHandler, true);
 
@@ -1053,9 +1248,10 @@ function newAVIMInit() {
 	}
 
 	AVIMObj = new AVIM();
-	AVIMAJAXFix();
+	rescanIframes();
+	watchForIframes();
 
-	document.addEventListener("mouseup", AVIMAJAXFix, false);
+	document.addEventListener("mouseup", rescanIframes, false);
 	document.addEventListener("keyup", keyUpHandler, true);
 	document.addEventListener("keypress", keyPressHandler, true);
 }

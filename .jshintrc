@@ -6,6 +6,8 @@
 	"globals": {
 		"chrome": false,
 		"globalThis": false,
+		"InputEvent": false,
+		"StaticRange": false,
 		"exclude": true,
 		"AVIMAutoConfig": true
 	}

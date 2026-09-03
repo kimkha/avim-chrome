@@ -8,6 +8,7 @@ import {
 	launchExtension,
 	typeUntil,
 	typeOnce,
+	readEditable,
 } from "./helpers/browser-harness.js";
 
 const CONVERTS = [
@@ -114,28 +115,186 @@ for (const dir of extensionDirs()) {
 			}
 		});
 
-		describe("Known issue: an input inside a shadow root never reaches AVIM", () => {
+		describe("An input inside a shadow root converts too", () => {
 			// A document-level capture listener sees e.target retargeted to the shadow host, a DIV
-			// whose .type is undefined, so keyPressHandler bails before the engine runs. A fix means
-			// reading e.composedPath()[0] instead of e.target.
+			// whose .type is undefined, so keyPressHandler reads e.composedPath()[0] instead.
 			const cases = [
 				["a textarea in an open shadow root", "#host >> #shadowTextarea"],
 				["an input in an open shadow root", "#host >> #shadowText"],
+				["a contenteditable in an open shadow root", "#host >> #shadowEditable"],
 			];
 
 			for (const [label, target] of cases) {
-				it(`${label} stays as typed`, async () => {
-					assert.equal(await typeOnce(page, target, "chaof"), "chaof");
+				it(`${label} gives "chào"`, async () => {
+					assert.equal(await typeUntil(page, target, "chaof", "chào"), "chào");
 				});
 			}
 		});
 
-		describe("Known issue: a contenteditable ending in a space loses it", () => {
-			// ifMoz stashes everything after the caret, deletes to the end of the text node, then
-			// re-inserts. Chrome puts the caret before a trailing collapsed space, so that space is
-			// what gets stashed and it does not survive the round trip. Losing it also merges the two
-			// words, which then fails the spell check and blocks the tone.
-			it('typing "chaof" after "xin " gives "xinchaof", not "xin chào"', async () => {
+		describe("An iframe added after load still converts", () => {
+			it("a designMode iframe inserted dynamically", async () => {
+				await page.evaluate(() => {
+					const frame = document.createElement("iframe");
+					frame.id = "lateDesignMode";
+					document.body.append(frame);
+					frame.contentDocument.designMode = "on";
+				});
+
+				const target = { frame: "#lateDesignMode", selector: "body" };
+				assert.equal(await typeUntil(page, target, "chaof", "chào"), "chào");
+			});
+
+			it("a designMode iframe inserted inside another iframe, a second later", async () => {
+				// The observer does not cross document boundaries; this lands on the child frame's
+				// own content script instance (all_frames), long after its initial scan.
+				await page.waitForTimeout(1000);
+				await page.frameLocator("#sameOrigin").locator("body").evaluate(() => {
+					const frame = document.createElement("iframe");
+					frame.id = "nestedDesignMode";
+					document.body.append(frame);
+					frame.contentDocument.designMode = "on";
+				});
+
+				const target = { frame: ["#sameOrigin", "#nestedDesignMode"], selector: "body" };
+				assert.equal(await typeUntil(page, target, "chaof", "chào"), "chào");
+			});
+		});
+
+		describe("A word split across elements is still one word", () => {
+			// An editor splits a word for anything inline — bold, a mention, an emoji — and Slate,
+			// Lexical and ProseMirror wrap every leaf in its own span. Reading only the caret's text
+			// node loses the start of the word, and with it the modifier: ngu<b>oi</b> came out
+			// "nguời" because the engine never saw a u to horn.
+			const cases = [
+				["bold in the middle", "#splitBold"],
+				["two sibling spans", "#splitSpans"],
+			];
+
+			for (const [label, target] of cases) {
+				it(`${label} gives "người"`, async () => {
+					const editable = page.locator(target);
+					await editable.click();
+					await page.keyboard.press("Control+End");
+					await page.keyboard.type("wf", { delay: 15 });
+
+					assert.equal(await editable.evaluate((element) => element.textContent), "người");
+				});
+			}
+
+			it("does not reach back into the previous block", async () => {
+				const editable = page.locator("#blocks");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				const lines = await editable.evaluate((element) =>
+					[...element.children].map((child) => child.textContent));
+				assert.deepEqual(lines, ["xin", "chào"], 'joining the blocks would spell-check "xinchao"');
+			});
+
+			it("does not reach back across a soft line break", async () => {
+				const editable = page.locator("#softBreak");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.innerHTML), "xin<br>chào");
+			});
+
+			it("does not reach back across an emoji image, and the emoji survives", async () => {
+				const editable = page.locator("#emojiSplit");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "hichào",
+					'joining the words would spell-check "hichao" and lose the tone');
+				assert.equal(await editable.evaluate((element) => element.querySelectorAll("img").length), 1);
+			});
+
+			it("does not reach back into an uneditable chip, and the chip survives", async () => {
+				const editable = page.locator("#chipSplit");
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "hi@tokenchào");
+				assert.equal(await editable.evaluate((element) => element.querySelector("span").textContent), "@token");
+			});
+		});
+
+		describe("A tone typed with the caret in the middle of a word", () => {
+			it('"chaoX" with the caret after "chao" becomes "chàoX"', async () => {
+				await page.locator("#midWord").evaluate((element) => {
+					const range = document.createRange();
+					range.setStart(element.firstChild, 4);
+					range.collapse(true);
+					const sel = window.getSelection();
+					sel.removeAllRanges();
+					sel.addRange(range);
+					element.focus();
+				});
+				await page.keyboard.type("f", { delay: 15 });
+
+				assert.equal(await page.locator("#midWord").evaluate((element) => element.textContent), "chàoX");
+			});
+
+			// Fixing a missed letter after the fact: "khong em", arrow back to after the o, add the
+			// o. The rewrite lands inside the word, with "ng em" still after the caret.
+			const surfaces = [
+				["a textarea", "#textarea"],
+				["a text input", "#text"],
+				["a contenteditable div", "#editable"],
+			];
+
+			for (const [label, selector] of surfaces) {
+				it(`arrowing back into "khong em" and adding the o gives "không em" in ${label}`, async () => {
+					const editable = page.locator(selector);
+					await editable.click();
+					await page.keyboard.press("Control+A");
+					await page.keyboard.press("Delete");
+					await page.keyboard.type("khong em", { delay: 15 });
+					for (let i = 0; i < 5; i++) {
+						await page.keyboard.press("ArrowLeft");
+					}
+					await page.keyboard.type("o", { delay: 15 });
+					assert.equal(await editable.evaluate(readEditable), "không em");
+
+					await page.keyboard.type("o", { delay: 15 });
+					assert.equal(await editable.evaluate(readEditable), "khoong em",
+						"repeating the key mid-word escapes the transform");
+				});
+			}
+		});
+
+		describe("A word after a trailing space", () => {
+			// Chrome cannot place the caret after a trailing collapsed plain space, so new text lands
+			// before it and Chrome drops the space — measured identically with the extension removed.
+			// Not an AVIM bug: a space the user types becomes an NBSP and both realistic flows work.
+			it('typing the space yourself: "xin chaof" gives "xin chào"', async () => {
+				const editable = page.locator("#spaced");
+				await editable.evaluate((element) => {
+					element.textContent = "";
+				});
+				await editable.click();
+				await page.keyboard.type("xin chaof", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "xin chào");
+			});
+
+			it('after a preset NBSP: "chaof" gives "xin chào"', async () => {
+				const editable = page.locator("#spaced");
+				await editable.evaluate((element) => {
+					element.textContent = "xin\u00a0";
+				});
+				await editable.click();
+				await page.keyboard.press("Control+End");
+				await page.keyboard.type("chaof", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "xin chào");
+			});
+
+			it("after a preset plain space, Chrome itself eats the space and merges the words", async () => {
 				const editable = page.locator("#spaced");
 				await editable.evaluate((element) => {
 					element.textContent = "xin ";
@@ -160,35 +319,55 @@ for (const dir of extensionDirs()) {
 			});
 		});
 
-		describe("Known issue: a framework-controlled contenteditable loses every diacritic", () => {
-			// Reproduces #30 (Discord, Slate.js). AVIM cancels the keypress and writes the DOM
-			// without dispatching input, so the editor's own model only ever holds the raw keys, and
-			// its next re-render throws the accents away. Space is when it becomes obvious.
-			it('typing "tieengs " leaves "tieng "', async () => {
+		describe("A framework-controlled contenteditable keeps the diacritics (#30)", () => {
+			// Discord's message box is Slate, which re-renders from its own model and so reverts a
+			// DOM edit it never saw. Slate hosts are recognised by their DOM attributes and
+			// announced to as one targeted insertText, so the model applies the rewrite itself.
+			it("announces to a Slate host from the very first conversion", async () => {
+				const textOf = () => page.locator("#controlled").evaluate((element) => element.textContent);
+
 				await page.evaluate(() => window.__resetControlled());
 				await page.locator("#controlled").click();
 				await page.keyboard.type("tieengs ", { delay: 15 });
+				assert.equal(await textOf(), "tiếng ", "correct from the first conversion in the host");
 
-				assert.equal(await page.locator("#controlled").evaluate((element) => element.textContent), "tieng ");
+				await page.evaluate(() => window.__resetControlled());
+				await page.locator("#controlled").click();
+				await page.keyboard.type("tieengs ", { delay: 15 });
+				assert.equal(await textOf(), "tiếng ");
 			});
 
 			it("the same keystrokes in a plain contenteditable keep the diacritics", async () => {
 				// Chrome stores a trailing space in a contenteditable as &nbsp; so it stays visible.
 				assert.equal(await typeUntil(page, "#editable", "tieengs ", "tiếng\u00a0"), "tiếng\u00a0");
 			});
+
+			it("fires an input event for the converted keystroke, for editors that read the DOM", async () => {
+				await page.locator("#editable").evaluate((element) => {
+					element.textContent = "";
+					window.__editableInputEvents = 0;
+				});
+				await page.locator("#editable").click();
+				await page.keyboard.type("chaof", { delay: 15 });
+
+				assert.equal(await page.locator("#editable").evaluate((element) => element.textContent), "chào");
+				assert.equal(await page.evaluate(() => window.__editableInputEvents), 5);
+			});
 		});
 
-		describe("Known issue: a converted keystroke fires no input event", () => {
-			// AVIM cancels the keypress and assigns el.value, which dispatches nothing. Frameworks
-			// that track state from input events therefore never see the Vietnamese text.
-			it("reports 4 input events for the 5 keystrokes of chaof", async () => {
+		describe("A converted keystroke in an input fires an input event", () => {
+			// Assigning el.value fires nothing, so a controlled component kept the raw keystrokes.
+			// React is worse than silent about it: its value tracker swallows an input event
+			// dispatched after the assignment, because the assignment already moved the value it
+			// compares against. Going through execCommand is what makes the edit real.
+			it("reports 5 input events for the 5 keystrokes of chaof", async () => {
 				await page.locator("#eventProbe").evaluate((element) => {
 					element.value = "";
 					window.__inputEvents = 0;
 				});
 
 				assert.equal(await typeOnce(page, "#eventProbe", "chaof"), "chào");
-				assert.equal(await page.evaluate(() => window.__inputEvents), 4);
+				assert.equal(await page.evaluate(() => window.__inputEvents), 5);
 			});
 		});
 	});

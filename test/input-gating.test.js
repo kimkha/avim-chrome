@@ -88,6 +88,43 @@ describe("Gating: supported input types", () => {
 	}
 });
 
+describe("Gating: shadow DOM retargeting", () => {
+	// A capture listener on document sees e.target retargeted to the shadow host; the real input
+	// is only reachable through composedPath()[0]
+	function pressRetargetedKey(context, element, char) {
+		const shadowHost = { type: undefined, isContentEditable: false };
+		context.document.activeElement = element;
+		let prevented = false;
+		context.keyPressHandler({
+			target: shadowHost,
+			composedPath: () => [element, shadowHost],
+			which: char.charCodeAt(0),
+			ctrlKey: false,
+			altKey: false,
+			preventDefault() {
+				prevented = true;
+			},
+		});
+		return prevented;
+	}
+
+	it("converts in an input reached through composedPath", () => {
+		const context = loadEngine(TELEX);
+		const element = createInput({ value: "a", caret: 1 });
+		const prevented = pressRetargetedKey(context, element, "s");
+		assert.equal(element.value, "á");
+		assert.equal(prevented, true);
+	});
+
+	it("still honours the exclude list on the real target, not the host", () => {
+		const context = loadEngine(TELEX);
+		const element = createInput({ value: "a", caret: 1, id: "email" });
+		const prevented = pressRetargetedKey(context, element, "s");
+		assert.equal(element.value, "a");
+		assert.equal(prevented, false);
+	});
+});
+
 describe("Gating: modifier keys", () => {
 	it("ignores the keypress while Ctrl is held", () => {
 		assert.equal(typeWithModifier("s", { ctrl: true }), "as");

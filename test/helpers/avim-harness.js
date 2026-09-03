@@ -85,10 +85,27 @@ function createSandbox() {
 	sandbox.__selection = null;
 	sandbox.__messages = [];
 	sandbox.__timers = [];
-	// AVIMAJAXFix reschedules itself up to 100 times; a real timer would outlive the test
+	// Timers are captured, not run: a real timer would outlive the test
 	sandbox.setTimeout = (callback, delay) => {
 		sandbox.__timers.push({ callback, delay });
 		return sandbox.__timers.length;
+	};
+	sandbox.__observers = [];
+	sandbox.MutationObserver = class {
+		constructor(callback) {
+			this.callback = callback;
+			this.target = null;
+			this.options = null;
+			this.disconnected = false;
+			sandbox.__observers.push(this);
+		}
+		observe(target, options) {
+			this.target = target;
+			this.options = options;
+		}
+		disconnect() {
+			this.disconnected = true;
+		}
 	};
 	sandbox.chrome = {
 		runtime: {
@@ -101,9 +118,42 @@ function createSandbox() {
 	};
 	sandbox.document = {
 		getElementsByTagName: () => [],
+		documentElement: { id: "documentElement" },
 		addEventListener() {},
 		removeEventListener() {},
 		createRange: () => new FakeRange(new FakeText(""), 0, 0),
+		activeElement: null,
+		// Both apply paths go through execCommand, so the fake DOM has to honour insertText: on the
+		// focused field for an input, on the current range for a contenteditable's text node.
+		execCommand(command, ui, text) {
+			if (command !== "insertText") {
+				return false;
+			}
+			const field = sandbox.document.activeElement;
+			if (field && (typeof field.value === "string")) {
+				const start = field.selectionStart;
+				field.value = field.value.slice(0, start) + text + field.value.slice(field.selectionEnd);
+				field.setSelectionRange(start + text.length, start + text.length);
+				return true;
+			}
+			if (!sandbox.__selection) {
+				return false;
+			}
+			const range = sandbox.__selection.getRangeAt(0);
+			const node = range.startContainer;
+			node.deleteData(range.startOffset, range.endOffset - range.startOffset);
+			node.insertData(range.startOffset, text);
+			const caret = range.startOffset + text.length;
+			range.setStart(node, caret);
+			range.setEnd(node, caret);
+			return true;
+		},
+	};
+	// ifMoz announces its rewrite as beforeinput before applying it; nothing here claims the edit
+	sandbox.InputEvent = class {
+		constructor(type, init) {
+			Object.assign(this, { type }, init);
+		}
 	};
 	sandbox.window = {
 		document: sandbox.document,
@@ -212,6 +262,7 @@ function insertChar(element, char) {
 /** Dispatch one keypress through the real extension handler. Returns true if cancelled. */
 function pressKey(context, element, char, { ctrl = false, alt = false } = {}) {
 	let prevented = false;
+	context.document.activeElement = element;
 	context.keyPressHandler({
 		target: element,
 		which: char.charCodeAt(0),
@@ -229,6 +280,7 @@ function pressKey(context, element, char, { ctrl = false, alt = false } = {}) {
 
 function countPreventDefaultCalls(context, element, char) {
 	let calls = 0;
+	context.document.activeElement = element;
 	context.keyPressHandler({
 		target: element,
 		which: char.charCodeAt(0),
@@ -267,9 +319,12 @@ function createEditableHost(text, caret, caretEnd = caret) {
 		id: "",
 		name: "",
 		parentNode: { wi: undefined, parentNode: { wi: undefined } },
+		dispatchEvent: () => true,
 	};
+	node.parentNode = host;
 	const range = new FakeRange(node, caret, caretEnd);
 	const selection = {
+		rangeCount: 1,
 		getRangeAt: () => range,
 		removeAllRanges() {},
 		addRange() {},
@@ -287,6 +342,7 @@ function typeContentEditableDetailed(sequence, config = {}) {
 		// the keypress target is the contenteditable element; the range points at the text node inside it
 		const editable = createEditableHost(text, caret);
 		context.__selection = editable.selection;
+		context.document.activeElement = editable.host;
 		let prevented = false;
 		context.keyPressHandler({
 			target: editable.host,

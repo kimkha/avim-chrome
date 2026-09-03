@@ -29,6 +29,11 @@ yarn test:browser   # chạy trên cả src/ và build/ nếu đã build
 
 Đặt `AVIM_CHROME_PATH` nếu muốn chỉ vào một bản Chromium khác.
 
+`test/framework-editors.test.js` cần thêm mạng: nó nạp Slate, Lexical, Quill và ProseMirror thật từ
+esm.sh, vì cách một editor phản ứng với chỗ AVIM ghi vào contenteditable khác nhau theo từng loại
+(xem [#30](https://github.com/kimkha/avim-chrome/issues/30)) và không có DOM giả nào mô phỏng nổi.
+Nó cũng **tự skip** kèm lý do khi thiếu Chromium hoặc không ra được mạng.
+
 Đóng gói extension (cần `yarn install` trước):
 
 ```sh
