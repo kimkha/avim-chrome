@@ -322,7 +322,7 @@ for (const dir of extensionDirs()) {
 		describe("A framework-controlled contenteditable keeps the diacritics (#30)", () => {
 			// Discord's message box is Slate, which re-renders from its own model and so reverts a
 			// DOM edit it never saw. Slate hosts are recognised by their DOM attributes and
-			// announced to as backspaces plus an insertion, so the model applies the rewrite itself.
+			// announced to as one targeted insertText, so the model applies the rewrite itself.
 			it("announces to a Slate host from the very first conversion", async () => {
 				const textOf = () => page.locator("#controlled").evaluate((element) => element.textContent);
 

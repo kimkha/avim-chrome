@@ -908,44 +908,52 @@ function locate(parts, offset) {
 }
 
 /** Fires beforeinput on the editable. False when a listener claimed the edit for its own model. */
-function emitBeforeInput(host, inputType, data) {
+function emitBeforeInput(host, inputType, data, target) {
 	return host.dispatchEvent(new InputEvent("beforeinput", {
 		inputType,
 		data,
 		bubbles: true,
 		cancelable: true,
-		composed: true
+		composed: true,
+		targetRanges: target ? [target] : []
 	}));
 }
 
 /**
- * Editors that re-render from their own model revert a DOM edit they never saw (Slate, so Discord).
- * Ones with a MutationObserver reconciler keep it (Lexical, Quill, ProseMirror) and mangle a
- * synthetic beforeinput instead, so the channel has to be chosen per host. Reverting is not enough
- * to earn the announcement either: CKEditor reverts too, but reads getTargetRanges()
- * unconditionally, so it drops the insertion and throws on the deletes. Whether an editor survives
- * a range-less beforeinput cannot be probed, so this is an allowlist, keyed on the attributes
- * slate-react needs in the DOM to map it back to its own model.
+ * Editors that re-render from their own model revert a DOM edit they never saw (Slate, so Discord;
+ * CKEditor, so many a CMS). Ones with a MutationObserver reconciler keep it (Lexical, Quill,
+ * ProseMirror) and mangle a synthetic beforeinput instead, so the channel has to be chosen per
+ * host, and whether an editor survives one cannot be probed. An allowlist, keyed on what each
+ * editor leaves in the DOM.
  */
-function isSlateEditor(host) {
+function expectsAnnouncement(host) {
 	if (typeof host.hasAttribute !== "function") {
 		return false;
 	}
-	return host.hasAttribute("data-slate-editor") || (host.querySelector("[data-slate-string]") !== null);
+	return host.hasAttribute("data-slate-editor") ||
+		(host.querySelector("[data-slate-string]") !== null) ||
+		!!host.classList?.contains("ck-editor__editable");
 }
 
-/** Announces a rewrite as backspaces plus an insertion. True when a listener claimed it. */
-function announceRewrite(host, before, after) {
+/**
+ * Announces a rewrite as one insertText whose target range spans the rewritten tail. One event,
+ * because a model-backed editor applies it asynchronously: anything dispatched after it aims at a
+ * caret the editor has not moved yet. True when a listener claimed it.
+ */
+function announceRewrite(host, parts, before, after) {
 	const head = commonPrefixLength(before, after);
-	let claimed = false;
-	for (let left = before.length - head; left > 0; left--) {
-		claimed = !emitBeforeInput(host, "deleteContentBackward", null) || claimed;
+	const from = locate(parts, head);
+	const to = locate(parts, before.length);
+	let target;
+	try {
+		target = new StaticRange({
+			startContainer: from.node, startOffset: from.offset,
+			endContainer: to.node, endOffset: to.offset
+		});
+	} catch (error) {
+		return false;
 	}
-	const replacement = after.slice(head);
-	if (replacement) {
-		claimed = !emitBeforeInput(host, "insertText", replacement) || claimed;
-	}
-	return claimed;
+	return !emitBeforeInput(host, "insertText", after.slice(head), target);
 }
 
 function commonPrefixLength(before, after) {
@@ -977,9 +985,9 @@ function replaceValueBeforeCaret(el, before, after, caret) {
 /**
  * Rewrites the text before the caret to `after`, from the first changed character on.
  *
- * A Slate host is told in backspaces plus one insertion, because a synthetic InputEvent carries
- * no getTargetRanges() and such an editor would otherwise revert an edit it never saw.
- * Everyone else gets the edit itself, through execCommand, which fires input but not beforeinput.
+ * A model-backed editor (Slate, CKEditor) is told in one targeted insertText beforeinput, which it
+ * applies to its own model. Everyone else gets the edit itself, through execCommand, which fires
+ * input but not beforeinput.
  */
 function replaceBeforeCaret(host, sel, range, parts, before, after) {
 	const head = commonPrefixLength(before, after);
@@ -987,7 +995,7 @@ function replaceBeforeCaret(host, sel, range, parts, before, after) {
 	const from = locate(parts, head);
 	const to = locate(parts, before.length);
 
-	if (isSlateEditor(host) && announceRewrite(host, before, after)) {
+	if (expectsAnnouncement(host) && announceRewrite(host, parts, before, after)) {
 		return;
 	}
 

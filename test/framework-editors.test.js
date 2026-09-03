@@ -10,8 +10,8 @@ import {
 
 /**
  * The editors AVIM has to share a contenteditable with, run for real instead of mocked. Slate is
- * #30 itself; the other three are the regression guard, because they reconcile a silent DOM edit
- * and an announcement meant for Slate corrupts them.
+ * #30 itself and CKEditor reverts the same way; the other three are the regression guard, because
+ * they reconcile a silent DOM edit and an announcement meant for the reverters corrupts them.
  */
 
 const CDN = "https://esm.sh/slate@0.112.0";
@@ -84,8 +84,8 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 	}
 
 	// Slate re-renders from its own model, so a DOM edit it never saw would be reverted. Slate
-	// hosts are recognised by their DOM attributes and announced to as backspaces plus an
-	// insertion from the very first conversion, so the model always agrees and nothing is lost.
+	// hosts are recognised by their DOM attributes and announced to as one targeted insertText
+	// from the very first conversion, so the model always agrees and nothing is lost.
 	it("Slate keeps every conversion, in the DOM and in its model", async () => {
 		const first = await retype("slate", "#slate", "tieengs Vieejt");
 		assert.equal(first.dom, "tiếng Việt", "correct from the very first conversion in the host");
@@ -188,15 +188,18 @@ describe("Editor frameworks, loaded from the CDN", { skip: launcher.skip ?? cdn.
 		});
 	}
 
-	// CKEditor reverts a silent DOM edit exactly like Slate, so it is tempting to announce to it as
-	// well, and it reads getTargetRanges() unconditionally: it drops the range-less insertion, keeps
-	// the deletes and throws internally, which is worse than the diacritics it loses today. This
-	// asserts the losing, so that anything that turns the announcement into a learned capability
-	// instead of an allowlist fails here rather than on someone's CMS.
-	it("Known issue: CKEditor loses the diacritics, and must not get worse than that", async () => {
+	// CKEditor reverts a silent DOM edit exactly like Slate, and it builds the insertion target
+	// from getTargetRanges() alone — with no range it drops the insertion and keeps the deletes.
+	// So it gets the same announcement as Slate, whose one insertText carries the target range.
+	it("CKEditor keeps the diacritics, in the DOM and in its model", async () => {
 		const typed = await retype("ckeditor", ".ck-editor__editable", "tieengs Vieejt");
+		assert.equal(typed.dom, "tiếng Việt");
+		assert.equal(typed.model, "tiếng Việt");
 
-		assert.equal(typed.dom, "tieng Viet");
-		assert.equal(typed.model, "tieng Viet");
+		const spaced = await retype("ckeditor", ".ck-editor__editable", "chaof anh");
+		assert.equal(spaced.model, "chào anh");
+
+		const escaped = await retype("ckeditor", ".ck-editor__editable", "vaof ddd");
+		assert.equal(escaped.model, "vào dd");
 	});
 });

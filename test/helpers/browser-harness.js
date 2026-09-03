@@ -61,14 +61,18 @@ function outerPage(altOrigin) {
 
 	// #controlled stands in for Slate/Draft-style editors such as Discord's message box: it owns
 	// beforeinput, applies each one to its own model, and re-renders the DOM from that model.
+	// Like the real ones, it applies an event to the range it targets, not to the caret.
 	const controlled = document.getElementById("controlled");
 	let model = "";
 	controlled.addEventListener("beforeinput", (event) => {
 		event.preventDefault();
+		const targets = event.getTargetRanges();
+		const from = targets.length ? targets[0].startOffset : model.length;
+		const to = targets.length ? targets[0].endOffset : model.length;
 		if (event.inputType === "deleteContentBackward") {
-			model = model.slice(0, -1);
+			model = targets.length ? model.slice(0, from) + model.slice(to) : model.slice(0, -1);
 		} else if ((event.inputType === "insertText") && (event.data != null)) {
-			model += event.data;
+			model = model.slice(0, from) + event.data + model.slice(to);
 		}
 		controlled.textContent = model;
 		const range = document.createRange();
@@ -92,11 +96,10 @@ function outerPage(altOrigin) {
 
 /**
  * Real editor frameworks on one page, pulled from a CDN at run time so the repo keeps its
- * no-install test suite. Each is here for a different reason. Slate reverts a DOM edit AVIM makes
- * silently (#30). Lexical, Quill and ProseMirror reconcile it instead, and are what a synthetic
- * beforeinput sent to everyone would break. CKEditor reverts like Slate but corrupts that same
- * beforeinput, which is why the announcement is an allowlist and not a learned capability. The
- * controlled React input is here because a plain field has the same divergence: what the page reads
+ * no-install test suite. Each is here for a different reason. Slate and CKEditor revert a DOM edit
+ * AVIM makes silently (#30), and are announced to instead. Lexical, Quill and ProseMirror reconcile
+ * the DOM edit, and are what a synthetic beforeinput sent to everyone would break. The controlled
+ * React input is here because a plain field has the same divergence: what the page reads
  * is the component's state, not the DOM value AVIM wrote.
  */
 const FRAMEWORK_EDITORS_PAGE = `<!DOCTYPE html><html><head><style>
