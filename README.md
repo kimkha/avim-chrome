@@ -8,7 +8,7 @@ Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trì
 
 ## Phát triển
 
-Bộ test chạy trên test runner có sẵn của Node (cần Node >= 20) và không cần cài dependency nào:
+Bộ test chạy trên test runner có sẵn của Node (cần Node >= 24) và không cần cài dependency nào:
 
 ```sh
 yarn test           # chạy toàn bộ test
