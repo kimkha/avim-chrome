@@ -66,7 +66,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
-          ASSET: dist/avim-chrome-${{ steps.version.outputs.version }}.zip
+          CHROME_ASSET: dist/avim-chrome-${{ steps.version.outputs.version }}.zip
+          FIREFOX_ASSET: dist/avim-firefox-${{ steps.version.outputs.version }}.zip
         run: |
           # Idempotent so the workflow_dispatch re-run can repair a release that already exists;
           # `gh release create` alone fails outright when the tag has been published before.
@@ -74,9 +75,9 @@ jobs:
           # would otherwise leave it hidden.
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "$TAG" --notes-file /tmp/notes.md --draft=false
-            gh release upload "$TAG" "$ASSET" --clobber
+            gh release upload "$TAG" "$CHROME_ASSET" "$FIREFOX_ASSET" --clobber
           else
-            gh release create "$TAG" "$ASSET" \
+            gh release create "$TAG" "$CHROME_ASSET" "$FIREFOX_ASSET" \
               --title "$TAG" \
               --notes-file /tmp/notes.md \
               --verify-tag
