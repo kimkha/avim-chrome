@@ -24,7 +24,7 @@ function createElement(id) {
 		id,
 		value: "",
 		checked: false,
-		innerHTML: "",
+		textContent: "",
 		focused: false,
 		selected: false,
 		listeners: {},
