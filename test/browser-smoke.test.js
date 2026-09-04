@@ -164,6 +164,44 @@ for (const dir of extensionDirs()) {
 			it("leaves a word the engine already handles to the engine", async () => {
 				assert.equal(await typeUntil(page, "#textarea", "quow", "quơ"), "quơ");
 			});
+
+			// The empty-editable branch cannot read a word back, so it inserts through execCommand;
+			// a Slate host only sees that as a beforeinput it applies to its own model.
+			it("expands in an empty Slate host", async () => {
+				await page.evaluate(() => window.__resetControlled());
+				await page.locator("#controlled").click();
+				await page.keyboard.type("w", { delay: 15 });
+
+				assert.equal(await page.locator("#controlled").evaluate((element) => element.textContent), "ư");
+			});
+
+			it("leaves a selected word to be replaced by the raw key", async () => {
+				const editable = page.locator("#editable");
+				await editable.evaluate((element) => {
+					element.textContent = "abc";
+					element.focus();
+					const range = document.createRange();
+					range.selectNodeContents(element);
+					const selection = getSelection();
+					selection.removeAllRanges();
+					selection.addRange(range);
+				});
+
+				await page.keyboard.type("w", { delay: 15 });
+
+				assert.equal(await editable.evaluate((element) => element.textContent), "w");
+			});
+
+			// Assigning el.value fires nothing, and a controlled component would keep the raw key
+			it("reports one input event for the one keystroke it replaces", async () => {
+				await page.locator("#eventProbe").evaluate((element) => {
+					element.value = "";
+					window.__inputEvents = 0;
+				});
+
+				assert.equal(await typeOnce(page, "#eventProbe", "w"), "ư");
+				assert.equal(await page.evaluate(() => window.__inputEvents), 1);
+			});
 		});
 
 		// The only check that the whole loop is wired: popup -> storage -> background -> tab.

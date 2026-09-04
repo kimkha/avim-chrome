@@ -36,9 +36,8 @@
 	const SCREENS = ["mainScreen", "shortcutScreen"];
 
 	/**
-	 * The engine runs on this page too, and would eat what is typed into a key field: the default
-	 * `w` rule alone makes the shortcut `w` unenterable. This name goes into the engine's `exclude`
-	 * list, so avim-ext.js must load first. Result fields stay in, to be typed in Telex.
+	 * Key fields carry this name so the engine, which runs here too, skips them: the default `w`
+	 * rule made `w` unenterable. It seeds `exclude` at load, hence the script order in popup.html.
 	 */
 	const SHORTCUT_KEY_FIELD = "avimShortcutKey";
 
@@ -48,7 +47,7 @@
 
 	/**
 	 * The background stores the prefs and pushes them to every tab; the reload re-reads them.
-	 * The shortcut screen saves without it, because a reload would drop back to the main screen.
+	 * The shortcut screen opts out, because a reload would drop back to the main screen.
 	 */
 	function savePrefs(prefs, { reload = true } = {}) {
 		chrome.runtime.sendMessage({ save_prefs: "all", ...prefs }, () => {
@@ -118,6 +117,7 @@
 		const arrow = document.createElement("span");
 		arrow.textContent = " → ";
 		const keyInput = createShortcutInput(key, "extPopupShortcutKeyHint", SHORTCUT_KEY_FIELD);
+		// Left nameless on purpose, so the engine stays on and a result can be typed in Telex
 		const resultInput = createShortcutInput(value, "extPopupShortcutResultHint", "");
 		const removeButton = document.createElement("button");
 		removeButton.type = "button";
@@ -175,7 +175,6 @@
 		if (stored.length === 0) {
 			addShortcutRow();
 		}
-		applyShortcutsEnabled();
 	}
 
 	function showPrefs(prefs) {

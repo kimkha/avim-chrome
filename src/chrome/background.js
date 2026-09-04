@@ -34,7 +34,7 @@ async function getShortcuts() {
 	const stored = await chrome.storage.local.get({ [SHORTCUTS_KEY]: JSON.stringify(DEFAULT_SHORTCUTS) });
 	try {
 		return cleanShortcuts(JSON.parse(stored[SHORTCUTS_KEY]));
-	} catch (error) {
+	} catch {
 		return DEFAULT_SHORTCUTS;
 	}
 }

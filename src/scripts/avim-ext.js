@@ -1046,7 +1046,8 @@ function ifMoz(e) {
 	const range = (sel && sel.rangeCount) ? sel.getRangeAt(0) : document.createRange();
 	const node = range.endContainer;
 
-	avim.sk = fromCharCode(code);
+	const char = fromCharCode(code);
+	avim.sk = char;
 	if (checkCode(code)) {
 		return;
 	}
@@ -1056,7 +1057,7 @@ function ifMoz(e) {
 	}
 	// An empty editable holds no text node to read back, so only the empty word can match
 	if (typeof node.data === "undefined") {
-		const fresh = shortcutRewrite("", fromCharCode(code));
+		const fresh = shortcutRewrite("", char);
 		if ((fresh !== null) && (node.ownerDocument ?? document).execCommand("insertText", false, fresh)) {
 			e.preventDefault();
 		}
@@ -1069,7 +1070,7 @@ function ifMoz(e) {
 	const parts = partsBeforeCaret(host, node, caret);
 	const before = parts.map((part) => part.text).join("");
 
-	const expanded = shortcutRewrite(before, fromCharCode(code));
+	const expanded = shortcutRewrite(before, char);
 	if (expanded !== null) {
 		replaceBeforeCaret(host, sel, range, parts, before, expanded);
 		e.preventDefault();
@@ -1085,7 +1086,7 @@ function ifMoz(e) {
 	// word and leaves the key to the browser, so the rewrite has to be applied either way.
 	const changed = avim.changed;
 	avim.changed = false;
-	const onset = editor.value === before ? shortcutAfterOnset(before, fromCharCode(code)) : null;
+	const onset = editor.value === before ? shortcutAfterOnset(before, char) : null;
 	const after = onset ?? editor.value;
 	if (after !== before) {
 		replaceBeforeCaret(host, sel, range, parts, before, after);
@@ -1159,8 +1160,7 @@ function replaceWordTail(before, length, result) {
 
 /**
  * The text before the caret with a shortcut applied, or null when this keystroke completes none.
- * A shortcut spans the whole word, never just its tail: a tail match would turn the Telex "chuw"
- * into "chuư" under the default `w` rule instead of leaving the engine to make "chư".
+ * Whole-word only: a tail match here would let the default `w` rule turn Telex "chuw" into "chuư".
  */
 function shortcutRewrite(before, char) {
 	const word = wordBefore(before) + char;
@@ -1179,9 +1179,8 @@ function hasVowel(text) {
 }
 
 /**
- * The same, for a shortcut that merely ends the word, with nothing but a consonant onset in front:
- * "chw" gives the "chư" the engine builds for "chuw". Only ever tried once the engine has passed on
- * the keystroke, so a word it does handle keeps its reading — "quow" stays "quơ", not "qươ".
+ * The same for a shortcut that only ends the word, with a bare consonant onset in front: "chw" gives
+ * the "chư" of "chuw". Tried only where the engine passed, so "quow" keeps its "quơ", not "qươ".
  */
 function shortcutAfterOnset(before, char) {
 	const word = wordBefore(before) + char;
@@ -1251,7 +1250,8 @@ function keyPressHandler(e) {
 	if (checkCode(code)) {
 		return;
 	}
-	AVIMObj.sk = fromCharCode(code);
+	const char = fromCharCode(code);
+	AVIMObj.sk = char;
 	if (findIgnore(el) || el.readOnly) {
 		return;
 	}
@@ -1262,7 +1262,7 @@ function keyPressHandler(e) {
 
 	const caret = el.selectionStart;
 	const before = el.value.slice(0, caret);
-	const expanded = shortcutRewrite(before, fromCharCode(code));
+	const expanded = shortcutRewrite(before, char);
 	if (expanded !== null) {
 		replaceValueBeforeCaret(el, before, expanded, caret);
 		e.preventDefault();
@@ -1275,7 +1275,7 @@ function keyPressHandler(e) {
 	start(editor, e);
 	const changed = AVIMObj.changed;
 	AVIMObj.changed = false;
-	const onset = editor.value === before ? shortcutAfterOnset(before, fromCharCode(code)) : null;
+	const onset = editor.value === before ? shortcutAfterOnset(before, char) : null;
 	const after = onset ?? editor.value;
 	if (after !== before) {
 		replaceValueBeforeCaret(el, before, after, caret);

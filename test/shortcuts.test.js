@@ -28,6 +28,7 @@ describe("The default shortcuts expand what Telex leaves alone", () => {
 		["uow", "ươ"],
 		["uowng", "ương"],
 		["xin w", "xin ư"],
+		["xin,w", "xin,ư"],
 		["wa", "ưa"],
 	];
 
@@ -45,6 +46,16 @@ describe("The default shortcuts expand what Telex leaves alone", () => {
 
 		assert.equal(element.value, "ư");
 		assert.equal(element.selectionStart, 1);
+	});
+
+	it("keeps the text that follows the caret", () => {
+		const context = loadEngine(on([{ key: "vn", value: "Việt Nam" }]));
+		const element = createInput({ value: "vX", caret: 1 });
+
+		pressKey(context, element, "n");
+
+		assert.equal(element.value, "Việt NamX");
+		assert.equal(element.selectionStart, 8);
 	});
 });
 
@@ -104,6 +115,29 @@ describe("A shortcut also lands right after a bare consonant onset", () => {
 	it("does not fire once the word already has a vowel", () => {
 		assert.equal(type("abvn", on([{ key: "vn", value: "Việt Nam" }])), "abvn");
 	});
+
+	// A vowel counts even when it arrived as one precomposed character, which is what NFD is for
+	const precomposed = [
+		["ưvn", "ưvn"],
+		["ấvn", "ấvn"],
+	];
+
+	for (const [sequence, expected] of precomposed) {
+		it(`treats the ${sequence.charAt(0)} in "${sequence}" as a vowel`, () => {
+			assert.equal(type(sequence, on([{ key: "vn", value: "Việt Nam" }])), expected);
+		});
+	}
+
+	const overlapping = [
+		["the longer key wins", [{ key: "w", value: "S" }, { key: "hw", value: "L" }]],
+		["whatever order they are stored in", [{ key: "hw", value: "L" }, { key: "w", value: "S" }]],
+	];
+
+	for (const [label, shortcuts] of overlapping) {
+		it(`picks between two keys that both end the word: ${label}`, () => {
+			assert.equal(type("chw", on(shortcuts)), "cL");
+		});
+	}
 
 	it("does not fire with the feature off", () => {
 		assert.equal(type("chw", { shortcutsOn: 0, shortcuts: DEFAULT_SHORTCUTS }), "chw");
