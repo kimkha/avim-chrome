@@ -4,6 +4,8 @@ avim-chrome [![CI](https://github.com/kimkha/avim-chrome/actions/workflows/ci.ym
 Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trình duyệt Google Chrome và các trình duyệt khác dùng WebExtension:
 
 * [Cài đặt vào Google Chrome](https://chrome.google.com/webstore/detail/opgbbffpdglhkpglnlkiclakjlpiedoh)
+* [Cài đặt vào Firefox](https://addons.mozilla.org/en-US/firefox/addon/avim-vietnamese-input-method-/)
+* [Cài đặt vào Opera](https://addons.opera.com/en/extensions/details/avim-vietnamese-input-method/)
 * [Cài đặt vào Edge](https://microsoftedge.microsoft.com/addons/detail/avim-vietnamese-input-m/mgoacbmfohepgebnedihminjdkbgbpcc/)
 
 ## Phát triển
