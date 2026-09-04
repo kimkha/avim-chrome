@@ -1087,7 +1087,8 @@ function checkCode(code) {
 	return (code === 145) || (code === 255);
 }
 
-const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0\u200b\ufeff";
+// \u0003 is the marker Google Docs puts at the start of the text its annotation API hands out
+const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0\u200b\ufeff\u0003";
 
 function notWord(word) {
 	return NOT_WORD_CHARS.includes(word);
@@ -1118,6 +1119,7 @@ const INPUT_TYPES = ["textarea", "text", "search", "tel"];
 
 /** Attaches the contenteditable handler to every designMode iframe on the page. */
 function AVIMInit(avim) {
+	gdocsInit();
 	for (const frame of document.getElementsByTagName("iframe")) {
 		if (findIgnore(frame)) {
 			continue;
@@ -1190,6 +1192,113 @@ function keyPressHandler(e) {
 }
 
 const CTRL_KEY_CODE = 17;
+
+/* ---- Google Docs: a canvas editor, reached through the main-world bridge ---- */
+
+// Spelled out again rather than shared with chrome/gdocs-bridge.js: build.mjs minifies each file
+// on its own, so only string literals survive as a contract between them.
+const GDOCS_NODE_ID = "avim-gdocs-bridge";
+const GDOCS_EVENT_READ = "avim:gdocs:read";
+const GDOCS_EVENT_WRITE = "avim:gdocs:write";
+const GDOCS_IFRAME_SELECTOR = "iframe.docs-texteventtarget-iframe";
+
+/**
+ * The text in front of the caret and where it sits, out of Docs' own model. The bridge answers
+ * during the dispatch, so this reads back synchronously. Null until Docs has handed the bridge an
+ * annotated object, which it refuses to do before the document has a caret.
+ */
+function gdocsState() {
+	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_READ));
+	const node = document.getElementById(GDOCS_NODE_ID);
+	if (!node || (node.dataset.avimOk !== "1")) {
+		return null;
+	}
+	return {
+		tail: node.textContent,
+		base: Number(node.dataset.avimBase),
+		selectionStart: Number(node.dataset.avimStart),
+		selectionEnd: Number(node.dataset.avimEnd)
+	};
+}
+
+function gdocsReplace(from, to, text) {
+	const node = document.getElementById(GDOCS_NODE_ID);
+	if (!node) {
+		return;
+	}
+	node.dataset.avimWrite = JSON.stringify({ from, to, text });
+	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_WRITE));
+}
+
+/**
+ * Rewrites the word Docs has just typed into, one tick after the keystroke. Nothing is prevented,
+ * so the key is already in the document and the engine is handed the text without it. Reconciling
+ * against what Docs holds, not against what the keystroke should have produced, makes a lost race
+ * a no-op instead of a corrupted word.
+ */
+function gdocsRewrite(key, code) {
+	const state = gdocsState();
+	if (!state || (state.selectionStart !== state.selectionEnd)) {
+		return;
+	}
+	const caret = state.selectionEnd;
+	const typed = state.tail;
+	// Docs has not applied the key yet, or applied something else, or the read tore
+	if (!typed.endsWith(key) || ((caret - state.base) !== typed.length)) {
+		return;
+	}
+	const before = typed.slice(0, -1);
+	if (!before) {
+		return;
+	}
+
+	const editor = createTextEditor(before);
+	AVIMObj.sk = key;
+	start(editor, { which: code });
+	const changed = AVIMObj.changed;
+	AVIMObj.changed = false;
+	// changed only says who was meant to type the key, and Docs already did: a transform such as
+	// telex "chaof" drops it, an escape sequence such as "aaa" keeps it.
+	const want = editor.value + (changed ? "" : key);
+	if (want === typed) {
+		return;
+	}
+
+	const head = commonPrefixLength(typed, want);
+	gdocsReplace(state.base + head, caret, want.slice(head));
+}
+
+function gdocsKeyPress(e) {
+	const code = e.which;
+	if (e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
+		return;
+	}
+	if (checkCode(code)) {
+		return;
+	}
+	const key = fromCharCode(code);
+	// Docs applies the key after this listener returns, and the rewrite has to see the result
+	setTimeout(() => gdocsRewrite(key, code), 0);
+}
+
+/**
+ * Attaches to Docs' hidden text-event iframe, where the keystrokes land. It is about:blank, so it
+ * gets no content script of its own and must be reached from the parent. Idempotent: the iframe is
+ * replaced as the editor reloads and this runs on every rescan.
+ */
+function gdocsInit() {
+	if (typeof document.querySelector !== "function") {
+		return;
+	}
+	const iframe = document.querySelector(GDOCS_IFRAME_SELECTOR);
+	const target = iframe && iframe.contentDocument;
+	if (!target || target.avimGdocs) {
+		return;
+	}
+	target.avimGdocs = true;
+	target.addEventListener("keypress", gdocsKeyPress, true);
+}
+
 const DOUBLE_TAP_MS = 300;
 
 let isPressCtrl = false;
