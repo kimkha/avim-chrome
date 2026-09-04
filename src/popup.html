@@ -5,28 +5,47 @@
 </head>
 <body>
 <div style="width:310px;">
-	<b id="txtSel">Chọn một kiểu gõ:</b><br />
-	<input type="radio" name="method" id="auto" /> <label for="auto" id="txtAuto">Kết hợp</label><br />
-	<input type="radio" name="method" id="telex" /> <label for="telex" id="txtTelex">Kiểu TELEX</label><br />
-	<input type="radio" name="method" id="vni" /> <label for="vni" id="txtVni">Kiểu VNI</label><br />
-	<input type="radio" name="method" id="viqr" /> <label for="viqr" id="txtViqr">Kiểu VIQR</label><br />
-	<input type="radio" name="method" id="viqrStar" /> <label for="viqrStar" id="txtViqrStar">Kiểu VIQR*</label><br />
-	<input type="radio" name="method" id="off" /> <label for="off" id="txtOff">Tắt AVIM</label><br />
-	<br />
-	<input type="checkbox" id="spellCheck" /> <label for="spellCheck" id="txtSpellCheck">Kiểm tra chính tả</label><br />
-	<br />
-	<b><small id="txtTips">Mẹo nhỏ:</small></b><br />
-	- <small id="txtTipsCtrl">Nhấn Ctrl 2 lần để bật/tắt nhanh.</small>
-	<br />
-	<br />
-	<div>
-		<b id="txtDemo">Gõ nhanh</b><br />
-		<textarea id="inputDemo" style="width:100%; height:200px;" autofocus="autofocus" placeholder="Gõ nhanh tiếng Việt tại đây"></textarea>
-		<button id="demoCopy" type="button"><span id="txtDemoCopy">Copy</span></button>
-		<button id="removeAccent" type="button"><span id="txtRemoveAccent">Đổi không dấu</span></button>
+	<div id="mainScreen">
+		<b id="txtSel">Chọn một kiểu gõ:</b><br />
+		<input type="radio" name="method" id="auto" /> <label for="auto" id="txtAuto">Kết hợp</label><br />
+		<input type="radio" name="method" id="telex" /> <label for="telex" id="txtTelex">Kiểu TELEX</label><br />
+		<input type="radio" name="method" id="vni" /> <label for="vni" id="txtVni">Kiểu VNI</label><br />
+		<input type="radio" name="method" id="viqr" /> <label for="viqr" id="txtViqr">Kiểu VIQR</label><br />
+		<input type="radio" name="method" id="viqrStar" /> <label for="viqrStar" id="txtViqrStar">Kiểu VIQR*</label><br />
+		<input type="radio" name="method" id="off" /> <label for="off" id="txtOff">Tắt AVIM</label><br />
+		<br />
+		<input type="checkbox" id="spellCheck" /> <label for="spellCheck" id="txtSpellCheck">Kiểm tra chính tả</label><br />
+		<br />
+		<button id="openShortcuts" type="button"><span id="txtOpenShortcuts">Phím tắt</span></button>
+		<br />
+		<br />
+		<b><small id="txtTips">Mẹo nhỏ:</small></b><br />
+		- <small id="txtTipsCtrl">Nhấn Ctrl 2 lần để bật/tắt nhanh.</small>
+		<br />
+		<br />
+		<div>
+			<b id="txtDemo">Gõ nhanh</b><br />
+			<textarea id="inputDemo" style="width:100%; height:200px;" autofocus="autofocus" placeholder="Gõ nhanh tiếng Việt tại đây"></textarea>
+			<button id="demoCopy" type="button"><span id="txtDemoCopy">Copy</span></button>
+			<button id="removeAccent" type="button"><span id="txtRemoveAccent">Đổi không dấu</span></button>
+		</div>
+	</div>
+	<div id="shortcutScreen" style="display:none;">
+		<b id="txtShortcuts">Phím tắt</b><br />
+		<br />
+		<input type="checkbox" id="shortcutsOn" /> <label for="shortcutsOn" id="txtShortcutsOn">Bật phím tắt</label><br />
+		<br />
+		<div id="shortcutList"></div>
+		<button id="addShortcut" type="button"><span id="txtAddShortcut">Thêm phím tắt</span></button>
+		<br />
+		<br />
+		<button id="saveShortcuts" type="button"><span id="txtSaveShortcuts">Lưu phím tắt</span></button>
+		<br />
+		<br />
+		- <small id="txtShortcutsHint">Phím tắt chạy khi là cả từ, hoặc ngay sau phụ âm.</small>
 	</div>
 </div>
-	<script src="chrome/popup.js"></script>
 	<script src="scripts/avim-ext.js"></script>
+	<script src="chrome/popup.js"></script>
 </body>
 </html>

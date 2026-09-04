@@ -5,6 +5,15 @@ since `v0.8.3` is collected under 0.10.0.
 
 ## [Next]
 
+### Added
+
+- Phím tắt do người dùng tự đặt: popup có thêm màn hình "Phím tắt" với ô bật/tắt, các cặp
+  `phím` → `kết quả`, nút thêm dòng và nút xoá từng dòng. Mặc định tắt, và sẵn 5 dòng `w` → `ư`,
+  `W` → `Ư`, `uow` → `ươ`, `Uow` → `Ươ`, `UOW` → `ƯƠ` — những chuỗi engine không tự tạo ra (`w`
+  giữ nguyên là `w`, còn `uow` chỉ ra `uơ`). Một phím tắt được áp dụng khi nó là cả từ, hoặc khi
+  nó kết thúc từ mà phía trước chỉ có phụ âm, nhờ vậy `chw` và `chuw` đều ra `chư`; từ nào engine
+  đã xử lý thì vẫn theo engine, nên `quow` giữ nguyên `quơ`.
+
 ### Fixed
 
 - Mất ký tự khi gõ trong contenteditable của các editor tự render lại từ model của chúng

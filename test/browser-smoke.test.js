@@ -115,6 +115,87 @@ for (const dir of extensionDirs()) {
 			}
 		});
 
+		describe("Shortcut keys ship switched off", () => {
+			it("leaves the default w rule dormant", async () => {
+				assert.equal(await typeUntil(page, "#textarea", "w", "w"), "w");
+			});
+
+			it("still lists the default rows, greyed out, ready to be switched on", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.click("#openShortcuts");
+
+				assert.equal(await popup.locator("#shortcutsOn").isChecked(), false);
+				assert.equal(await popup.locator("#saveShortcuts").isDisabled(), true);
+				const values = await popup.locator("#shortcutList input").evaluateAll((els) => els.map((el) => el.value));
+				assert.deepEqual(values, ["w", "ư", "W", "Ư", "uow", "ươ", "Uow", "Ươ", "UOW", "ƯƠ"]);
+				await popup.close();
+			});
+		});
+
+		describe("The default shortcut keys expand once switched on", () => {
+			before(async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.click("#openShortcuts");
+				await popup.check("#shortcutsOn");
+				await popup.waitForTimeout(300);
+				await popup.close();
+			});
+
+			const cases = [
+				["w in a textarea", "#textarea", "w", "ư"],
+				["uow in a textarea", "#textarea", "uow", "ươ"],
+				["W in a textarea", "#textarea", "W", "Ư"],
+				["UOW in a textarea", "#textarea", "UOW", "ƯƠ"],
+				["w after a bare consonant", "#textarea", "chw", "chư"],
+				["the same word spelled with its vowel", "#textarea", "chuw", "chư"],
+				["w in an empty contenteditable", "#editable", "w", "ư"],
+				["w after a bare consonant in a contenteditable", "#editable", "chw", "chư"],
+				["w in a same-origin iframe", { frame: "#sameOrigin", selector: "#nested" }, "w", "ư"],
+			];
+
+			for (const [label, target, sequence, expected] of cases) {
+				it(`${label} gives "${expected}"`, async () => {
+					assert.equal(await typeUntil(page, target, sequence, expected), expected);
+				});
+			}
+
+			it("leaves a word the engine already handles to the engine", async () => {
+				assert.equal(await typeUntil(page, "#textarea", "quow", "quơ"), "quơ");
+			});
+		});
+
+		// The only check that the whole loop is wired: popup -> storage -> background -> tab.
+		describe("A shortcut added in the popup reaches an open tab", () => {
+			it("expands what was just saved", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.click("#openShortcuts");
+				await popup.click("#addShortcut");
+				const inputs = popup.locator("#shortcutList input");
+				const added = await inputs.count();
+				await inputs.nth(added - 2).fill("vnn");
+				await inputs.nth(added - 1).fill("Việt Nam");
+				await popup.click("#saveShortcuts");
+				await popup.waitForTimeout(300);
+
+				assert.equal(await popup.locator("#mainScreen").isVisible(), true);
+				assert.equal(await typeUntil(page, "#textarea", "vnn", "Việt Nam"), "Việt Nam");
+				await popup.close();
+			});
+
+			it("keeps it after the popup is reopened", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.click("#openShortcuts");
+				const values = await popup.locator("#shortcutList input").evaluateAll((els) => els.map((el) => el.value));
+
+				assert.deepEqual(values.slice(-2), ["vnn", "Việt Nam"]);
+				await popup.close();
+			});
+		});
+
 		describe("An input inside a shadow root converts too", () => {
 			// A document-level capture listener sees e.target retargeted to the shadow host, a DIV
 			// whose .type is undefined, so keyPressHandler reads e.composedPath()[0] instead.

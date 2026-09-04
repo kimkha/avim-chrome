@@ -62,5 +62,41 @@
 	"extPopupRemoveAccent" : {
 		"message" : "Đổi không dấu",
 		"description" : "Bỏ dấu tiếng Việt trong ô gõ nhanh"
+	},
+	"extPopupOpenShortcuts" : {
+		"message" : "Phím tắt",
+		"description" : "Nút mở màn hình phím tắt"
+	},
+	"extPopupShortcuts" : {
+		"message" : "Phím tắt",
+		"description" : "Tiêu đề màn hình phím tắt"
+	},
+	"extPopupShortcutsOn" : {
+		"message" : "Bật phím tắt",
+		"description" : "Nhãn của ô bật/tắt toàn bộ phím tắt"
+	},
+	"extPopupAddShortcut" : {
+		"message" : "Thêm phím tắt",
+		"description" : "Nút thêm một dòng phím tắt trống"
+	},
+	"extPopupSaveShortcuts" : {
+		"message" : "Lưu phím tắt",
+		"description" : "Nút lưu các dòng phím tắt rồi trở về màn hình chính"
+	},
+	"extPopupShortcutsHint" : {
+		"message" : "Phím tắt chạy khi là cả từ, hoặc ngay sau phụ âm: chw ra chư.",
+		"description" : "Cách phím tắt khớp, hiện dưới màn hình phím tắt"
+	},
+	"extPopupRemoveShortcut" : {
+		"message" : "Xoá phím tắt này",
+		"description" : "Chú thích của nút xoá một dòng phím tắt"
+	},
+	"extPopupShortcutKeyHint" : {
+		"message" : "phím cần gõ",
+		"description" : "Chữ mờ trong ô phím tắt"
+	},
+	"extPopupShortcutResultHint" : {
+		"message" : "đổi thành",
+		"description" : "Chữ mờ trong ô kết quả"
 	}
 }

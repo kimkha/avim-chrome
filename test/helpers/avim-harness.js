@@ -41,6 +41,8 @@ const DEFAULT_CONFIG = {
 	onOff: 1,
 	checkSpell: 1,
 	oldAccent: 1,
+	shortcutsOn: 0,
+	shortcuts: [],
 };
 
 class FakeText {
@@ -189,6 +191,8 @@ const CONFIG_KEYS = [
 	"onOff",
 	"checkSpell",
 	"oldAccent",
+	"shortcutsOn",
+	"shortcuts",
 	"exclude",
 	"autoConfig",
 	"element",
@@ -218,6 +222,8 @@ function loadEngine(config = {}) {
 		onOff: settings.onOff,
 		ckSpell: settings.checkSpell,
 		oldAccent: settings.oldAccent,
+		shortcutsOn: settings.shortcutsOn,
+		shortcuts: settings.shortcuts,
 	});
 	return sandbox;
 }

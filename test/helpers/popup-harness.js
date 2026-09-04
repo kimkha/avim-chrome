@@ -17,20 +17,42 @@ const enMessages = JSON.parse(fs.readFileSync(path.join(SRC, "_locales", "en", "
 
 const ELEMENT_IDS = [...popupHtml.matchAll(/id="([^"]+)"/g)].map((match) => match[1]);
 
-const DEFAULT_PREFS = { method: 0, onOff: 1, ckSpell: 1, oldAccent: 1 };
+const DEFAULT_PREFS = {
+	method: 0,
+	onOff: 1,
+	ckSpell: 1,
+	oldAccent: 1,
+	shortcutsOn: 0,
+	shortcuts: [{ key: "w", value: "ư" }, { key: "uow", value: "ươ" }],
+};
 
-function createElement(id) {
+function createElement(id, tagName = "div") {
 	return {
 		id,
+		tagName,
+		type: "",
+		name: "",
 		value: "",
 		checked: false,
+		disabled: false,
+		placeholder: "",
 		textContent: "",
 		focused: false,
 		selected: false,
+		style: {},
+		children: [],
 		listeners: {},
 		addEventListener(event, handler) {
 			this.listeners[event] = this.listeners[event] || [];
 			this.listeners[event].push(handler);
+		},
+		appendChild(child) {
+			this.children.push(child);
+			return child;
+		},
+		removeChild(child) {
+			this.children = this.children.filter((entry) => entry !== child);
+			return child;
 		},
 		focus() {
 			this.focused = true;
@@ -64,7 +86,7 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 			runtime: {
 				sendMessage(message, callback) {
 					// copied into this realm: a vm-created object fails deepStrictEqual on prototype
-					sent.push({ ...message });
+					sent.push(JSON.parse(JSON.stringify(message)));
 					if (message.get_prefs) {
 						callback(prefs);
 						return;
@@ -81,6 +103,9 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 		document: {
 			getElementById(id) {
 				return elements.get(id) ?? null;
+			},
+			createElement(tagName) {
+				return createElement("", tagName);
 			},
 			execCommand(command) {
 				execCommands.push(command);
@@ -128,9 +153,32 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 		}
 	}
 
+	function shortcutRows() {
+		return element("shortcutList").children.map((row) => {
+			const [keyInput, resultInput] = row.children.filter((child) => child.tagName === "input");
+			const [removeButton] = row.children.filter((child) => child.tagName === "button");
+			return { row, keyInput, resultInput, removeButton };
+		});
+	}
+
+	/** Runs the listeners of an element the page built itself, which has no id to look up. */
+	function fireOn(target, event) {
+		const handlers = target.listeners[event] || [];
+		if (handlers.length === 0) {
+			throw new Error(`the ${target.tagName} has no ${event} listener`);
+		}
+		for (const handler of handlers) {
+			handler();
+		}
+	}
+
 	return {
 		element,
 		fire,
+		fireOn,
+		shortcutRows,
+		// what popup.js left for the engine to skip; avim-ext.js owns this global in the real popup
+		excluded: () => sandbox.exclude ?? [],
 		sent,
 		clipboardWrites,
 		execCommands,

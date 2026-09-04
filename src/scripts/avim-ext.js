@@ -30,6 +30,7 @@ let method = 0; //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
 let onOff = 1; //Starting status: 0=Off, 1=On
 let checkSpell = 1; //Spell Check: 0=Off, 1=On
 let oldAccent = 1; //0: New way (oa`, oe`, uy`), 1: The good old day (o`a, o`e, u`y)
+let shortcutMap = new Map(); //Shortcut keys -> what replaces them; empty whenever the pref is off
 
 // Kept on globalThis, not in a lexical binding: the page and the test harness override them after load
 globalThis.exclude = ["email"]; //IDs of the fields you DON'T want to let users type Vietnamese in
@@ -1046,11 +1047,19 @@ function ifMoz(e) {
 	const node = range.endContainer;
 
 	avim.sk = fromCharCode(code);
-	if (checkCode(code) || !range.startOffset || (typeof node.data === "undefined")) {
+	if (checkCode(code)) {
 		return;
 	}
 	// The keystroke replaces a non-empty selection, so there is no word in front of it to transform
 	if (range.startOffset !== range.endOffset) {
+		return;
+	}
+	// An empty editable holds no text node to read back, so only the empty word can match
+	if (typeof node.data === "undefined") {
+		const fresh = shortcutRewrite("", fromCharCode(code));
+		if ((fresh !== null) && (node.ownerDocument ?? document).execCommand("insertText", false, fresh)) {
+			e.preventDefault();
+		}
 		return;
 	}
 
@@ -1060,16 +1069,28 @@ function ifMoz(e) {
 	const parts = partsBeforeCaret(host, node, caret);
 	const before = parts.map((part) => part.text).join("");
 
+	const expanded = shortcutRewrite(before, fromCharCode(code));
+	if (expanded !== null) {
+		replaceBeforeCaret(host, sel, range, parts, before, expanded);
+		e.preventDefault();
+		return;
+	}
+	if (!range.startOffset) {
+		return;
+	}
+
 	const editor = createTextEditor(before);
 	start(editor, e);
 	// changed only decides who types the key. An escape sequence such as telex "aaa" rewrites the
 	// word and leaves the key to the browser, so the rewrite has to be applied either way.
 	const changed = avim.changed;
 	avim.changed = false;
-	if (editor.value !== before) {
-		replaceBeforeCaret(host, sel, range, parts, before, editor.value);
+	const onset = editor.value === before ? shortcutAfterOnset(before, fromCharCode(code)) : null;
+	const after = onset ?? editor.value;
+	if (after !== before) {
+		replaceBeforeCaret(host, sel, range, parts, before, after);
 	}
-	if (changed) {
+	if (changed || (onset !== null)) {
 		e.preventDefault();
 	}
 }
@@ -1107,6 +1128,73 @@ function upperCase(word) {
 			return at >= 0 ? UPPER_VIET.charAt(at) : char;
 		})
 		.join("");
+}
+
+
+/* ---- User-defined shortcuts: whole words the keystroke expands, before the engine sees it ---- */
+
+/** Entries with a blank key are dropped: such a key would match after every keystroke. */
+function buildShortcutMap(list) {
+	const map = new Map();
+	for (const entry of list ?? []) {
+		if (entry && (typeof entry.key === "string") && (entry.key.length > 0)) {
+			map.set(entry.key, String(entry.value ?? ""));
+		}
+	}
+	return map;
+}
+
+function wordBefore(text) {
+	let at = text.length;
+	while ((at > 0) && !notWord(text.charAt(at - 1))) {
+		at--;
+	}
+	return text.slice(at);
+}
+
+/** `before` with the `length` characters of the word it ends with swapped for `result`. */
+function replaceWordTail(before, length, result) {
+	return before.slice(0, before.length - length + 1) + result;
+}
+
+/**
+ * The text before the caret with a shortcut applied, or null when this keystroke completes none.
+ * A shortcut spans the whole word, never just its tail: a tail match would turn the Telex "chuw"
+ * into "chuư" under the default `w` rule instead of leaving the engine to make "chư".
+ */
+function shortcutRewrite(before, char) {
+	const word = wordBefore(before) + char;
+	const result = shortcutMap.get(word);
+	if (result === undefined) {
+		return null;
+	}
+	return replaceWordTail(before, word.length, result);
+}
+
+// NFD splits ư into u + horn and ấ into a + marks, so the bare letters are enough to spot a vowel
+const VOWEL_LETTER = /[aeiouy]/i;
+
+function hasVowel(text) {
+	return VOWEL_LETTER.test(text.normalize("NFD"));
+}
+
+/**
+ * The same, for a shortcut that merely ends the word, with nothing but a consonant onset in front:
+ * "chw" gives the "chư" the engine builds for "chuw". Only ever tried once the engine has passed on
+ * the keystroke, so a word it does handle keeps its reading — "quow" stays "quơ", not "qươ".
+ */
+function shortcutAfterOnset(before, char) {
+	const word = wordBefore(before) + char;
+	let longest = null;
+	for (const [key, result] of shortcutMap) {
+		if (!word.endsWith(key) || hasVowel(word.slice(0, word.length - key.length))) {
+			continue;
+		}
+		if (!longest || (key.length > longest.key.length)) {
+			longest = { key, result };
+		}
+	}
+	return longest ? replaceWordTail(before, longest.key.length, longest.result) : null;
 }
 
 
@@ -1173,18 +1261,26 @@ function keyPressHandler(e) {
 	}
 
 	const caret = el.selectionStart;
+	const before = el.value.slice(0, caret);
+	const expanded = shortcutRewrite(before, fromCharCode(code));
+	if (expanded !== null) {
+		replaceValueBeforeCaret(el, before, expanded, caret);
+		e.preventDefault();
+		return;
+	}
 	if (!caret) {
 		return;
 	}
-	const before = el.value.slice(0, caret);
 	const editor = createTextEditor(before);
 	start(editor, e);
 	const changed = AVIMObj.changed;
 	AVIMObj.changed = false;
-	if (editor.value !== before) {
-		replaceValueBeforeCaret(el, before, editor.value, caret);
+	const onset = editor.value === before ? shortcutAfterOnset(before, fromCharCode(code)) : null;
+	const after = onset ?? editor.value;
+	if (after !== before) {
+		replaceValueBeforeCaret(el, before, after, caret);
 	}
-	if (changed) {
+	if (changed || (onset !== null)) {
 		e.preventDefault();
 	}
 }
@@ -1263,6 +1359,8 @@ function configAVIM(data) {
 		onOff = data.onOff;
 		checkSpell = data.ckSpell;
 		oldAccent = data.oldAccent;
+		// An empty map is what "off" looks like here, so nothing downstream has to test the pref
+		shortcutMap = data.shortcutsOn === 1 ? buildShortcutMap(data.shortcuts) : new Map();
 	}
 
 	newAVIMInit();

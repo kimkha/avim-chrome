@@ -9,11 +9,17 @@
 		"ViqrStar",
 		"Off",
 		"SpellCheck",
+		"OpenShortcuts",
 		"Tips",
 		"TipsCtrl",
 		"Demo",
 		"DemoCopy",
-		"RemoveAccent"
+		"RemoveAccent",
+		"Shortcuts",
+		"ShortcutsOn",
+		"AddShortcut",
+		"SaveShortcuts",
+		"ShortcutsHint"
 	];
 
 	/** Radio element id -> the method number the engine expects. */
@@ -27,12 +33,28 @@
 
 	const COMBINING_MARKS = /[\u0300-\u036f]/g;
 
+	const SCREENS = ["mainScreen", "shortcutScreen"];
+
+	/**
+	 * The engine runs on this page too, and would eat what is typed into a key field: the default
+	 * `w` rule alone makes the shortcut `w` unenterable. This name goes into the engine's `exclude`
+	 * list, so avim-ext.js must load first. Result fields stay in, to be typed in Telex.
+	 */
+	const SHORTCUT_KEY_FIELD = "avimShortcutKey";
+
+	const shortcutRows = [];
+
 	const $g = (id) => document.getElementById(id);
 
-	/** The background stores the prefs and pushes them to every tab; the reload re-reads them. */
-	function savePrefs(prefs) {
+	/**
+	 * The background stores the prefs and pushes them to every tab; the reload re-reads them.
+	 * The shortcut screen saves without it, because a reload would drop back to the main screen.
+	 */
+	function savePrefs(prefs, { reload = true } = {}) {
 		chrome.runtime.sendMessage({ save_prefs: "all", ...prefs }, () => {
-			window.location.reload();
+			if (reload) {
+				window.location.reload();
+			}
 		});
 	}
 
@@ -62,8 +84,78 @@
 		inputDemo.select();
 	}
 
-	function showPrefs(prefs) {
-		$g("spellCheck").checked = prefs.ckSpell === 1;
+	function showScreen(shown) {
+		for (const screen of SCREENS) {
+			$g(screen).style.display = screen === shown ? "" : "none";
+		}
+	}
+
+	function createShortcutInput(value, hint, name) {
+		const input = document.createElement("input");
+		input.type = "text";
+		input.name = name;
+		input.value = value;
+		input.placeholder = chrome.i18n.getMessage(hint);
+		// A share of the row rather than a fixed width, or the delete button wraps to its own line
+		input.style.flex = "1";
+		input.style.minWidth = "0";
+		return input;
+	}
+
+	function removeShortcutRow(entry) {
+		$g("shortcutList").removeChild(entry.row);
+		shortcutRows.splice(shortcutRows.indexOf(entry), 1);
+		if (shortcutRows.length === 0) {
+			addShortcutRow();
+		}
+	}
+
+	function addShortcutRow({ key = "", value = "" } = {}) {
+		const row = document.createElement("div");
+		row.style.display = "flex";
+		row.style.alignItems = "center";
+		row.style.gap = "4px";
+		const arrow = document.createElement("span");
+		arrow.textContent = " → ";
+		const keyInput = createShortcutInput(key, "extPopupShortcutKeyHint", SHORTCUT_KEY_FIELD);
+		const resultInput = createShortcutInput(value, "extPopupShortcutResultHint", "");
+		const removeButton = document.createElement("button");
+		removeButton.type = "button";
+		removeButton.textContent = "✕";
+		removeButton.title = chrome.i18n.getMessage("extPopupRemoveShortcut");
+		row.appendChild(keyInput);
+		row.appendChild(arrow);
+		row.appendChild(resultInput);
+		row.appendChild(removeButton);
+		$g("shortcutList").appendChild(row);
+		const entry = { row, keyInput, resultInput, removeButton };
+		shortcutRows.push(entry);
+		removeButton.addEventListener("click", () => removeShortcutRow(entry));
+		applyShortcutsEnabled();
+	}
+
+	/** Turning the feature off disables Save too, so the checkbox has to store itself. */
+	function applyShortcutsEnabled() {
+		const off = !$g("shortcutsOn").checked;
+		for (const row of shortcutRows) {
+			row.keyInput.disabled = off;
+			row.resultInput.disabled = off;
+			row.removeButton.disabled = off;
+		}
+		$g("addShortcut").disabled = off;
+		$g("saveShortcuts").disabled = off;
+	}
+
+	function saveShortcuts() {
+		savePrefs({
+			shortcutsOn: $g("shortcutsOn").checked ? 1 : 0,
+			// Rows left blank are dropped by the background, which is how a shortcut is deleted
+			shortcuts: shortcutRows.map((row) => ({ key: row.keyInput.value, value: row.resultInput.value }))
+		}, { reload: false });
+		showScreen("mainScreen");
+	}
+
+	function showMethod(prefs) {
 		if (prefs.onOff === 0) {
 			$g("off").checked = true;
 			return;
@@ -74,10 +166,30 @@
 		}
 	}
 
+	function showShortcuts(prefs) {
+		$g("shortcutsOn").checked = prefs.shortcutsOn === 1;
+		const stored = prefs.shortcuts ?? [];
+		for (const entry of stored) {
+			addShortcutRow(entry);
+		}
+		if (stored.length === 0) {
+			addShortcutRow();
+		}
+		applyShortcutsEnabled();
+	}
+
+	function showPrefs(prefs) {
+		$g("spellCheck").checked = prefs.ckSpell === 1;
+		showMethod(prefs);
+		showShortcuts(prefs);
+	}
+
 	const selectMethod = (method) => () => savePrefs({ method, onOff: 1 });
 
 	function init() {
 		loadText();
+		showScreen("mainScreen");
+		globalThis.exclude = [...(globalThis.exclude ?? []), SHORTCUT_KEY_FIELD];
 		chrome.runtime.sendMessage({ get_prefs: "all" }, showPrefs);
 
 		for (const [id, method] of Object.entries(METHOD_RADIOS)) {
@@ -90,6 +202,14 @@
 
 		$g("demoCopy").addEventListener("click", copyAllDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);
+
+		$g("openShortcuts").addEventListener("click", () => showScreen("shortcutScreen"));
+		$g("shortcutsOn").addEventListener("change", () => {
+			applyShortcutsEnabled();
+			savePrefs({ shortcutsOn: $g("shortcutsOn").checked ? 1 : 0 }, { reload: false });
+		});
+		$g("addShortcut").addEventListener("click", () => addShortcutRow());
+		$g("saveShortcuts").addEventListener("click", saveShortcuts);
 	}
 
 	init();
