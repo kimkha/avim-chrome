@@ -3,14 +3,6 @@ import assert from "node:assert/strict";
 
 import { loadBackground } from "./helpers/background-harness.js";
 
-const SHIPPED_SHORTCUTS = [
-	{ key: "w", value: "ư" },
-	{ key: "W", value: "Ư" },
-	{ key: "uow", value: "ươ" },
-	{ key: "Uow", value: "Ươ" },
-	{ key: "UOW", value: "ƯƠ" },
-];
-
 const GET = { get_prefs: "all" };
 
 describe("A fresh profile gets the shipped defaults", () => {
@@ -23,14 +15,17 @@ describe("A fresh profile gets the shipped defaults", () => {
 			ckSpell: 1,
 			oldAccent: 1,
 			shortcutsOn: 0,
-			shortcuts: SHIPPED_SHORTCUTS,
+			shortcuts: [],
 		});
 	});
 
-	it("ships the shortcuts switched off", async () => {
+	it("ships the shortcuts switched off, with no rows at all", async () => {
 		const background = loadBackground();
 
-		assert.equal((await background.send(GET)).shortcutsOn, 0);
+		const prefs = await background.send(GET);
+
+		assert.equal(prefs.shortcutsOn, 0);
+		assert.deepEqual(prefs.shortcuts, []);
 	});
 
 	it("reads the stored strings back as numbers", async () => {
@@ -61,14 +56,14 @@ describe("Stored shortcuts survive a hand-edited profile", () => {
 	];
 
 	for (const [label, value] of broken) {
-		it(`falls back to the defaults for ${label}`, async () => {
+		it(`falls back to an empty list for ${label}`, async () => {
 			const background = loadBackground({ stored: { shortcuts: value } });
 
-			assert.deepEqual((await background.send(GET)).shortcuts, SHIPPED_SHORTCUTS);
+			assert.deepEqual((await background.send(GET)).shortcuts, []);
 		});
 	}
 
-	it("drops a row with no key, which would otherwise match every word", async () => {
+	it("drops a row with no key, which is how a shortcut is deleted", async () => {
 		const stored = { shortcuts: JSON.stringify([{ key: "", value: "ư" }, { key: "vn", value: "x" }]) };
 		const background = loadBackground({ stored });
 

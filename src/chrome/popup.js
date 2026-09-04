@@ -36,8 +36,8 @@
 	const SCREENS = ["mainScreen", "shortcutScreen"];
 
 	/**
-	 * Key fields carry this name so the engine, which runs here too, skips them: the default `w`
-	 * rule made `w` unenterable. It seeds `exclude` at load, hence the script order in popup.html.
+	 * Key fields carry this name so the engine, which runs here too, skips them: Telex would turn
+	 * a key like "uw" into "ư". It seeds `exclude` at load, hence the script order in popup.html.
 	 */
 	const SHORTCUT_KEY_FIELD = "avimShortcutKey";
 

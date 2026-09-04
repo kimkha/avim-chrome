@@ -23,7 +23,7 @@ const DEFAULT_PREFS = {
 	ckSpell: 1,
 	oldAccent: 1,
 	shortcutsOn: 0,
-	shortcuts: [{ key: "w", value: "ư" }, { key: "uow", value: "ươ" }],
+	shortcuts: [],
 };
 
 function createElement(id, tagName = "div") {

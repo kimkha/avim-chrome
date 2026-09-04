@@ -102,7 +102,7 @@ describe("Telex: real words", () => {
 		["nguoiwf", "người"],
 		["chaof", "chào"],
 		["khoong", "không"],
-		["dduowngwf", "đường"],
+		["dduowngf", "đường"],
 		["cuoiwf", "cười"],
 		["truowngf", "trường"],
 		["nguyeenj", "nguyện"],

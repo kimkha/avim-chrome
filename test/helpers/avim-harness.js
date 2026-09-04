@@ -363,8 +363,11 @@ function typeContentEditableDetailed(sequence, config = {}) {
 			text = editable.node.data;
 			caret = editable.range.endOffset;
 		} else {
-			text = editable.node.data.slice(0, caret) + char + editable.node.data.slice(caret);
-			caret += 1;
+			// A rewrite that was not cancelled has already moved the caret, and the browser types
+			// the key at that new spot rather than where the keypress started
+			const at = editable.range.endOffset;
+			text = editable.node.data.slice(0, at) + char + editable.node.data.slice(at);
+			caret = at + 1;
 		}
 	}
 	return { text, caret };

@@ -510,6 +510,8 @@ function pickFromVowelPair(word, vowelsFromEnd) {
 	return (consonants === 1) || (consonants === 2) ? vowelsFromEnd[0] : vowelsFromEnd[1];
 }
 
+const HORNED_O = "ơƠ";
+
 function replaceChar(o, pos, c) {
 	const isCode = !notNumber(c);
 	const wfix = isCode ? upperCase(unV(fromCharCode(c))) : "";
@@ -523,15 +525,26 @@ function replaceChar(o, pos, c) {
 	}
 	const savePos = o.selectionStart;
 	const scrollTop = o.scrollTop;
+	const priorChar = o.value.charAt(pos - 1);
+	const afterQ = upperCase(o.value.charAt(pos - 2)) === "Q";
+	// "thuở" is the one word spelt with a bare u, so a th onset keeps it while the pair ends the
+	// word; promoteHornPair horns it as soon as a letter follows, giving "thuown" -> "thươn".
+	const endsWord = pos >= savePos - 1;
+	const afterTh = (pos >= 3) && (upperCase(o.value.slice(pos - 3, pos - 1)) === "TH");
 	let hornedU = "";
-	if ((upperCase(o.value.charAt(pos - 1)) === "U") && (pos < savePos - 1) && (upperCase(o.value.charAt(pos - 2)) !== "Q")) {
+	if ((upperCase(priorChar) === "U") && !(endsWord && afterTh) && !afterQ) {
 		if ((wfix === "Ơ") || addsHorn) {
-			hornedU = fromCharCode(o.value.charAt(pos - 1) === "u" ? 432 : 431);
+			hornedU = fromCharCode(priorChar === "u" ? 432 : 431);
 		}
 		if (addsHorn) {
 			AVIMObj.changed = true;
 			replaceBy = c === "o" ? "ơ" : "Ơ";
 		}
+	}
+	// The u rode along into ư when the o took its horn, so the key taking that horn back off has
+	// to strip both: "uoiww" gives "uoiw", not "ưoiw".
+	if (addsHorn && (upperCase(priorChar) === "Ư") && HORNED_O.includes(o.value.charAt(pos))) {
+		hornedU = priorChar === "ư" ? "u" : "U";
 	}
 	o.value = o.value.slice(0, pos) + replaceBy + o.value.slice(pos + 1);
 	if (hornedU) {
@@ -1048,19 +1061,15 @@ function ifMoz(e) {
 
 	const char = fromCharCode(code);
 	avim.sk = char;
-	if (checkCode(code)) {
+	if (onOff === 0) {
 		return;
 	}
 	// The keystroke replaces a non-empty selection, so there is no word in front of it to transform
 	if (range.startOffset !== range.endOffset) {
 		return;
 	}
-	// An empty editable holds no text node to read back, so only the empty word can match
+	// An empty editable holds no text node to read back, and no word for a shortcut to match
 	if (typeof node.data === "undefined") {
-		const fresh = shortcutRewrite("", char);
-		if ((fresh !== null) && (node.ownerDocument ?? document).execCommand("insertText", false, fresh)) {
-			e.preventDefault();
-		}
 		return;
 	}
 
@@ -1070,13 +1079,16 @@ function ifMoz(e) {
 	const parts = partsBeforeCaret(host, node, caret);
 	const before = parts.map((part) => part.text).join("");
 
-	const expanded = shortcutRewrite(before, char);
-	if (expanded !== null) {
-		replaceBeforeCaret(host, sel, range, parts, before, expanded);
-		e.preventDefault();
-		return;
-	}
-	if (!range.startOffset) {
+	// A key the engine is never offered, such as a comma, still ends a word: the gate stops the
+	// engine, not the shortcut pass.
+	if (checkCode(code) || !range.startOffset) {
+		const gated = shortcutEdit(before, char);
+		if (gated) {
+			replaceBeforeCaret(host, sel, range, parts, before, gated.text);
+			if (gated.typesKey) {
+				e.preventDefault();
+			}
+		}
 		return;
 	}
 
@@ -1086,12 +1098,19 @@ function ifMoz(e) {
 	// word and leaves the key to the browser, so the rewrite has to be applied either way.
 	const changed = avim.changed;
 	avim.changed = false;
-	const onset = editor.value === before ? shortcutAfterOnset(before, char) : null;
-	const after = onset ?? editor.value;
+	// VIQR spends punctuation on tone marks, so a shortcut only ever gets a key the engine passed on
+	const passed = editor.value === before;
+	const edit = passed ? shortcutEdit(before, char) : null;
+	let after = editor.value;
+	if (edit) {
+		after = edit.text;
+	} else if (passed) {
+		after = promoteHornPair(before, char);
+	}
 	if (after !== before) {
 		replaceBeforeCaret(host, sel, range, parts, before, after);
 	}
-	if (changed || (onset !== null)) {
+	if (changed || edit?.typesKey) {
 		e.preventDefault();
 	}
 }
@@ -1132,7 +1151,28 @@ function upperCase(word) {
 }
 
 
-/* ---- User-defined shortcuts: whole words the keystroke expands, before the engine sees it ---- */
+// ơ and its five toned forms, in both cases: the o of a uo pair that has already taken the horn
+const HORNED_O_FORMS = "ơớờởỡợƠỚỜỞỠỢ";
+
+/**
+ * The text before the caret with the u of a trailing uo pair horned, ready for a letter to follow
+ * it. "thuơ" is spelt that way on its own, but "thuơn" is not, so "thuown" has to give "thươn".
+ */
+function promoteHornPair(before, char) {
+	const at = before.length - 1;
+	if (notWord(char) || (at < 1) || !HORNED_O_FORMS.includes(before.charAt(at))) {
+		return before;
+	}
+	const u = before.charAt(at - 1);
+	// A u after q belongs to the qu digraph and is never the vowel that takes the horn
+	if (((u !== "u") && (u !== "U")) || (upperCase(before.charAt(at - 2)) === "Q")) {
+		return before;
+	}
+	return before.slice(0, at - 1) + (u === "u" ? "ư" : "Ư") + before.slice(at);
+}
+
+
+/* ---- User-defined shortcuts: whole words a word-boundary key expands ---- */
 
 /** Entries with a blank key are dropped: such a key would match after every keystroke. */
 function buildShortcutMap(list) {
@@ -1153,47 +1193,35 @@ function wordBefore(text) {
 	return text.slice(at);
 }
 
-/** `before` with the `length` characters of the word it ends with swapped for `result`. */
-function replaceWordTail(before, length, result) {
-	return before.slice(0, before.length - length + 1) + result;
-}
-
 /**
  * The text before the caret with a shortcut applied, or null when this keystroke completes none.
- * Whole-word only: a tail match here would let the default `w` rule turn Telex "chuw" into "chuư".
+ * Matching mid-word would turn Telex "chuw" into "chuư" and leave the key itself unenterable.
  */
 function shortcutRewrite(before, char) {
-	const word = wordBefore(before) + char;
-	const result = shortcutMap.get(word);
-	if (result === undefined) {
+	if (!notWord(char)) {
 		return null;
 	}
-	return replaceWordTail(before, word.length, result);
+	const word = wordBefore(before);
+	const result = shortcutMap.get(word);
+	return result === undefined ? null : before.slice(0, before.length - word.length) + result;
 }
 
-// NFD splits ư into u + horn and ấ into a + marks, so the bare letters are enough to spot a vowel
-const VOWEL_LETTER = /[aeiouy]/i;
-
-function hasVowel(text) {
-	return VOWEL_LETTER.test(text.normalize("NFD"));
-}
+const CONTROL_KEYS = "\r\n\t";
 
 /**
- * The same for a shortcut that only ends the word, with a bare consonant onset in front: "chw" gives
- * the "chư" of "chuw". Tried only where the engine passed, so "quow" keeps its "quơ", not "qươ".
+ * The same, plus who types the boundary key. A model-backed editor re-renders asynchronously, so a
+ * key left to the browser lands at the pre-rewrite caret: "vn x" came out "Việt Namx ". Typing it
+ * ourselves keeps that to one event. Enter and Tab do more than insert, so they stay the browser's.
  */
-function shortcutAfterOnset(before, char) {
-	const word = wordBefore(before) + char;
-	let longest = null;
-	for (const [key, result] of shortcutMap) {
-		if (!word.endsWith(key) || hasVowel(word.slice(0, word.length - key.length))) {
-			continue;
-		}
-		if (!longest || (key.length > longest.key.length)) {
-			longest = { key, result };
-		}
+function shortcutEdit(before, char) {
+	const expanded = shortcutRewrite(before, char);
+	if (expanded === null) {
+		return null;
 	}
-	return longest ? replaceWordTail(before, longest.key.length, longest.result) : null;
+	if (CONTROL_KEYS.includes(char)) {
+		return { text: expanded, typesKey: false };
+	}
+	return { text: expanded + char, typesKey: true };
 }
 
 
@@ -1247,11 +1275,10 @@ function keyPressHandler(e) {
 		}
 		return;
 	}
-	if (checkCode(code)) {
+	if (onOff === 0) {
 		return;
 	}
 	const char = fromCharCode(code);
-	AVIMObj.sk = char;
 	if (findIgnore(el) || el.readOnly) {
 		return;
 	}
@@ -1262,25 +1289,36 @@ function keyPressHandler(e) {
 
 	const caret = el.selectionStart;
 	const before = el.value.slice(0, caret);
-	const expanded = shortcutRewrite(before, char);
-	if (expanded !== null) {
-		replaceValueBeforeCaret(el, before, expanded, caret);
-		e.preventDefault();
+	// A key the engine is never offered, such as a comma, still ends a word: the gate stops the
+	// engine, not the shortcut pass.
+	if (checkCode(code) || !caret) {
+		const edit = shortcutEdit(before, char);
+		if (edit) {
+			replaceValueBeforeCaret(el, before, edit.text, caret);
+			if (edit.typesKey) {
+				e.preventDefault();
+			}
+		}
 		return;
 	}
-	if (!caret) {
-		return;
-	}
+	AVIMObj.sk = char;
 	const editor = createTextEditor(before);
 	start(editor, e);
 	const changed = AVIMObj.changed;
 	AVIMObj.changed = false;
-	const onset = editor.value === before ? shortcutAfterOnset(before, char) : null;
-	const after = onset ?? editor.value;
+	// VIQR spends punctuation on tone marks, so a shortcut only ever gets a key the engine passed on
+	const passed = editor.value === before;
+	const edit = passed ? shortcutEdit(before, char) : null;
+	let after = editor.value;
+	if (edit) {
+		after = edit.text;
+	} else if (passed) {
+		after = promoteHornPair(before, char);
+	}
 	if (after !== before) {
 		replaceValueBeforeCaret(el, before, after, caret);
 	}
-	if (changed || (onset !== null)) {
+	if (changed || edit?.typesKey) {
 		e.preventDefault();
 	}
 }

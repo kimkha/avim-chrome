@@ -116,11 +116,11 @@ for (const dir of extensionDirs()) {
 		});
 
 		describe("Shortcut keys ship switched off", () => {
-			it("leaves the default w rule dormant", async () => {
-				assert.equal(await typeUntil(page, "#textarea", "w", "w"), "w");
+			it("ships no rows at all, so a word is left as typed", async () => {
+				assert.equal(await typeUntil(page, "#textarea", "vn ", "vn "), "vn ");
 			});
 
-			it("still lists the default rows, greyed out, ready to be switched on", async () => {
+			it("offers one blank row, greyed out, ready to be switched on", async () => {
 				const popup = await extension.context.newPage();
 				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
 				await popup.click("#openShortcuts");
@@ -128,31 +128,34 @@ for (const dir of extensionDirs()) {
 				assert.equal(await popup.locator("#shortcutsOn").isChecked(), false);
 				assert.equal(await popup.locator("#saveShortcuts").isDisabled(), true);
 				const values = await popup.locator("#shortcutList input").evaluateAll((els) => els.map((el) => el.value));
-				assert.deepEqual(values, ["w", "ư", "W", "Ư", "uow", "ươ", "Uow", "Ươ", "UOW", "ƯƠ"]);
+				assert.deepEqual(values, ["", ""]);
 				await popup.close();
 			});
 		});
 
-		describe("The default shortcut keys expand once switched on", () => {
+		describe("A shortcut expands on the key that ends the word", () => {
 			before(async () => {
 				const popup = await extension.context.newPage();
 				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
 				await popup.click("#openShortcuts");
 				await popup.check("#shortcutsOn");
+				const inputs = popup.locator("#shortcutList input");
+				await inputs.nth(0).fill("vn");
+				await inputs.nth(1).fill("Việt Nam");
+				await popup.click("#saveShortcuts");
 				await popup.waitForTimeout(300);
 				await popup.close();
 			});
 
+			// A space typed into a contenteditable becomes an NBSP, so those cases keep a letter after it
 			const cases = [
-				["w in a textarea", "#textarea", "w", "ư"],
-				["uow in a textarea", "#textarea", "uow", "ươ"],
-				["W in a textarea", "#textarea", "W", "Ư"],
-				["UOW in a textarea", "#textarea", "UOW", "ƯƠ"],
-				["w after a bare consonant", "#textarea", "chw", "chư"],
-				["the same word spelled with its vowel", "#textarea", "chuw", "chư"],
-				["w in an empty contenteditable", "#editable", "w", "ư"],
-				["w after a bare consonant in a contenteditable", "#editable", "chw", "chư"],
-				["w in a same-origin iframe", { frame: "#sameOrigin", selector: "#nested" }, "w", "ư"],
+				["a space in a textarea", "#textarea", "vn ", "Việt Nam "],
+				["a comma in a textarea", "#textarea", "vn,", "Việt Nam,"],
+				["a full stop in a textarea", "#textarea", "vn.", "Việt Nam."],
+				["mid-sentence in a textarea", "#textarea", "xin vn ", "xin Việt Nam "],
+				["a space in a contenteditable", "#editable", "vn x", "Việt Nam x"],
+				["a comma in a contenteditable", "#editable", "vn,", "Việt Nam,"],
+				["a space in a same-origin iframe", { frame: "#sameOrigin", selector: "#nested" }, "vn ", "Việt Nam "],
 			];
 
 			for (const [label, target, sequence, expected] of cases) {
@@ -161,24 +164,53 @@ for (const dir of extensionDirs()) {
 				});
 			}
 
-			it("leaves a word the engine already handles to the engine", async () => {
-				assert.equal(await typeUntil(page, "#textarea", "quow", "quơ"), "quơ");
+			it("waits for the boundary key, leaving the bare word alone", async () => {
+				assert.equal(await typeUntil(page, "#textarea", "vn", "vn"), "vn");
 			});
 
-			// The empty-editable branch cannot read a word back, so it inserts through execCommand;
-			// a Slate host only sees that as a beforeinput it applies to its own model.
-			it("expands in an empty Slate host", async () => {
+			it("matches the whole word only", async () => {
+				assert.equal(await typeUntil(page, "#textarea", "avn ", "avn "), "avn ");
+			});
+
+			it("leaves telex to the engine", async () => {
+				assert.equal(await typeUntil(page, "#textarea", "chaof ", "chào "), "chào ");
+			});
+
+			// A Slate host rebuilds its text from its own model, so it only ever sees the beforeinput.
+			// Comma, not space: re-rendering leaves a collapsed trailing space Chrome cannot put the
+			// caret after, so the next letter lands in front of it — the same quirk as #spaced below.
+			it("expands in a Slate host", async () => {
 				await page.evaluate(() => window.__resetControlled());
 				await page.locator("#controlled").click();
-				await page.keyboard.type("w", { delay: 15 });
+				await page.keyboard.type("vn,", { delay: 15 });
 
-				assert.equal(await page.locator("#controlled").evaluate((element) => element.textContent), "ư");
+				assert.equal(await page.locator("#controlled").evaluate((element) => element.textContent), "Việt Nam,");
+			});
+
+			// The engine runs in the popup too, so the key field is in `exclude`: without that, a key
+			// like "uw" would be typed as "ư" and could never be entered. The result field is not.
+			it("takes a Telex-looking key in the key field and Telex in the result field", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.click("#openShortcuts");
+				await popup.click("#addShortcut");
+				const inputs = popup.locator("#shortcutList input");
+				const added = await inputs.count();
+
+				await inputs.nth(added - 2).click();
+				await popup.keyboard.type("uw", { delay: 15 });
+				await inputs.nth(added - 1).click();
+				await popup.keyboard.type("uw", { delay: 15 });
+
+				assert.equal(await inputs.nth(added - 2).inputValue(), "uw");
+				assert.equal(await inputs.nth(added - 1).inputValue(), "ư");
+				await popup.close();
 			});
 
 			it("leaves a selected word to be replaced by the raw key", async () => {
 				const editable = page.locator("#editable");
 				await editable.evaluate((element) => {
-					element.textContent = "abc";
+					element.textContent = "vn";
 					element.focus();
 					const range = document.createRange();
 					range.selectNodeContents(element);
@@ -187,20 +219,9 @@ for (const dir of extensionDirs()) {
 					selection.addRange(range);
 				});
 
-				await page.keyboard.type("w", { delay: 15 });
+				await page.keyboard.type("x", { delay: 15 });
 
-				assert.equal(await editable.evaluate((element) => element.textContent), "w");
-			});
-
-			// Assigning el.value fires nothing, and a controlled component would keep the raw key
-			it("reports one input event for the one keystroke it replaces", async () => {
-				await page.locator("#eventProbe").evaluate((element) => {
-					element.value = "";
-					window.__inputEvents = 0;
-				});
-
-				assert.equal(await typeOnce(page, "#eventProbe", "w"), "ư");
-				assert.equal(await page.evaluate(() => window.__inputEvents), 1);
+				assert.equal(await editable.evaluate((element) => element.textContent), "x");
 			});
 		});
 
@@ -219,7 +240,7 @@ for (const dir of extensionDirs()) {
 				await popup.waitForTimeout(300);
 
 				assert.equal(await popup.locator("#mainScreen").isVisible(), true);
-				assert.equal(await typeUntil(page, "#textarea", "vnn", "Việt Nam"), "Việt Nam");
+				assert.equal(await typeUntil(page, "#textarea", "vnn ", "Việt Nam "), "Việt Nam ");
 				await popup.close();
 			});
 

@@ -9,21 +9,12 @@ const DEFAULT_PREFS = {
 
 const PREF_KEYS = Object.keys(DEFAULT_PREFS);
 
-/** The two Telex helpers the engine itself does not produce, plus how they are capitalised. */
-const DEFAULT_SHORTCUTS = [
-	{ key: 'w', value: 'ư' },
-	{ key: 'W', value: 'Ư' },
-	{ key: 'uow', value: 'ươ' },
-	{ key: 'Uow', value: 'Ươ' },
-	{ key: 'UOW', value: 'ƯƠ' }
-];
-
 const SHORTCUTS_KEY = 'shortcuts';
 
-/** A blank key matches every word, so an empty row is a deletion rather than a rule. */
+/** A blank key is a row the user emptied out, which is how a shortcut is deleted. */
 function cleanShortcuts(list) {
 	if (!Array.isArray(list)) {
-		return DEFAULT_SHORTCUTS;
+		return [];
 	}
 	return list
 		.filter((entry) => entry && (typeof entry.key === 'string') && (entry.key.length > 0))
@@ -31,11 +22,11 @@ function cleanShortcuts(list) {
 }
 
 async function getShortcuts() {
-	const stored = await chrome.storage.local.get({ [SHORTCUTS_KEY]: JSON.stringify(DEFAULT_SHORTCUTS) });
+	const stored = await chrome.storage.local.get({ [SHORTCUTS_KEY]: '[]' });
 	try {
 		return cleanShortcuts(JSON.parse(stored[SHORTCUTS_KEY]));
 	} catch {
-		return DEFAULT_SHORTCUTS;
+		return [];
 	}
 }
 
