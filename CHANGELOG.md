@@ -7,6 +7,7 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Added
 
+- Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)).
 - Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
 
 ### Fixed
@@ -18,6 +19,10 @@ since `v0.8.3` is collected under 0.10.0.
 - Từ bị chia bởi thẻ inline nay biến đổi đúng, và không còn nối hai từ nằm hai bên một widget.
 - Gõ được vào input nằm trong shadow root.
 - Iframe xuất hiện sau khi trang tải giờ được bắt ngay, thay vì chờ tới 10 giây.
+
+### Changed
+
+- Firefox tối thiểu nâng từ 109 lên 128, bản đầu hỗ trợ `world: "MAIN"` mà Google Docs cần.
 
 ## [0.10.2] - 2026-09-02
 

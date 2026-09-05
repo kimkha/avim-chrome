@@ -22,6 +22,11 @@
     "matches": ["http://*/*", "https://*/*"],
     "run_at": "document_idle",
     "all_frames": true
+  }, {
+    "js": [ "chrome/gdocs-bridge.js" ],
+    "matches": ["https://docs.google.com/document/*"],
+    "run_at": "document_start",
+    "world": "MAIN"
   }],
   "default_locale": "en",
   "permissions": ["storage"],
@@ -31,7 +36,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "mozilla@kimkha.com",
-      "strict_min_version": "109.0",
+      "strict_min_version": "128.0",
       "data_collection_permissions": {
         "required": ["none"]
       }

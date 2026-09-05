@@ -1126,7 +1126,8 @@ function checkCode(code) {
 	return (code === 145) || (code === 255);
 }
 
-const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0\u200b\ufeff";
+// \u0003 is the marker Google Docs puts at the start of the text its annotation API hands out
+const NOT_WORD_CHARS = " \r\n#,\\;.:-_()<>+-*/=?!\"$%{}[]'~|^@&\t\u00a0\u200b\ufeff\u0003";
 
 function notWord(word) {
 	return NOT_WORD_CHARS.includes(word);
@@ -1231,6 +1232,7 @@ const INPUT_TYPES = ["textarea", "text", "search", "tel"];
 
 /** Attaches the contenteditable handler to every designMode iframe on the page. */
 function AVIMInit(avim) {
+	gdocsInit();
 	for (const frame of document.getElementsByTagName("iframe")) {
 		if (findIgnore(frame)) {
 			continue;
@@ -1322,6 +1324,119 @@ function keyPressHandler(e) {
 }
 
 const CTRL_KEY_CODE = 17;
+
+// Duplicated in chrome/gdocs-bridge.js — build.mjs minifies per file, so only literals survive.
+const GDOCS_NODE_ID = "avim-gdocs-bridge";
+const GDOCS_EVENT_READ = "avim:gdocs:read";
+const GDOCS_EVENT_WRITE = "avim:gdocs:write";
+const GDOCS_IFRAME_SELECTOR = "iframe.docs-texteventtarget-iframe";
+
+function gdocsRead() {
+	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_READ));
+}
+
+function gdocsState() {
+	gdocsRead();
+	const node = document.getElementById(GDOCS_NODE_ID);
+	if (!node || (node.dataset.avimOk !== "1")) {
+		return null;
+	}
+	return {
+		tail: node.textContent,
+		base: Number(node.dataset.avimBase),
+		selectionStart: Number(node.dataset.avimStart),
+		selectionEnd: Number(node.dataset.avimEnd)
+	};
+}
+
+function gdocsReplace(from, to, text) {
+	const node = document.getElementById(GDOCS_NODE_ID);
+	if (!node) {
+		return;
+	}
+	node.dataset.avimWrite = JSON.stringify({ from, to, text });
+	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_WRITE));
+}
+
+/**
+ * The text Docs should end up holding, or null when nothing should change. Docs has already typed
+ * the key, so every branch has to say for itself whether the result still carries it.
+ */
+function gdocsWant(before, key, code) {
+	// A comma and its like never reach the engine but still end a word: the gate stops the engine,
+	// not the shortcut.
+	if (checkCode(code)) {
+		const gated = shortcutEdit(before, key);
+		return gated === null ? null : gated.text + (gated.typesKey ? "" : key);
+	}
+
+	const editor = createTextEditor(before);
+	AVIMObj.sk = key;
+	start(editor, { which: code });
+	const changed = AVIMObj.changed;
+	AVIMObj.changed = false;
+	// VIQR spends punctuation on tone marks, so a shortcut only ever gets a key the engine passed on
+	const passed = editor.value === before;
+	const edit = passed ? shortcutEdit(before, key) : null;
+	if (edit) {
+		return edit.text + (edit.typesKey ? "" : key);
+	}
+	// changed only means AVIM meant to type the key; Docs already did: "chaof" drops it, "aaa" keeps.
+	const keyTail = changed ? "" : key;
+	return passed ? promoteHornPair(before, key) + keyTail : editor.value + keyTail;
+}
+
+/** Nothing is prevented: reconciling against what Docs holds makes a lost race a no-op. */
+function gdocsRewrite(key, code) {
+	const state = gdocsState();
+	if (!state || (state.selectionStart !== state.selectionEnd)) {
+		return;
+	}
+	const caret = state.selectionEnd;
+	const typed = state.tail;
+	// Docs has not applied the key, applied something else, or the read tore
+	if (!typed.endsWith(key) || ((caret - state.base) !== typed.length)) {
+		return;
+	}
+	const before = typed.slice(0, -1);
+	if (!before) {
+		return;
+	}
+
+	const want = gdocsWant(before, key, code);
+	if ((want === null) || (want === typed)) {
+		return;
+	}
+
+	const head = commonPrefixLength(typed, want);
+	gdocsReplace(state.base + head, caret, want.slice(head));
+}
+
+function gdocsKeyPress(e) {
+	const code = e.which;
+	if ((onOff === 0) || e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
+		return;
+	}
+	const key = fromCharCode(code);
+	// Starts acquisition now: its microtask lands before the rewrite below, so key one converts too.
+	gdocsRead();
+	setTimeout(() => gdocsRewrite(key, code), 0);
+}
+
+/** The flag lives on the iframe's document, which Docs replaces as the editor reloads. */
+function gdocsInit() {
+	if (typeof document.querySelector !== "function") {
+		return;
+	}
+	const target = document.querySelector(GDOCS_IFRAME_SELECTOR)?.contentDocument;
+	if (!target || target.avimGdocs) {
+		return;
+	}
+	target.avimGdocs = true;
+	target.addEventListener("keypress", gdocsKeyPress, true);
+	gdocsRead();
+}
+
 const DOUBLE_TAP_MS = 300;
 
 let isPressCtrl = false;
