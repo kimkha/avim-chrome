@@ -10,48 +10,55 @@ Bộ gõ tiếng Việt AVIM được tùy chỉnh cho tương thích với trì
 
 ## Phát triển
 
-Bộ test chạy trên test runner có sẵn của Node (cần Node >= 24) và không cần cài dependency nào:
+Cần Node >= 24. Repo dùng yarn, không dùng npm: `package.json` ghim vài transitive dependency có lỗ
+hổng qua `resolutions`, mà npm bỏ qua field này (npm dùng `overrides`).
+
+### Chạy test
 
 ```sh
-yarn test           # chạy toàn bộ test
+yarn test           # toàn bộ test, chạy được ngay không cần cài dependency
+yarn lint
 yarn test:watch     # chạy lại khi có thay đổi
 yarn test:coverage  # kèm báo cáo độ phủ
 ```
 
-Riêng `test/browser-smoke.test.js` cần Chromium thật (nó nạp extension bằng `--load-extension`
-để kiểm những thứ DOM giả không chứng minh được: content script có inject vào page hay không,
-`Selection` thật trong contenteditable, iframe, shadow DOM, và clipboard hệ thống). Nó **tự skip**
-kèm lý do khi thiếu Chromium, nên `yarn test` vẫn xanh trên máy trắng. Bật lên bằng:
+`yarn test` chạy mọi file trong `test/`, kể cả những file cần Chromium thật hoặc cần ra mạng — số đó
+**tự skip kèm lý do** khi thiếu, nên trên máy trắng vẫn xanh. Muốn chạy thật thì cài Chromium rồi
+gọi riêng:
 
 ```sh
 yarn install
 npx playwright install chromium
-yarn test:browser   # chạy trên cả src/ và build/ nếu đã build
+
+yarn test:browser                            # smoke test, chạy trên cả src/ và build/ nếu đã build
+node --test test/framework-editors.test.js   # cần thêm mạng, nạp editor thật từ esm.sh
 ```
 
 Đặt `AVIM_CHROME_PATH` nếu muốn chỉ vào một bản Chromium khác.
 
-`test/framework-editors.test.js` cần thêm mạng: nó nạp Slate, Lexical, Quill và ProseMirror thật từ
-esm.sh, vì cách một editor phản ứng với chỗ AVIM ghi vào contenteditable khác nhau theo từng loại
-(xem [#30](https://github.com/kimkha/avim-chrome/issues/30)) và không có DOM giả nào mô phỏng nổi.
-Nó cũng **tự skip** kèm lý do khi thiếu Chromium hoặc không ra được mạng.
-
-Đóng gói extension (cần `yarn install` trước):
+### Đóng gói
 
 ```sh
+yarn install
 yarn lint
-yarn build          # tạo build/ và dist/avim-chrome-<version>.zip
+yarn build
 ```
 
-Repo dùng yarn, không dùng npm: `package.json` ghim vài transitive dependency có lỗ hổng
-qua `resolutions`, mà npm bỏ qua field này (npm dùng `overrides`).
+`yarn build` tạo `build/` và hai zip trong `dist/`: `avim-chrome-<version>.zip` cho Chrome, Opera,
+Edge và `avim-firefox-<version>.zip` cho Firefox — cùng một `src/manifest.json`, khác cách khai báo
+background.
 
-Test nạp `src/scripts/avim-ext.js` vào một context `node:vm` riêng cho từng test, nên không
-cần sửa mã nguồn và các biến toàn cục của engine không rò rỉ giữa các test.
-Xem [`test/helpers/avim-harness.js`](test/helpers/avim-harness.js).
+### Ghi chú
 
-Chrome không có test runner riêng cho extension của bên thứ ba (`chrome.test` cần một harness C++
-`ExtensionApiTest` bên trong bản build Chromium), nên cách chính thức Google hướng dẫn là điều
-khiển browser bằng Puppeteer/Playwright với `--load-extension`. Đó là những gì
-[`test/helpers/browser-harness.js`](test/helpers/browser-harness.js) làm.
+Lý do đằng sau cách test được ghi ngay trong từng file, đọc ở đó khi cần sửa:
 
+* [`test/helpers/avim-harness.js`](test/helpers/avim-harness.js) — nạp engine vào một context
+  `node:vm` riêng cho từng test.
+* [`test/helpers/browser-harness.js`](test/helpers/browser-harness.js) — vì sao là Playwright với
+  `--load-extension` chứ không phải `chrome.test`, và những gì chỉ browser thật chứng minh được.
+* [`test/framework-editors.test.js`](test/framework-editors.test.js) — vì sao phải nạp editor thật
+  thay vì mô phỏng ([#30](https://github.com/kimkha/avim-chrome/issues/30)).
+
+## Giấy phép
+
+GPL-3.0, xem [LICENSE](LICENSE).
