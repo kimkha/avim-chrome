@@ -1199,8 +1199,12 @@ const GDOCS_EVENT_READ = "avim:gdocs:read";
 const GDOCS_EVENT_WRITE = "avim:gdocs:write";
 const GDOCS_IFRAME_SELECTOR = "iframe.docs-texteventtarget-iframe";
 
-function gdocsState() {
+function gdocsRead() {
 	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_READ));
+}
+
+function gdocsState() {
+	gdocsRead();
 	const node = document.getElementById(GDOCS_NODE_ID);
 	if (!node || (node.dataset.avimOk !== "1")) {
 		return null;
@@ -1263,6 +1267,8 @@ function gdocsKeyPress(e) {
 		return;
 	}
 	const key = fromCharCode(code);
+	// Starts acquisition now: its microtask lands before the rewrite below, so key one converts too.
+	gdocsRead();
 	setTimeout(() => gdocsRewrite(key, code), 0);
 }
 
@@ -1277,6 +1283,7 @@ function gdocsInit() {
 	}
 	target.avimGdocs = true;
 	target.addEventListener("keypress", gdocsKeyPress, true);
+	gdocsRead();
 }
 
 const DOUBLE_TAP_MS = 300;

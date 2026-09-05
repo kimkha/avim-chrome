@@ -75,6 +75,12 @@ const DOCS_PAGE = `<!DOCTYPE html><html><body>
 	window._docs_annotate_getAnnotatedText = () => Promise.resolve(annotatedAt(generation));
 	window.__avimRetireAnnotated = () => { generation += 1; };
 	window.__avimReplaceIframe = () => { frame.remove(); frame = wireIframe(); };
+	window.__avimSetText = (value) => {
+		text = value;
+		selStart = value.length;
+		selEnd = selStart;
+		mirror();
+	};
 })();
 </script>
 </body></html>`;
@@ -145,6 +151,24 @@ for (const dir of extensionDirs()) {
 			return text;
 		}
 
+		/** Each attempt reloads, so every one gets a fresh session and its own first keystroke. */
+		async function pressUntilSettled(preset, key, expected) {
+			let text = "";
+			for (let attempt = 0; attempt < 5; attempt++) {
+				await page.goto(server.origin);
+				await focusEditor();
+				await page.evaluate((value) => window.__avimSetText(value), preset);
+				await page.keyboard.press(key);
+				await page.waitForTimeout(150);
+				text = await model();
+				if (text === expected) {
+					return text;
+				}
+				await page.waitForTimeout(400);
+			}
+			return text;
+		}
+
 		async function converting() {
 			const text = await typeUntilSettled("chaof", "\u0003chào");
 			assert.equal(text, "\u0003chào", "AVIM never converted, so there is nothing to disrupt");
@@ -156,6 +180,10 @@ for (const dir of extensionDirs()) {
 				await page.evaluate(() => window._docs_annotate_canvas_by_ext),
 				"opgbbffpdglhkpglnlkiclakjlpiedoh",
 			);
+		});
+
+		it("converts on the session's first keystroke", async () => {
+			assert.equal(await pressUntilSettled("\u0003chao", "f", "\u0003chào"), "\u0003chào");
 		});
 
 		it("converts a word Docs itself typed", async () => {
