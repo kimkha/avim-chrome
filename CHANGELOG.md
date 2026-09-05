@@ -5,8 +5,13 @@ since `v0.8.3` is collected under 0.10.0.
 
 ## [Next]
 
+### Added
+
+- Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
+
 ### Fixed
 
+- Sửa cách đặt dấu móc (`w`) cho đúng ở các trường hợp có cặp `uo`.
 - Mất ký tự khi gõ trong contenteditable của các editor tự render lại từ model của chúng
   ([#30](https://github.com/kimkha/avim-chrome/issues/30),
   [#35](https://github.com/kimkha/avim-chrome/pull/35)).
