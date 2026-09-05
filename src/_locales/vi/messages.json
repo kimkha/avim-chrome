@@ -83,10 +83,6 @@
 		"message" : "Lưu phím tắt",
 		"description" : "Nút lưu các dòng phím tắt rồi trở về màn hình chính"
 	},
-	"extPopupShortcutsHint" : {
-		"message" : "Phím tắt chạy khi là cả từ, hoặc ngay sau phụ âm: chw ra chư.",
-		"description" : "Cách phím tắt khớp, hiện dưới màn hình phím tắt"
-	},
 	"extPopupRemoveShortcut" : {
 		"message" : "Xoá phím tắt này",
 		"description" : "Chú thích của nút xoá một dòng phím tắt"

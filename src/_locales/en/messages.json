@@ -83,10 +83,6 @@
 		"message" : "Save shortcuts",
 		"description" : "Button that stores the shortcut rows and returns to the main screen"
 	},
-	"extPopupShortcutsHint" : {
-		"message" : "A shortcut fires on a whole word, or right after a consonant: chw becomes chư.",
-		"description" : "How shortcut keys match, shown under the shortcut screen"
-	},
 	"extPopupRemoveShortcut" : {
 		"message" : "Delete this shortcut",
 		"description" : "Tooltip of the button that removes one shortcut row"

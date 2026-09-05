@@ -187,8 +187,7 @@ for (const dir of extensionDirs()) {
 				assert.equal(await page.locator("#controlled").evaluate((element) => element.textContent), "Việt Nam,");
 			});
 
-			// The engine runs in the popup too, so the key field is in `exclude`: without that, a key
-			// like "uw" would be typed as "ư" and could never be entered. The result field is not.
+			// The engine runs in the popup too, so the key field is in `exclude` and the result is not
 			it("takes a Telex-looking key in the key field and Telex in the result field", async () => {
 				const popup = await extension.context.newPage();
 				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);

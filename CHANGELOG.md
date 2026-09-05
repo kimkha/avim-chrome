@@ -7,9 +7,7 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Added
 
-- Phím tắt do người dùng tự đặt: popup có thêm màn hình "Phím tắt" với ô bật/tắt và các cặp
-  `phím` → `kết quả`. Mặc định tắt và không sẵn dòng nào. Phím tắt nổ khi phím vừa gõ kết thúc từ
-  (khoảng trắng, `,`, `.`, Enter…) và khớp cả từ: `vn` + khoảng trắng ra `Việt Nam`.
+- Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
 
 ### Fixed
 

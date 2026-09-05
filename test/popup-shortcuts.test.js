@@ -65,8 +65,8 @@ describe("The shortcut screen shows what the background stored", () => {
 });
 
 describe("The engine keeps its hands off the key fields", () => {
-	// The regression this guards: the engine runs in the popup too, so with the default `w` rule
-	// the key field turned a typed "w" into "ư" and the shortcut could not be entered at all.
+	// The regression this guards: the engine runs in the popup too, so a key field left to it typed
+	// "uw" as "ư" and that shortcut could never be entered.
 	it("names every key field so the engine skips it", () => {
 		const popup = loadPopup({ prefs: { shortcuts: STORED } });
 
@@ -311,7 +311,6 @@ describe("The shortcut screen labels come from the locale file", () => {
 		["txtShortcutsOn", "extPopupShortcutsOn"],
 		["txtAddShortcut", "extPopupAddShortcut"],
 		["txtSaveShortcuts", "extPopupSaveShortcuts"],
-		["txtShortcutsHint", "extPopupShortcutsHint"],
 	];
 
 	for (const [elementId, messageKey] of labels) {

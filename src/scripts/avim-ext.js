@@ -30,7 +30,7 @@ let method = 0; //Default input method: 0=AUTO, 1=TELEX, 2=VNI, 3=VIQR, 4=VIQR*
 let onOff = 1; //Starting status: 0=Off, 1=On
 let checkSpell = 1; //Spell Check: 0=Off, 1=On
 let oldAccent = 1; //0: New way (oa`, oe`, uy`), 1: The good old day (o`a, o`e, u`y)
-let shortcutMap = new Map(); //Shortcut keys -> what replaces them; empty whenever the pref is off
+let shortcutMap = new Map(); //Shortcut keys -> replacement; empty when the pref is off, so nothing else tests it
 
 // Kept on globalThis, not in a lexical binding: the page and the test harness override them after load
 globalThis.exclude = ["email"]; //IDs of the fields you DON'T want to let users type Vietnamese in
@@ -527,8 +527,7 @@ function replaceChar(o, pos, c) {
 	const scrollTop = o.scrollTop;
 	const priorChar = o.value.charAt(pos - 1);
 	const afterQ = upperCase(o.value.charAt(pos - 2)) === "Q";
-	// "thuở" is the one word spelt with a bare u, so a th onset keeps it while the pair ends the
-	// word; promoteHornPair horns it as soon as a letter follows, giving "thuown" -> "thươn".
+	// "thuở" is the one word spelt with a bare u, so a th onset keeps it while the pair ends the word
 	const endsWord = pos >= savePos - 1;
 	const afterTh = (pos >= 3) && (upperCase(o.value.slice(pos - 3, pos - 1)) === "TH");
 	let hornedU = "";
@@ -541,8 +540,7 @@ function replaceChar(o, pos, c) {
 			replaceBy = c === "o" ? "ơ" : "Ơ";
 		}
 	}
-	// The u rode along into ư when the o took its horn, so the key taking that horn back off has
-	// to strip both: "uoiww" gives "uoiw", not "ưoiw".
+	// Taking the o's horn back off has to un-horn the u that rode along: "uoiww" gives "uoiw"
 	if (addsHorn && (upperCase(priorChar) === "Ư") && HORNED_O.includes(o.value.charAt(pos))) {
 		hornedU = priorChar === "ư" ? "u" : "U";
 	}
@@ -1079,8 +1077,8 @@ function ifMoz(e) {
 	const parts = partsBeforeCaret(host, node, caret);
 	const before = parts.map((part) => part.text).join("");
 
-	// A key the engine is never offered, such as a comma, still ends a word: the gate stops the
-	// engine, not the shortcut pass.
+	// A comma and its like never reach the engine but still end a word: the gate stops the engine,
+	// not the shortcut.
 	if (checkCode(code) || !range.startOffset) {
 		const gated = shortcutEdit(before, char);
 		if (gated) {
@@ -1151,12 +1149,12 @@ function upperCase(word) {
 }
 
 
-// ơ and its five toned forms, in both cases: the o of a uo pair that has already taken the horn
+// ơ with its five tones, both cases: the o of a uo pair that has already taken the horn
 const HORNED_O_FORMS = "ơớờởỡợƠỚỜỞỠỢ";
 
 /**
- * The text before the caret with the u of a trailing uo pair horned, ready for a letter to follow
- * it. "thuơ" is spelt that way on its own, but "thuơn" is not, so "thuown" has to give "thươn".
+ * The text before the caret with the u of a trailing uo pair horned, ready for a letter to follow.
+ * "thuơ" is spelt that way on its own, but "thuơn" is not, so "thuown" has to give "thươn".
  */
 function promoteHornPair(before, char) {
 	const at = before.length - 1;
@@ -1210,8 +1208,8 @@ const CONTROL_KEYS = "\r\n\t";
 
 /**
  * The same, plus who types the boundary key. A model-backed editor re-renders asynchronously, so a
- * key left to the browser lands at the pre-rewrite caret: "vn x" came out "Việt Namx ". Typing it
- * ourselves keeps that to one event. Enter and Tab do more than insert, so they stay the browser's.
+ * key left to the browser lands at the pre-rewrite caret: "vn x" came out "Việt Namx ". Enter and
+ * Tab do more than insert, so they stay the browser's.
  */
 function shortcutEdit(before, char) {
 	const expanded = shortcutRewrite(before, char);
@@ -1289,8 +1287,8 @@ function keyPressHandler(e) {
 
 	const caret = el.selectionStart;
 	const before = el.value.slice(0, caret);
-	// A key the engine is never offered, such as a comma, still ends a word: the gate stops the
-	// engine, not the shortcut pass.
+	// A comma and its like never reach the engine but still end a word: the gate stops the engine,
+	// not the shortcut.
 	if (checkCode(code) || !caret) {
 		const edit = shortcutEdit(before, char);
 		if (edit) {
@@ -1397,7 +1395,6 @@ function configAVIM(data) {
 		onOff = data.onOff;
 		checkSpell = data.ckSpell;
 		oldAccent = data.oldAccent;
-		// An empty map is what "off" looks like here, so nothing downstream has to test the pref
 		shortcutMap = data.shortcutsOn === 1 ? buildShortcutMap(data.shortcuts) : new Map();
 	}
 

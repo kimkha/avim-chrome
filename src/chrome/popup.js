@@ -18,8 +18,7 @@
 		"Shortcuts",
 		"ShortcutsOn",
 		"AddShortcut",
-		"SaveShortcuts",
-		"ShortcutsHint"
+		"SaveShortcuts"
 	];
 
 	/** Radio element id -> the method number the engine expects. */
@@ -149,7 +148,6 @@
 	function saveShortcuts() {
 		savePrefs({
 			shortcutsOn: $g("shortcutsOn").checked ? 1 : 0,
-			// Rows left blank are dropped by the background, which is how a shortcut is deleted
 			shortcuts: shortcutRows.map((row) => ({ key: row.keyInput.value, value: row.resultInput.value }))
 		}, { reload: false });
 		showScreen("mainScreen");
