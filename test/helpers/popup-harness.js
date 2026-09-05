@@ -142,14 +142,14 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 		return found;
 	}
 
-	function fire(id, event) {
+	function fire(id, event, eventObject) {
 		const target = element(id);
 		const handlers = target.listeners[event] || [];
 		if (handlers.length === 0) {
 			throw new Error(`#${id} has no ${event} listener`);
 		}
 		for (const handler of handlers) {
-			handler();
+			handler(eventObject);
 		}
 	}
 
@@ -162,13 +162,13 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 	}
 
 	/** Runs the listeners of an element the page built itself, which has no id to look up. */
-	function fireOn(target, event) {
+	function fireOn(target, event, eventObject) {
 		const handlers = target.listeners[event] || [];
 		if (handlers.length === 0) {
 			throw new Error(`the ${target.tagName} has no ${event} listener`);
 		}
 		for (const handler of handlers) {
-			handler();
+			handler(eventObject);
 		}
 	}
 

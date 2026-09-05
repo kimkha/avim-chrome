@@ -10,7 +10,7 @@
 	<h1 class="headerTitle" id="txtTitle">Bảng điều khiển AVIM</h1>
 </header>
 <div id="mainScreen">
-	<section class="section">
+	<section class="paneMethods">
 		<h2 class="sectionTitle" id="txtSel">Chọn một kiểu gõ:</h2>
 		<div class="options">
 			<label class="option"><input type="radio" name="method" id="auto"><span id="txtAuto">Kết hợp</span></label>
@@ -21,7 +21,7 @@
 			<label class="option optionOff"><input type="radio" name="method" id="off"><span id="txtOff">Tắt AVIM</span></label>
 		</div>
 	</section>
-	<section class="section">
+	<section class="paneToggles">
 		<label class="switchRow">
 			<span id="txtSpellCheck">Kiểm tra chính tả</span>
 			<input type="checkbox" class="switch" id="spellCheck">
@@ -31,7 +31,7 @@
 		</div>
 	</section>
 	<p class="tip"><b class="tipTitle" id="txtTips">Mẹo nhỏ:</b> <span id="txtTipsCtrl">Nhấn Ctrl 2 lần để bật/tắt nhanh.</span></p>
-	<section class="section">
+	<section class="paneScratch">
 		<h2 class="sectionTitle" id="txtDemo">Gõ nhanh</h2>
 		<textarea id="inputDemo" autofocus="autofocus" placeholder="Gõ nhanh tiếng Việt tại đây"></textarea>
 		<div class="buttonRow">
@@ -41,22 +41,20 @@
 	</section>
 </div>
 <div id="shortcutScreen" style="display:none;">
-	<div class="screenHeader">
-		<button class="button" id="backToMain" type="button"><span id="txtBack">← Trở về</span></button>
-		<h2 class="screenTitle" id="txtShortcuts">Phím tắt</h2>
-	</div>
-	<label class="switchRow">
-		<span id="txtShortcutsOn">Bật phím tắt</span>
-		<input type="checkbox" class="switch" id="shortcutsOn">
-	</label>
-	<section class="section">
+	<div class="modal" role="dialog" aria-modal="true" aria-labelledby="txtShortcuts">
+		<div class="screenHeader">
+			<button class="button" id="backToMain" type="button"><span id="txtBack">← Trở về</span></button>
+			<h2 class="screenTitle" id="txtShortcuts">Phím tắt</h2>
+		</div>
+		<label class="switchRow">
+			<span id="txtShortcutsOn">Bật phím tắt</span>
+			<input type="checkbox" class="switch" id="shortcutsOn">
+		</label>
 		<div id="shortcutList"></div>
 		<div class="buttonRow">
 			<button class="button" id="addShortcut" type="button"><span id="txtAddShortcut">Thêm phím tắt</span></button>
+			<button class="button buttonPrimary" id="saveShortcuts" type="button"><span id="txtSaveShortcuts">Lưu phím tắt</span></button>
 		</div>
-	</section>
-	<div class="buttonRow">
-		<button class="button buttonPrimary" id="saveShortcuts" type="button"><span id="txtSaveShortcuts">Lưu phím tắt</span></button>
 	</div>
 </div>
 	<script src="scripts/avim-ext.js"></script>

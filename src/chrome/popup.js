@@ -34,8 +34,6 @@
 
 	const COMBINING_MARKS = /[\u0300-\u036f]/g;
 
-	const SCREENS = ["mainScreen", "shortcutScreen"];
-
 	/**
 	 * Key fields carry this name so the engine, which runs here too, skips them: Telex would turn
 	 * a key like "uw" into "ư". It seeds `exclude` at load, hence the script order in popup.html.
@@ -84,10 +82,26 @@
 		inputDemo.select();
 	}
 
-	function showScreen(shown) {
-		for (const screen of SCREENS) {
-			$g(screen).style.display = screen === shown ? "" : "none";
+	function showShortcutModal(open) {
+		$g("shortcutScreen").style.display = open ? "" : "none";
+		$g("mainScreen").inert = open;
+		if (open) {
+			$g("backToMain").focus();
 		}
+	}
+
+	function closeModalOnBackdrop(event) {
+		if (event.target === $g("shortcutScreen")) {
+			showShortcutModal(false);
+		}
+	}
+
+	function addRowFromEnter(event) {
+		if (event.key !== "Enter") {
+			return;
+		}
+		event.preventDefault();
+		addShortcutRow().keyInput.focus();
 	}
 
 	function createShortcutInput(value, hint, name) {
@@ -97,6 +111,7 @@
 		input.value = value;
 		input.placeholder = chrome.i18n.getMessage(hint);
 		input.className = "shortcutInput";
+		input.addEventListener("keydown", addRowFromEnter);
 		return input;
 	}
 
@@ -131,6 +146,7 @@
 		shortcutRows.push(entry);
 		removeButton.addEventListener("click", () => removeShortcutRow(entry));
 		applyShortcutsEnabled();
+		return entry;
 	}
 
 	/** Turning the feature off disables Save too, so the checkbox has to store itself. */
@@ -150,7 +166,7 @@
 			shortcutsOn: $g("shortcutsOn").checked ? 1 : 0,
 			shortcuts: shortcutRows.map((row) => ({ key: row.keyInput.value, value: row.resultInput.value }))
 		}, { reload: false });
-		showScreen("mainScreen");
+		showShortcutModal(false);
 	}
 
 	function showMethod(prefs) {
@@ -185,7 +201,7 @@
 
 	function init() {
 		loadText();
-		showScreen("mainScreen");
+		showShortcutModal(false);
 		globalThis.exclude = [...(globalThis.exclude ?? []), SHORTCUT_KEY_FIELD];
 		chrome.runtime.sendMessage({ get_prefs: "all" }, showPrefs);
 
@@ -200,9 +216,10 @@
 		$g("demoCopy").addEventListener("click", copyAllDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);
 
-		$g("openShortcuts").addEventListener("click", () => showScreen("shortcutScreen"));
+		$g("openShortcuts").addEventListener("click", () => showShortcutModal(true));
+		$g("shortcutScreen").addEventListener("click", closeModalOnBackdrop);
 		// Deliberately outside applyShortcutsEnabled(): turning shortcuts off would trap the screen
-		$g("backToMain").addEventListener("click", () => showScreen("mainScreen"));
+		$g("backToMain").addEventListener("click", () => showShortcutModal(false));
 		$g("shortcutsOn").addEventListener("change", () => {
 			applyShortcutsEnabled();
 			savePrefs({ shortcutsOn: $g("shortcutsOn").checked ? 1 : 0 }, { reload: false });
