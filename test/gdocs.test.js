@@ -62,7 +62,7 @@ function typeInDocs(sequence, config = {}, initial = { text: MARKER, caret: MARK
 
 describe("Google Docs types the same as a textarea", () => {
 	const transforms = [
-		[METHOD.TELEX, ["chaof", "tieengs", "vieejt", "nguowif", "aa", "aaa", "ddd", "ass", "xin chaof"]],
+		[METHOD.TELEX, ["chaof", "tieengs", "vieejt", "nguowif", "aa", "aaa", "ddd", "ass", "xin chaof", "thuown", "thuowngf"]],
 		[METHOD.VNI, ["toi6", "viet65", "nguoi72", "duong792", "a10"]],
 		[METHOD.VIQR, ["hoa`", "gia?", "thuye^t'"]],
 		[METHOD.VIQR_STAR, ["to^i", "vie^.t", "ngu*o*i`"]],
@@ -94,6 +94,41 @@ describe("Google Docs types the same as a textarea", () => {
 			typeInDocs("chaof", {}, { text: head + rest, caret: head.length }),
 			`${head}chào${rest}`,
 		);
+	});
+});
+
+const VN = [{ key: "vn", value: "Việt Nam" }];
+
+function withShortcuts(shortcuts = VN, extra = {}) {
+	return { shortcutsOn: 1, shortcuts, ...extra };
+}
+
+describe("Shortcuts expand in Google Docs too", () => {
+	// space and "." reach the engine first; "," and ")" are gated off it but still end a word
+	for (const sequence of ["vn ", "vn.", "vn,", "vn)", "xin vn "]) {
+		it(`"${sequence}" expands as it does in a textarea`, () => {
+			const expected = type(sequence, withShortcuts());
+			assert.notEqual(expected, sequence, `"${sequence}" is not expanded at all`);
+			assert.equal(typeInDocs(sequence, withShortcuts()), MARKER + expected);
+		});
+	}
+
+	for (const sequence of ["vn", "avn ", "vnx "]) {
+		it(`leaves "${sequence}" alone, as a textarea does`, () => {
+			assert.equal(type(sequence, withShortcuts()), sequence);
+			assert.equal(typeInDocs(sequence, withShortcuts()), MARKER + sequence);
+		});
+	}
+
+	it("stays put when the shortcuts pref is off", () => {
+		assert.equal(typeInDocs("vn ", { shortcuts: VN }), `${MARKER}vn `);
+	});
+
+	// VIQR spends punctuation on tone marks, so the engine must get those keys before a shortcut does
+	it("lets VIQR keep a tone key a shortcut would otherwise have eaten", () => {
+		const config = withShortcuts([{ key: "a", value: "SHORTCUT" }], { method: METHOD.VIQR });
+		assert.equal(typeInDocs("a'", config), `${MARKER}á`);
+		assert.equal(typeInDocs("a,", config), `${MARKER}SHORTCUT,`);
 	});
 });
 
@@ -161,5 +196,6 @@ describe("Google Docs rewrites are guarded", () => {
 
 	it("stays out of the way while AVIM is off", () => {
 		assert.equal(typeInDocs("chaof", { onOff: 0 }), `${MARKER}chaof`);
+		assert.equal(typeInDocs("vn ", withShortcuts(VN, { onOff: 0 })), `${MARKER}vn `);
 	});
 });

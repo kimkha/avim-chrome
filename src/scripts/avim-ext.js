@@ -1358,6 +1358,34 @@ function gdocsReplace(from, to, text) {
 	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_WRITE));
 }
 
+/**
+ * The text Docs should end up holding, or null when nothing should change. Docs has already typed
+ * the key, so every branch has to say for itself whether the result still carries it.
+ */
+function gdocsWant(before, key, code) {
+	// A comma and its like never reach the engine but still end a word: the gate stops the engine,
+	// not the shortcut.
+	if (checkCode(code)) {
+		const gated = shortcutEdit(before, key);
+		return gated === null ? null : gated.text + (gated.typesKey ? "" : key);
+	}
+
+	const editor = createTextEditor(before);
+	AVIMObj.sk = key;
+	start(editor, { which: code });
+	const changed = AVIMObj.changed;
+	AVIMObj.changed = false;
+	// VIQR spends punctuation on tone marks, so a shortcut only ever gets a key the engine passed on
+	const passed = editor.value === before;
+	const edit = passed ? shortcutEdit(before, key) : null;
+	if (edit) {
+		return edit.text + (edit.typesKey ? "" : key);
+	}
+	// changed only means AVIM meant to type the key; Docs already did: "chaof" drops it, "aaa" keeps.
+	const keyTail = changed ? "" : key;
+	return passed ? promoteHornPair(before, key) + keyTail : editor.value + keyTail;
+}
+
 /** Nothing is prevented: reconciling against what Docs holds makes a lost race a no-op. */
 function gdocsRewrite(key, code) {
 	const state = gdocsState();
@@ -1375,14 +1403,8 @@ function gdocsRewrite(key, code) {
 		return;
 	}
 
-	const editor = createTextEditor(before);
-	AVIMObj.sk = key;
-	start(editor, { which: code });
-	const changed = AVIMObj.changed;
-	AVIMObj.changed = false;
-	// changed only means AVIM meant to type the key; Docs already did: "chaof" drops it, "aaa" keeps.
-	const want = editor.value + (changed ? "" : key);
-	if (want === typed) {
+	const want = gdocsWant(before, key, code);
+	if ((want === null) || (want === typed)) {
 		return;
 	}
 
@@ -1392,10 +1414,7 @@ function gdocsRewrite(key, code) {
 
 function gdocsKeyPress(e) {
 	const code = e.which;
-	if (e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
-		return;
-	}
-	if (checkCode(code)) {
+	if ((onOff === 0) || e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
 		return;
 	}
 	const key = fromCharCode(code);
