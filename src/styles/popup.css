@@ -1,0 +1,319 @@
+:root {
+	color-scheme: light dark;
+
+	--bg: #ffffff;
+	--surface: #f5f6f8;
+	--surface-hover: #eceef1;
+	--border: #dfe1e5;
+	--border-strong: #c3c7cd;
+	--text: #1f2328;
+	--text-muted: #656d76;
+	--accent: #2563eb;
+	--accent-text: #1d4ed8;
+	--accent-button: #2563eb;
+	--accent-button-hover: #1d4ed8;
+	--accent-soft: rgba(37, 99, 235, 0.1);
+	--danger: #d1242f;
+	--danger-soft: rgba(209, 36, 47, 0.1);
+
+	--radius: 7px;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #1c1f24;
+		--surface: #24282e;
+		--surface-hover: #2c313a;
+		--border: #343a42;
+		--border-strong: #4a515b;
+		--text: #e6e8eb;
+		--text-muted: #99a1ab;
+		--accent: #4d8dfd;
+		--accent-text: #8ab4ff;
+		--accent-soft: rgba(77, 141, 253, 0.16);
+		--danger: #ff6b6b;
+		--danger-soft: rgba(255, 107, 107, 0.16);
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	width: 320px;
+	margin: 0;
+	padding: 12px;
+	background: var(--bg);
+	color: var(--text);
+	font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-bottom: 10px;
+	margin-bottom: 12px;
+	border-bottom: 1px solid var(--border);
+}
+
+.headerIcon {
+	flex: none;
+}
+
+.headerTitle {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+#mainScreen,
+#shortcutScreen {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.sectionTitle {
+	margin: 0 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.options {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.option {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 7px 9px;
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.option:hover {
+	background: var(--surface-hover);
+}
+
+.option:has(:checked) {
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-weight: 500;
+}
+
+.option input {
+	flex: none;
+	width: 15px;
+	height: 15px;
+	margin: 0;
+	accent-color: var(--accent);
+}
+
+.optionOff {
+	margin-top: 6px;
+	padding-top: 13px;
+	border-top: 1px solid var(--border);
+	border-radius: 0 0 var(--radius) var(--radius);
+	color: var(--text-muted);
+}
+
+.optionOff:has(:checked) {
+	background: var(--surface-hover);
+	color: var(--text);
+}
+
+.switchRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 8px 9px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.switchRow:hover {
+	background: var(--surface-hover);
+}
+
+.switch {
+	position: relative;
+	flex: none;
+	width: 34px;
+	height: 20px;
+	margin: 0;
+	appearance: none;
+	background: var(--border-strong);
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background 0.15s;
+}
+
+.switch::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	background: #fff;
+	border-radius: 50%;
+	transition: transform 0.15s;
+}
+
+.switch:checked {
+	background: var(--accent);
+}
+
+.switch:checked::after {
+	transform: translateX(14px);
+}
+
+.button {
+	padding: 7px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+	background: var(--surface-hover);
+	border-color: var(--border-strong);
+}
+
+.button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.buttonPrimary {
+	background: var(--accent-button);
+	border-color: var(--accent-button);
+	color: #fff;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+	background: var(--accent-button-hover);
+	border-color: var(--accent-button-hover);
+}
+
+.buttonRow {
+	display: flex;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.buttonRow .button {
+	flex: 1;
+}
+
+.tip {
+	margin: 0;
+	padding: 8px 10px;
+	background: var(--surface);
+	border-radius: var(--radius);
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.tipTitle {
+	color: var(--text);
+	font-weight: 600;
+}
+
+#inputDemo {
+	display: block;
+	width: 100%;
+	height: 110px;
+	padding: 8px 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	resize: vertical;
+}
+
+#inputDemo:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.screenHeader {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.screenTitle {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.shortcutRow {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 6px;
+}
+
+.shortcutInput {
+	flex: 1;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+}
+
+.shortcutInput:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.shortcutInput:disabled {
+	background: var(--surface);
+	color: var(--text-muted);
+}
+
+.shortcutArrow {
+	flex: none;
+	color: var(--text-muted);
+}
+
+.shortcutRemove {
+	flex: none;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	line-height: 1;
+}
+
+.shortcutRemove:hover:not(:disabled) {
+	background: var(--danger-soft);
+	border-color: var(--danger);
+	color: var(--danger);
+}

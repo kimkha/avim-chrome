@@ -11,6 +11,10 @@
 		"message" : "Options for AVIM",
 		"description" : "Default title of browser action"
 	},
+	"extPopupTitle" : {
+		"message" : "AVIM control panel",
+		"description" : "Heading at the top of the popup"
+	},
 	"extPopupSel" : {
 		"message" : "Select an option:",
 		"description" : ""

@@ -1,6 +1,7 @@
 (() => {
 	/** Each key maps to a #txt<Key> element in popup.html and an extPopup<Key> locale message. */
 	const LABEL_KEYS = [
+		"Title",
 		"Sel",
 		"Auto",
 		"Telex",
@@ -95,9 +96,7 @@
 		input.name = name;
 		input.value = value;
 		input.placeholder = chrome.i18n.getMessage(hint);
-		// A share of the row rather than a fixed width, or the delete button wraps to its own line
-		input.style.flex = "1";
-		input.style.minWidth = "0";
+		input.className = "shortcutInput";
 		return input;
 	}
 
@@ -111,16 +110,16 @@
 
 	function addShortcutRow({ key = "", value = "" } = {}) {
 		const row = document.createElement("div");
-		row.style.display = "flex";
-		row.style.alignItems = "center";
-		row.style.gap = "4px";
+		row.className = "shortcutRow";
 		const arrow = document.createElement("span");
-		arrow.textContent = " → ";
+		arrow.className = "shortcutArrow";
+		arrow.textContent = "→";
 		const keyInput = createShortcutInput(key, "extPopupShortcutKeyHint", SHORTCUT_KEY_FIELD);
 		// Left nameless on purpose, so the engine stays on and a result can be typed in Telex
 		const resultInput = createShortcutInput(value, "extPopupShortcutResultHint", "");
 		const removeButton = document.createElement("button");
 		removeButton.type = "button";
+		removeButton.className = "button shortcutRemove";
 		removeButton.textContent = "✕";
 		removeButton.title = chrome.i18n.getMessage("extPopupRemoveShortcut");
 		row.appendChild(keyInput);

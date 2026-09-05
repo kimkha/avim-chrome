@@ -11,6 +11,10 @@
 		"message" : "Đổi kiểu gõ AVIM",
 		"description" : "Default title of browser action"
 	},
+	"extPopupTitle" : {
+		"message" : "Bảng điều khiển AVIM",
+		"description" : "Tiêu đề ở đầu popup"
+	},
 	"extPopupSel" : {
 		"message" : "Chọn một kiểu gõ:",
 		"description" : ""
