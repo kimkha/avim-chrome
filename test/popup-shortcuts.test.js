@@ -304,9 +304,72 @@ describe("Save stores the rows and goes back", () => {
 	});
 });
 
+describe("Back leaves the shortcut screen", () => {
+	it("returns to the main screen", () => {
+		const popup = openShortcuts(ENABLED);
+
+		popup.fire("backToMain", "click");
+
+		assert.equal(popup.element("mainScreen").style.display, "");
+		assert.equal(popup.element("shortcutScreen").style.display, "none");
+	});
+
+	it("stores nothing", () => {
+		const popup = openShortcuts(ENABLED);
+		popup.shortcutRows()[0].resultInput.value = "Ư";
+
+		popup.fire("backToMain", "click");
+
+		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.reloads, []);
+	});
+
+	it("keeps unsaved edits when the screen is reopened", () => {
+		const popup = openShortcuts(ENABLED);
+		popup.shortcutRows()[0].resultInput.value = "Ư";
+		popup.fire("addShortcut", "click");
+		popup.shortcutRows().at(-1).keyInput.value = "vn";
+
+		popup.fire("backToMain", "click");
+		popup.fire("openShortcuts", "click");
+
+		assert.deepEqual(rowValues(popup), [["w", "Ư"], ["uow", "ươ"], ["vn", ""]]);
+	});
+
+	it("sends those kept edits when Save is pressed after reopening", () => {
+		const popup = openShortcuts(ENABLED);
+		popup.shortcutRows()[0].resultInput.value = "Ư";
+
+		popup.fire("backToMain", "click");
+		popup.fire("openShortcuts", "click");
+		popup.fire("saveShortcuts", "click");
+
+		assert.deepEqual(popup.sent.at(-1).shortcuts[0], { key: "w", value: "Ư" });
+	});
+
+	// Save and Add go disabled with the feature; Back must not, or the screen has no way out
+	it("stays enabled when shortcuts are turned off", () => {
+		const popup = openShortcuts({ shortcutsOn: 0, shortcuts: STORED });
+
+		assert.equal(popup.element("backToMain").disabled, false);
+		assert.equal(popup.element("saveShortcuts").disabled, true);
+	});
+
+	it("still navigates once the screen is reopened", () => {
+		const popup = openShortcuts(ENABLED);
+
+		popup.fire("backToMain", "click");
+		popup.fire("openShortcuts", "click");
+		popup.fire("backToMain", "click");
+
+		assert.equal(popup.element("shortcutScreen").style.display, "none");
+	});
+});
+
 describe("The shortcut screen labels come from the locale file", () => {
 	const labels = [
 		["txtOpenShortcuts", "extPopupOpenShortcuts"],
+		["txtBack", "extPopupBack"],
 		["txtShortcuts", "extPopupShortcuts"],
 		["txtShortcutsOn", "extPopupShortcutsOn"],
 		["txtAddShortcut", "extPopupAddShortcut"],

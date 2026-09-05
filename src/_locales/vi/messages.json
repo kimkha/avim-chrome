@@ -67,6 +67,10 @@
 		"message" : "Phím tắt",
 		"description" : "Nút mở màn hình phím tắt"
 	},
+	"extPopupBack" : {
+		"message" : "← Trở về",
+		"description" : "Nút rời màn hình phím tắt mà không lưu"
+	},
 	"extPopupShortcuts" : {
 		"message" : "Phím tắt",
 		"description" : "Tiêu đề màn hình phím tắt"

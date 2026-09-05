@@ -15,6 +15,7 @@
 		"Demo",
 		"DemoCopy",
 		"RemoveAccent",
+		"Back",
 		"Shortcuts",
 		"ShortcutsOn",
 		"AddShortcut",
@@ -201,6 +202,8 @@
 		$g("removeAccent").addEventListener("click", removeAccent);
 
 		$g("openShortcuts").addEventListener("click", () => showScreen("shortcutScreen"));
+		// Deliberately outside applyShortcutsEnabled(): turning shortcuts off would trap the screen
+		$g("backToMain").addEventListener("click", () => showScreen("mainScreen"));
 		$g("shortcutsOn").addEventListener("change", () => {
 			applyShortcutsEnabled();
 			savePrefs({ shortcutsOn: $g("shortcutsOn").checked ? 1 : 0 }, { reload: false });

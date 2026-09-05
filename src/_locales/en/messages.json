@@ -67,6 +67,10 @@
 		"message" : "Shortcut keys",
 		"description" : "Button that opens the shortcut key screen"
 	},
+	"extPopupBack" : {
+		"message" : "← Back",
+		"description" : "Button that leaves the shortcut key screen without saving"
+	},
 	"extPopupShortcuts" : {
 		"message" : "Shortcut keys",
 		"description" : "Heading of the shortcut key screen"
