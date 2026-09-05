@@ -8,13 +8,8 @@ since `v0.8.3` is collected under 0.10.0.
 ### Added
 
 - Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)). Docs vẽ tài
-  liệu lên `<canvas>` và không giữ text trong DOM, nên không có gì để đọc hay ghi theo cách thường.
-  Bản này bật lớp annotation của Docs bằng một content script chạy ở `world: "MAIN"`, đọc text và
-  caret qua `_docs_annotate_getAnnotatedText`, rồi thay từ bằng một `beforeinput insertText` — kênh
-  duy nhất còn ăn, và là kênh giữ được định dạng của đoạn văn, khác với paste. Docs vẫn tự chèn phím
-  như thường; AVIM sửa lại từ ngay sau đó, nên một lần gõ bị đua thì chỉ là không đổi gì chứ không
-  làm hỏng từ. Phím đầu tiên của mỗi phiên chưa được chuyển, vì Docs chỉ trao API sau khi tài liệu
-  đã có caret, và mỗi lần bỏ dấu là một bước undo trọn từ.
+  liệu lên `<canvas>`, nên AVIM đọc và ghi qua lớp annotation của Docs. Hai giới hạn: phím đầu tiên
+  của mỗi phiên chưa được chuyển, và mỗi lần bỏ dấu là một bước undo trọn từ.
 
 ### Fixed
 
@@ -31,8 +26,7 @@ since `v0.8.3` is collected under 0.10.0.
 ### Changed
 
 - Nhãn trong popup render bằng `textContent` thay vì `innerHTML`.
-- Firefox tối thiểu nâng từ 109 lên 128, phiên bản đầu hỗ trợ `world: "MAIN"` mà lớp annotation của
-  Google Docs cần.
+- Firefox tối thiểu nâng từ 109 lên 128, bản đầu hỗ trợ `world: "MAIN"` mà Google Docs cần.
 
 ## [0.10.2] - 2026-09-02
 

@@ -12,55 +12,69 @@ import {
 
 const ROOT = path.join(import.meta.dirname, "..");
 
-/**
- * A stand-in for Google Docs: the text lives in a variable, the editable is an empty div in an
- * about:blank iframe, and the only ways in are the annotation API and a beforeinput. Enough to
- * exercise the real bridge, whose whole job is to cross the isolated/main world boundary — the one
- * thing the node tests have to fake. Docs itself cannot be automated: it needs a Google login.
- */
+/** Real Docs needs a Google login and cannot be automated. */
 const DOCS_PAGE = `<!DOCTYPE html><html><body>
-<iframe class="docs-texteventtarget-iframe"></iframe>
 <div id="model"></div>
 <script>
 (() => {
 	let text = "\\u0003";
 	let selStart = 1;
 	let selEnd = 1;
+	// Retires every object already handed out, as Docs does when it rebuilds its model
+	let generation = 0;
 	const mirror = () => { document.getElementById("model").textContent = text; };
 	mirror();
 
-	const frame = document.querySelector("iframe.docs-texteventtarget-iframe");
-	const fdoc = frame.contentDocument;
-	const editable = fdoc.createElement("div");
-	editable.setAttribute("contenteditable", "true");
-	editable.tabIndex = 0;
-	fdoc.body.appendChild(editable);
+	function wireIframe() {
+		const frame = document.createElement("iframe");
+		frame.className = "docs-texteventtarget-iframe";
+		document.body.appendChild(frame);
 
-	editable.addEventListener("keypress", (event) => {
-		if (event.key.length !== 1) { return; }
-		event.preventDefault();
-		text = text.slice(0, selStart) + event.key + text.slice(selEnd);
-		selStart += 1;
-		selEnd = selStart;
-		editable.textContent = "";
-		mirror();
-	});
+		const fdoc = frame.contentDocument;
+		const editable = fdoc.createElement("div");
+		editable.setAttribute("contenteditable", "true");
+		editable.tabIndex = 0;
+		fdoc.body.appendChild(editable);
 
-	editable.addEventListener("beforeinput", (event) => {
-		if (event.inputType !== "insertText") { return; }
-		event.preventDefault();
-		const from = selStart;
-		text = text.slice(0, from) + event.data + text.slice(selEnd);
-		selStart = from;
-		selEnd = from + event.data.length;
-		mirror();
-	});
+		editable.addEventListener("keypress", (event) => {
+			if (event.key.length !== 1) { return; }
+			event.preventDefault();
+			text = text.slice(0, selStart) + event.key + text.slice(selEnd);
+			selStart += 1;
+			selEnd = selStart;
+			editable.textContent = "";
+			mirror();
+		});
 
-	window._docs_annotate_getAnnotatedText = () => Promise.resolve({
-		getText: () => text,
-		getSelection: () => [{ start: selStart, end: selEnd }],
-		setSelection: (start, end) => { selStart = start; selEnd = end; },
-	});
+		editable.addEventListener("beforeinput", (event) => {
+			if (event.inputType !== "insertText") { return; }
+			event.preventDefault();
+			const from = selStart;
+			text = text.slice(0, from) + event.data + text.slice(selEnd);
+			selStart = from;
+			selEnd = from + event.data.length;
+			mirror();
+		});
+
+		return frame;
+	}
+
+	let frame = wireIframe();
+
+	const annotatedAt = (issued) => {
+		const live = () => {
+			if (issued !== generation) { throw new Error("annotated object retired"); }
+		};
+		return {
+			getText: () => { live(); return text; },
+			getSelection: () => { live(); return [{ start: selStart, end: selEnd }]; },
+			setSelection: (start, end) => { live(); selStart = start; selEnd = end; },
+		};
+	};
+
+	window._docs_annotate_getAnnotatedText = () => Promise.resolve(annotatedAt(generation));
+	window.__avimRetireAnnotated = () => { generation += 1; };
+	window.__avimReplaceIframe = () => { frame.remove(); frame = wireIframe(); };
 })();
 </script>
 </body></html>`;
@@ -93,7 +107,6 @@ for (const dir of extensionDirs()) {
 			server = await startServer();
 			extension = await launchExtension(launcher, dir);
 			page = await extension.context.newPage();
-			// What the manifest does on docs.google.com: the bridge, main world, before page scripts.
 			// Read out of the directory under test, so build/ exercises the minified copy.
 			await page.addInitScript({
 				content: fs.readFileSync(path.join(ROOT, dir, BRIDGE_PATH), "utf8"),
@@ -106,17 +119,21 @@ for (const dir of extensionDirs()) {
 		});
 
 		const model = () => page.locator("#model").textContent();
+		const editable = () => page
+			.frameLocator("iframe.docs-texteventtarget-iframe")
+			.locator("[contenteditable=\"true\"]");
+
+		async function focusEditor() {
+			await page.locator("body").click();
+			await editable().click();
+		}
 
 		/** The content script lands at document_idle and boots off an async get_prefs. */
 		async function typeUntilSettled(sequence, expected) {
 			let text = "";
 			for (let attempt = 0; attempt < 5; attempt++) {
 				await page.goto(server.origin);
-				await page.locator("body").click();
-				const editable = page
-					.frameLocator("iframe.docs-texteventtarget-iframe")
-					.locator("[contenteditable=\"true\"]");
-				await editable.click();
+				await focusEditor();
 				await page.keyboard.type(sequence, { delay: 30 });
 				await page.waitForTimeout(150);
 				text = await model();
@@ -126,6 +143,11 @@ for (const dir of extensionDirs()) {
 				await page.waitForTimeout(400);
 			}
 			return text;
+		}
+
+		async function converting() {
+			const text = await typeUntilSettled("chaof", "\u0003chào");
+			assert.equal(text, "\u0003chào", "AVIM never converted, so there is nothing to disrupt");
 		}
 
 		it("sets the annotation flag in the page's own world", async () => {
@@ -140,14 +162,30 @@ for (const dir of extensionDirs()) {
 			assert.equal(await typeUntilSettled("chaof", "\u0003chào"), "\u0003chào");
 		});
 
-		// Docs leaves the text it inserted selected, so without the bridge collapsing the caret the
-		// next keystroke replaces the word instead of following it.
+		// Without the bridge collapsing the caret, the next keystroke replaces the word.
 		it("keeps typing after a conversion", async () => {
 			assert.equal(await typeUntilSettled("chaof ok", "\u0003chào ok"), "\u0003chào ok");
 		});
 
 		it("converts a second word in the same line", async () => {
 			assert.equal(await typeUntilSettled("xin chaof", "\u0003xin chào"), "\u0003xin chào");
+		});
+
+		it("takes a fresh annotated object when the cached one is retired", async () => {
+			await converting();
+			await page.evaluate(() => window.__avimRetireAnnotated());
+			await page.keyboard.type(" chaof", { delay: 30 });
+			await page.waitForTimeout(400);
+			assert.equal(await model(), "\u0003chào chào");
+		});
+
+		it("reattaches when the text-event iframe is replaced", async () => {
+			await converting();
+			await page.evaluate(() => window.__avimReplaceIframe());
+			await focusEditor();
+			await page.keyboard.type(" chaof", { delay: 30 });
+			await page.waitForTimeout(400);
+			assert.equal(await model(), "\u0003chào chào");
 		});
 	});
 }

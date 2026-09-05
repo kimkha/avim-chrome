@@ -68,6 +68,33 @@ describe("popup.html loads the same engine bundle as the content script", () => 
 	});
 });
 
+describe("The Google Docs bridge is wired for the main world", () => {
+	const bridge = manifest.content_scripts.find((entry) => entry.js.includes("chrome/gdocs-bridge.js"));
+
+	// The popup test above reads content_scripts[0] as the engine entry
+	it("keeps the engine as the first content script", () => {
+		assert.deepEqual(manifest.content_scripts[0].js, ["scripts/avim-ext.js"]);
+	});
+
+	it("declares the bridge at all", () => {
+		assert.ok(bridge, "no content script loads chrome/gdocs-bridge.js");
+	});
+
+	// An isolated world or a later run_at silently leaves Google Docs unsupported.
+	it("runs it in the main world at document_start", () => {
+		assert.equal(bridge.world, "MAIN");
+		assert.equal(bridge.run_at, "document_start");
+	});
+
+	it("scopes it to Google Docs documents", () => {
+		assert.deepEqual(bridge.matches, ["https://docs.google.com/document/*"]);
+	});
+
+	it("asks for a Firefox new enough for world:MAIN, which landed in 128", () => {
+		assert.equal(manifest.browser_specific_settings.gecko.strict_min_version, "128.0");
+	});
+});
+
 describe("Locales agree on which messages exist", () => {
 	const [reference, ...others] = locales;
 

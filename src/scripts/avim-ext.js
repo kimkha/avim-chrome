@@ -1193,20 +1193,12 @@ function keyPressHandler(e) {
 
 const CTRL_KEY_CODE = 17;
 
-/* ---- Google Docs: a canvas editor, reached through the main-world bridge ---- */
-
-// Spelled out again rather than shared with chrome/gdocs-bridge.js: build.mjs minifies each file
-// on its own, so only string literals survive as a contract between them.
+// Duplicated in chrome/gdocs-bridge.js — build.mjs minifies per file, so only literals survive.
 const GDOCS_NODE_ID = "avim-gdocs-bridge";
 const GDOCS_EVENT_READ = "avim:gdocs:read";
 const GDOCS_EVENT_WRITE = "avim:gdocs:write";
 const GDOCS_IFRAME_SELECTOR = "iframe.docs-texteventtarget-iframe";
 
-/**
- * The text in front of the caret and where it sits, out of Docs' own model. The bridge answers
- * during the dispatch, so this reads back synchronously. Null until Docs has handed the bridge an
- * annotated object, which it refuses to do before the document has a caret.
- */
 function gdocsState() {
 	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_READ));
 	const node = document.getElementById(GDOCS_NODE_ID);
@@ -1230,12 +1222,7 @@ function gdocsReplace(from, to, text) {
 	document.dispatchEvent(new CustomEvent(GDOCS_EVENT_WRITE));
 }
 
-/**
- * Rewrites the word Docs has just typed into, one tick after the keystroke. Nothing is prevented,
- * so the key is already in the document and the engine is handed the text without it. Reconciling
- * against what Docs holds, not against what the keystroke should have produced, makes a lost race
- * a no-op instead of a corrupted word.
- */
+/** Nothing is prevented: reconciling against what Docs holds makes a lost race a no-op. */
 function gdocsRewrite(key, code) {
 	const state = gdocsState();
 	if (!state || (state.selectionStart !== state.selectionEnd)) {
@@ -1243,7 +1230,7 @@ function gdocsRewrite(key, code) {
 	}
 	const caret = state.selectionEnd;
 	const typed = state.tail;
-	// Docs has not applied the key yet, or applied something else, or the read tore
+	// Docs has not applied the key, applied something else, or the read tore
 	if (!typed.endsWith(key) || ((caret - state.base) !== typed.length)) {
 		return;
 	}
@@ -1257,8 +1244,7 @@ function gdocsRewrite(key, code) {
 	start(editor, { which: code });
 	const changed = AVIMObj.changed;
 	AVIMObj.changed = false;
-	// changed only says who was meant to type the key, and Docs already did: a transform such as
-	// telex "chaof" drops it, an escape sequence such as "aaa" keeps it.
+	// changed only means AVIM meant to type the key; Docs already did: "chaof" drops it, "aaa" keeps.
 	const want = editor.value + (changed ? "" : key);
 	if (want === typed) {
 		return;
@@ -1277,21 +1263,15 @@ function gdocsKeyPress(e) {
 		return;
 	}
 	const key = fromCharCode(code);
-	// Docs applies the key after this listener returns, and the rewrite has to see the result
 	setTimeout(() => gdocsRewrite(key, code), 0);
 }
 
-/**
- * Attaches to Docs' hidden text-event iframe, where the keystrokes land. It is about:blank, so it
- * gets no content script of its own and must be reached from the parent. Idempotent: the iframe is
- * replaced as the editor reloads and this runs on every rescan.
- */
+/** The flag lives on the iframe's document, which Docs replaces as the editor reloads. */
 function gdocsInit() {
 	if (typeof document.querySelector !== "function") {
 		return;
 	}
-	const iframe = document.querySelector(GDOCS_IFRAME_SELECTOR);
-	const target = iframe && iframe.contentDocument;
+	const target = document.querySelector(GDOCS_IFRAME_SELECTOR)?.contentDocument;
 	if (!target || target.avimGdocs) {
 		return;
 	}

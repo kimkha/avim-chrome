@@ -11,10 +11,10 @@ import {
 const NODE_ID = "avim-gdocs-bridge";
 const TAIL = 64;
 
-/** Stands in for chrome/gdocs-bridge.js, which the engine only ever reaches through the node. */
 function installBridge(context, text, caret) {
 	const node = { id: NODE_ID, textContent: "", dataset: {} };
-	const state = { text, caret, ready: true, writes: [] };
+	// publishAs keeps the write path: a fixture that drops writes passes "does nothing" tests vacuously.
+	const state = { text, caret, ready: true, publishAs: {}, writes: [] };
 
 	context.CustomEvent = class {
 		constructor(kind) {
@@ -30,6 +30,7 @@ function installBridge(context, text, caret) {
 			node.dataset.avimBase = String(base);
 			node.dataset.avimStart = String(state.caret);
 			node.dataset.avimEnd = String(state.caret);
+			Object.assign(node.dataset, state.publishAs);
 		}
 		if (event.type === "avim:gdocs:write") {
 			state.writes.push(JSON.parse(node.dataset.avimWrite));
@@ -39,16 +40,12 @@ function installBridge(context, text, caret) {
 	return state;
 }
 
-/** The \u0003 Docs puts in front of the document, so every offset here is one past it. */
+/** Docs puts this in front of the document, so every offset here is one past it. */
 const MARKER = "\u0003";
 
-/**
- * Types a sequence the way Docs does it: the key lands in the document first, then the scheduled
- * rewrite reconciles against it.
- */
-function typeInDocs(sequence, config = {}) {
+function typeInDocs(sequence, config = {}, initial = { text: MARKER, caret: MARKER.length }) {
 	const context = loadEngine({ method: METHOD.TELEX, ...config });
-	const state = installBridge(context, MARKER, MARKER.length);
+	const state = installBridge(context, initial.text, initial.caret);
 
 	for (const char of sequence) {
 		context.gdocsKeyPress({ which: char.charCodeAt(0) });
@@ -63,34 +60,39 @@ function typeInDocs(sequence, config = {}) {
 	return state.text;
 }
 
-/**
- * Docs owns the keystroke, so the adapter reconciles after the fact instead of preventing it. The
- * outcome still has to be the one the engine produces in a plain field, escape sequences included.
- */
 describe("Google Docs types the same as a textarea", () => {
-	const sequences = [
-		"chaof",
-		"tieengs",
-		"vieejt",
-		"nguowif",
-		"aa",
-		"aaa",
-		"ddd",
-		"ass",
-		"hello",
-		"xin chaof",
+	const transforms = [
+		[METHOD.TELEX, ["chaof", "tieengs", "vieejt", "nguowif", "aa", "aaa", "ddd", "ass", "xin chaof"]],
+		[METHOD.VNI, ["toi6", "viet65", "nguoi72", "duong792", "a10"]],
+		[METHOD.VIQR, ["hoa`", "gia?", "thuye^t'"]],
+		[METHOD.VIQR_STAR, ["to^i", "vie^.t", "ngu*o*i`"]],
 	];
 
-	for (const sequence of sequences) {
-		it(`"${sequence}"`, () => {
-			assert.equal(typeInDocs(sequence), MARKER + type(sequence, { method: METHOD.TELEX }));
+	for (const [method, sequences] of transforms) {
+		for (const sequence of sequences) {
+			it(`method ${method}: "${sequence}"`, () => {
+				const expected = type(sequence, { method });
+				// A sequence the engine leaves alone would pass the next line vacuously
+				assert.notEqual(expected, sequence, `"${sequence}" is not transformed at all`);
+				assert.equal(typeInDocs(sequence, { method }), MARKER + expected);
+			});
+		}
+	}
+
+	for (const sequence of ["hello", "abc"]) {
+		it(`leaves "${sequence}" alone, as a textarea does`, () => {
+			assert.equal(type(sequence, { method: METHOD.TELEX }), sequence);
+			assert.equal(typeInDocs(sequence), MARKER + sequence);
 		});
 	}
 
-	it("VNI too", () => {
+	// The bridge publishes only 64 characters, so the offsets it hands back must be absolute.
+	it("converts a word further into the document than the published tail", () => {
+		const head = `${MARKER}${"x".repeat(70)} `;
+		const rest = " sau";
 		assert.equal(
-			typeInDocs("cha2o", { method: METHOD.VNI }),
-			MARKER + type("cha2o", { method: METHOD.VNI }),
+			typeInDocs("chaof", {}, { text: head + rest, caret: head.length }),
+			`${head}chào${rest}`,
 		);
 	});
 });
@@ -138,17 +140,14 @@ describe("Google Docs rewrites are guarded", () => {
 
 	it("does nothing when the caret replaces a selection", () => {
 		const { context, state } = readyContext();
-		context.document.dispatchEvent = (event) => {
-			if (event.type === "avim:gdocs:read") {
-				const node = context.document.getElementById(NODE_ID);
-				node.dataset.avimOk = "1";
-				node.textContent = `${MARKER}chaof`;
-				node.dataset.avimBase = "0";
-				node.dataset.avimStart = "2";
-				node.dataset.avimEnd = "6";
-			}
-			return true;
-		};
+		state.publishAs = { avimStart: "2", avimEnd: "6" };
+		context.gdocsRewrite("f", "f".charCodeAt(0));
+		assert.deepEqual(state.writes, []);
+	});
+
+	it("does nothing when the published tail and offsets disagree", () => {
+		const { context, state } = readyContext();
+		state.publishAs = { avimStart: "7", avimEnd: "7" };
 		context.gdocsRewrite("f", "f".charCodeAt(0));
 		assert.deepEqual(state.writes, []);
 	});
@@ -161,10 +160,6 @@ describe("Google Docs rewrites are guarded", () => {
 	});
 
 	it("stays out of the way while AVIM is off", () => {
-		const context = loadEngine({ method: METHOD.TELEX, onOff: 0 });
-		const state = installBridge(context, `${MARKER}chao`, 5);
-		context.gdocsKeyPress({ which: "f".charCodeAt(0) });
-		runTimersWithDelay(context, 0);
-		assert.deepEqual(state.writes, []);
+		assert.equal(typeInDocs("chaof", { onOff: 0 }), `${MARKER}chaof`);
 	});
 });
