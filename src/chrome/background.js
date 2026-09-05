@@ -3,10 +3,32 @@ const DEFAULT_PREFS = {
 	method: '0',
 	onOff: '1',
 	ckSpell: '1',
-	oldAccent: '1'
+	oldAccent: '1',
+	shortcutsOn: '0'
 };
 
 const PREF_KEYS = Object.keys(DEFAULT_PREFS);
+
+const SHORTCUTS_KEY = 'shortcuts';
+
+/** A blank key is a row the user emptied out, which is how a shortcut is deleted. */
+function cleanShortcuts(list) {
+	if (!Array.isArray(list)) {
+		return [];
+	}
+	return list
+		.filter((entry) => entry && (typeof entry.key === 'string') && (entry.key.length > 0))
+		.map((entry) => ({ key: entry.key, value: String(entry.value ?? '') }));
+}
+
+async function getShortcuts() {
+	const stored = await chrome.storage.local.get({ [SHORTCUTS_KEY]: '[]' });
+	try {
+		return cleanShortcuts(JSON.parse(stored[SHORTCUTS_KEY]));
+	} catch {
+		return [];
+	}
+}
 
 const BADGE = {
 	on: { text: 'on', color: [0, 255, 0, 255] },
@@ -15,8 +37,14 @@ const BADGE = {
 
 /** Every consumer wants numbers, so the stored strings are parsed here once. */
 async function getPrefs() {
-	const stored = await chrome.storage.local.get(DEFAULT_PREFS);
-	return Object.fromEntries(PREF_KEYS.map((key) => [key, Number.parseInt(stored[key], 10)]));
+	const [stored, shortcuts] = await Promise.all([
+		chrome.storage.local.get(DEFAULT_PREFS),
+		getShortcuts()
+	]);
+	return {
+		...Object.fromEntries(PREF_KEYS.map((key) => [key, Number.parseInt(stored[key], 10)])),
+		shortcuts
+	};
 }
 
 async function updateIcon(prefs) {
@@ -42,9 +70,11 @@ async function turnAvim() {
 
 async function savePrefs(request) {
 	const changed = PREF_KEYS.filter((key) => request[key] !== undefined);
-	await chrome.storage.local.set(
-		Object.fromEntries(changed.map((key) => [key, String(request[key])]))
-	);
+	const written = Object.fromEntries(changed.map((key) => [key, String(request[key])]));
+	if (request[SHORTCUTS_KEY] !== undefined) {
+		written[SHORTCUTS_KEY] = JSON.stringify(cleanShortcuts(request[SHORTCUTS_KEY]));
+	}
+	await chrome.storage.local.set(written);
 	await updateAllTabs(await getPrefs());
 }
 

@@ -66,6 +66,16 @@ describe("popup.html loads the same engine bundle as the content script", () => 
 	it("loads every content script, in the same order", () => {
 		assert.deepEqual(loaded, declared);
 	});
+
+	// popup.js appends its key-field name to globalThis.exclude, which avim-ext.js overwrites
+	// wholesale when it loads. Later, and the popup's own shortcut fields are transformed again.
+	it("loads the engine before its own popup.js", () => {
+		const srcs = scriptSrcs(read("popup.html"));
+
+		assert.ok(srcs.includes("scripts/avim-ext.js"), "popup.html no longer loads the engine");
+		assert.ok(srcs.includes("chrome/popup.js"), "popup.html no longer loads chrome/popup.js");
+		assert.ok(srcs.indexOf("scripts/avim-ext.js") < srcs.indexOf("chrome/popup.js"));
+	});
 });
 
 describe("The Google Docs bridge is wired for the main world", () => {

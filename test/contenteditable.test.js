@@ -23,7 +23,7 @@ describe("contenteditable: telex", () => {
 		["vieejt", "việt"],
 		["nguoiwf", "người"],
 		["chaof", "chào"],
-		["dduowngwf", "đường"],
+		["dduowngf", "đường"],
 	];
 
 	for (const [sequence, expected] of cases) {

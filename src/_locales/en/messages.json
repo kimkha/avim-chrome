@@ -62,5 +62,41 @@
 	"extPopupRemoveAccent" : {
 		"message" : "Remove accents",
 		"description" : "Strip Vietnamese diacritics from the demo text"
+	},
+	"extPopupOpenShortcuts" : {
+		"message" : "Shortcut keys",
+		"description" : "Button that opens the shortcut key screen"
+	},
+	"extPopupBack" : {
+		"message" : "← Back",
+		"description" : "Button that leaves the shortcut key screen without saving"
+	},
+	"extPopupShortcuts" : {
+		"message" : "Shortcut keys",
+		"description" : "Heading of the shortcut key screen"
+	},
+	"extPopupShortcutsOn" : {
+		"message" : "Enable shortcut keys",
+		"description" : "Label of the toggle that turns all shortcut keys on or off"
+	},
+	"extPopupAddShortcut" : {
+		"message" : "Add a shortcut",
+		"description" : "Button that appends an empty shortcut row"
+	},
+	"extPopupSaveShortcuts" : {
+		"message" : "Save shortcuts",
+		"description" : "Button that stores the shortcut rows and returns to the main screen"
+	},
+	"extPopupRemoveShortcut" : {
+		"message" : "Delete this shortcut",
+		"description" : "Tooltip of the button that removes one shortcut row"
+	},
+	"extPopupShortcutKeyHint" : {
+		"message" : "keys to type",
+		"description" : "Placeholder of the shortcut input"
+	},
+	"extPopupShortcutResultHint" : {
+		"message" : "becomes",
+		"description" : "Placeholder of the replacement input"
 	}
 }
