@@ -7,8 +7,7 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Added
 
-- Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)). Mỗi lần bỏ dấu
-  là một bước undo trọn từ.
+- Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)).
 
 ### Fixed
 
