@@ -7,25 +7,20 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Added
 
-- Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)). Docs vẽ tài
-  liệu lên `<canvas>`, nên AVIM đọc và ghi qua lớp annotation của Docs. Hai giới hạn: phím đầu tiên
+- Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)). Phím đầu tiên
   của mỗi phiên chưa được chuyển, và mỗi lần bỏ dấu là một bước undo trọn từ.
 
 ### Fixed
 
 - Mất ký tự khi gõ trong contenteditable của các editor tự render lại từ model của chúng
   ([#30](https://github.com/kimkha/avim-chrome/issues/30),
-  [#35](https://github.com/kimkha/avim-chrome/pull/35)). Từ trước caret giờ được đọc xuyên nhiều
-  text node nên từ bị chia bởi `<b>`/`<span>` vẫn biến đổi đúng, và phép đọc đó dừng ở widget
-  (`contenteditable="false"`, `<br>`, ảnh emoji) thay vì nối hai từ ở hai bên. Slate và CKEditor 5
-  nhận đúng một `beforeinput insertText` nhắm vào phần đuôi thay đổi nên giữ được dấu; các field do
-  React kiểm soát nhận được text qua execCommand.
-- Input nằm trong shadow root giờ tới được, qua `composedPath()`.
-- Iframe xuất hiện sau khi trang tải giờ được bắt bằng observer, thay cho vòng poll 10 giây.
+  [#35](https://github.com/kimkha/avim-chrome/pull/35)).
+- Từ bị chia bởi thẻ inline nay biến đổi đúng, và không còn nối hai từ nằm hai bên một widget.
+- Gõ được vào input nằm trong shadow root.
+- Iframe xuất hiện sau khi trang tải giờ được bắt ngay, thay vì chờ tới 10 giây.
 
 ### Changed
 
-- Nhãn trong popup render bằng `textContent` thay vì `innerHTML`.
 - Firefox tối thiểu nâng từ 109 lên 128, bản đầu hỗ trợ `world: "MAIN"` mà Google Docs cần.
 
 ## [0.10.2] - 2026-09-02
