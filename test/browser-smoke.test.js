@@ -254,6 +254,247 @@ for (const dir of extensionDirs()) {
 			});
 		});
 
+		describe("Search hands the fast input to the browser", () => {
+			async function openPopup() {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				return popup;
+			}
+
+			it("opens a tab at a typed URL", async () => {
+				const popup = await openPopup();
+				const opened = [];
+				const collect = (page) => opened.push(page);
+				extension.context.on("page", collect);
+
+				await popup.fill("#inputDemo", `${server.origin}/`);
+				await popup.click("#searchDemo");
+				await popup.waitForTimeout(600);
+				extension.context.off("page", collect);
+
+				assert.equal(opened.length, 1);
+				await opened[0].waitForLoadState("domcontentloaded");
+				assert.equal(new URL(opened[0].url()).origin, new URL(server.origin).origin);
+				await opened[0].close();
+				await popup.close();
+			});
+
+			// Stubbed on purpose: a real query needs the network. Chrome owns the query itself.
+			it("asks the default search engine for plain text", async () => {
+				const popup = await openPopup();
+				await popup.evaluate(() => {
+					window.__searchCalls = [];
+					chrome.search.query = (queryInfo) => window.__searchCalls.push(queryInfo);
+				});
+
+				await popup.fill("#inputDemo", "xin chào");
+				await popup.click("#searchDemo");
+
+				assert.deepEqual(await popup.evaluate(() => window.__searchCalls), [
+					{ text: "xin chào", disposition: "NEW_TAB" },
+				]);
+				await popup.close();
+			});
+
+			it("treats a scheme it does not know as a search, never as a URL", async () => {
+				const popup = await openPopup();
+				await popup.evaluate(() => {
+					window.__searchCalls = [];
+					window.__createdTabs = [];
+					chrome.search.query = (queryInfo) => window.__searchCalls.push(queryInfo);
+					chrome.tabs.create = (properties) => window.__createdTabs.push(properties);
+				});
+
+				await popup.fill("#inputDemo", "javascript://evil");
+				await popup.click("#searchDemo");
+
+				assert.deepEqual(await popup.evaluate(() => window.__createdTabs), []);
+				assert.equal((await popup.evaluate(() => window.__searchCalls)).length, 1);
+				await popup.close();
+			});
+		});
+
+		describe("The fast input survives the popup closing", () => {
+			it("comes back converted, focused and fully selected", async () => {
+				const first = await extension.context.newPage();
+				await first.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				assert.equal(await typeUntil(first, "#inputDemo", "tieengs Vieejt", "tiếng Việt"), "tiếng Việt");
+				await first.waitForTimeout(400);
+				await first.close();
+
+				const second = await extension.context.newPage();
+				await second.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await second.waitForTimeout(400);
+
+				assert.deepEqual(await second.evaluate(() => {
+					const element = document.getElementById("inputDemo");
+					return {
+						value: element.value,
+						focused: document.activeElement === element,
+						selectedAll: element.selectionStart === 0 && element.selectionEnd === element.value.length,
+					};
+				}), { value: "tiếng Việt", focused: true, selectedAll: true });
+				await second.close();
+			});
+
+			it("remembers an emptied field, so clearing sticks", async () => {
+				const first = await extension.context.newPage();
+				await first.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await first.fill("#inputDemo", "");
+				await first.waitForTimeout(400);
+				await first.close();
+
+				const second = await extension.context.newPage();
+				await second.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await second.waitForTimeout(400);
+
+				assert.equal(await second.inputValue("#inputDemo"), "");
+				await second.close();
+			});
+		});
+
+		describe("The shortcut modal sits over a main screen that cannot be reached", () => {
+			async function openModal() {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.fill("#inputDemo", "");
+				await popup.click("#openShortcuts");
+				await popup.waitForTimeout(150);
+				return popup;
+			}
+			const focused = (popup) => popup.evaluate(() => document.activeElement.id);
+
+			it("moves focus to Back and marks the main screen inert", async () => {
+				const popup = await openModal();
+
+				assert.equal(await focused(popup), "backToMain");
+				assert.equal(await popup.evaluate(() => document.getElementById("mainScreen").inert), true);
+				await popup.close();
+			});
+
+			it("keeps the main screen visible behind the scrim", async () => {
+				const popup = await openModal();
+
+				assert.equal(await popup.locator("#mainScreen").isVisible(), true);
+				await popup.close();
+			});
+
+			// focus() still lands inside an inert subtree; only the keystrokes are refused.
+			it("swallows keystrokes aimed at the textarea behind it", async () => {
+				const popup = await openModal();
+
+				await popup.evaluate(() => document.getElementById("inputDemo").focus());
+				await popup.keyboard.type("chaof", { delay: 15 });
+
+				assert.equal(await popup.inputValue("#inputDemo"), "");
+				await popup.close();
+			});
+
+			const closers = [
+				["Back", async (popup) => popup.click("#backToMain")],
+				["a click on the scrim", async (popup) => popup.mouse.click(20, 208)],
+			];
+
+			for (const [label, close] of closers) {
+				it(`closes on ${label} and leaves the textarea ready to type`, async () => {
+					const popup = await openModal();
+
+					await close(popup);
+					await popup.waitForTimeout(150);
+					await popup.keyboard.type("chaof", { delay: 15 });
+
+					assert.equal(await popup.evaluate(() => document.getElementById("shortcutScreen").style.display), "none");
+					assert.equal(await popup.evaluate(() => document.getElementById("mainScreen").inert), false);
+					assert.equal(await popup.inputValue("#inputDemo"), "chào");
+					await popup.close();
+				});
+			}
+
+			it("adds a row on Enter and puts the caret in it, so Tab and Enter are enough", async () => {
+				const popup = await openModal();
+				if (!(await popup.locator("#shortcutsOn").isChecked())) {
+					await popup.check("#shortcutsOn");
+				}
+				// earlier suites leave rows filled in, so start from one this test owns
+				await popup.click("#addShortcut");
+				await popup.waitForTimeout(150);
+				const inputs = popup.locator("#shortcutList input");
+				const before = await inputs.count();
+
+				await inputs.nth(before - 2).click();
+				await popup.keyboard.type("zz", { delay: 15 });
+				await popup.keyboard.press("Tab");
+				await popup.keyboard.type("Vieejt Nam", { delay: 15 });
+				await popup.keyboard.press("Enter");
+				await popup.waitForTimeout(200);
+
+				const values = await inputs.evaluateAll((els) => els.map((el) => el.value));
+				assert.equal(values.length, before + 2);
+				assert.deepEqual(values.slice(-4), ["zz", "Việt Nam", "", ""]);
+				assert.equal(
+					await popup.evaluate(() => [...document.querySelectorAll("#shortcutList input")].indexOf(document.activeElement)),
+					values.length - 2,
+				);
+				await popup.close();
+			});
+		});
+
+		describe("Tapping Ctrl twice with the popup open", () => {
+			async function tapCtrlTwice(popup) {
+				await popup.click("#inputDemo");
+				await popup.keyboard.press("Control");
+				await popup.waitForTimeout(60);
+				await popup.keyboard.press("Control");
+				await popup.waitForTimeout(500);
+			}
+			async function typed(popup) {
+				await popup.fill("#inputDemo", "");
+				await popup.click("#inputDemo");
+				await popup.keyboard.type("chaof", { delay: 15 });
+				return popup.inputValue("#inputDemo");
+			}
+			const radios = (popup) => popup.evaluate(() => ({
+				off: document.getElementById("off").checked,
+				auto: document.getElementById("auto").checked,
+			}));
+
+			// Leaves AVIM back on, because the suites after this one expect it.
+			it("turns the popup's own controls off and on again", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.waitForTimeout(300);
+				assert.deepEqual(await radios(popup), { off: false, auto: true });
+				assert.equal(await typed(popup), "chào");
+
+				await tapCtrlTwice(popup);
+
+				assert.deepEqual(await radios(popup), { off: true, auto: false });
+				assert.equal(await typed(popup), "chaof");
+
+				await tapCtrlTwice(popup);
+
+				assert.deepEqual(await radios(popup), { off: false, auto: true });
+				assert.equal(await typed(popup), "chào");
+				await popup.close();
+			});
+
+			it("ignores the Ctrl that ends the Ctrl+Shift+V shortcut", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.waitForTimeout(300);
+				await popup.click("#inputDemo");
+
+				await popup.keyboard.press("Control+Shift+V");
+				await popup.waitForTimeout(60);
+				await popup.keyboard.press("Control");
+				await popup.waitForTimeout(500);
+
+				assert.deepEqual(await radios(popup), { off: false, auto: true });
+				assert.equal(await typed(popup), "chào");
+				await popup.close();
+			});
+		});
+
 		describe("An input inside a shadow root converts too", () => {
 			// A document-level capture listener sees e.target retargeted to the shadow host, a DIV
 			// whose .type is undefined, so keyPressHandler reads e.composedPath()[0] instead.

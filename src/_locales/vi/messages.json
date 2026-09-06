@@ -11,6 +11,10 @@
 		"message" : "Đổi kiểu gõ AVIM",
 		"description" : "Default title of browser action"
 	},
+	"extPopupTitle" : {
+		"message" : "Bảng điều khiển AVIM",
+		"description" : "Tiêu đề ở đầu popup"
+	},
 	"extPopupSel" : {
 		"message" : "Chọn một kiểu gõ:",
 		"description" : ""
@@ -54,6 +58,10 @@
 	"extPopupDemo" : {
 		"message" : "Gõ nhanh",
 		"description" : ""
+	},
+	"extPopupSearch" : {
+		"message" : "Tìm kiếm",
+		"description" : "Nút mở tab mới để tìm kiếm hoặc truy cập nội dung đã gõ"
 	},
 	"extPopupDemoCopy" : {
 		"message" : "Sao chép toàn bộ",

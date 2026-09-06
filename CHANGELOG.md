@@ -9,6 +9,9 @@ since `v0.8.3` is collected under 0.10.0.
 
 - Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)).
 - Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
+- Nút **Tìm kiếm** trong ô gõ nhanh: mở tab mới và tìm bằng công cụ tìm kiếm mặc định, hoặc vào
+  thẳng địa chỉ nếu nội dung là một tên miền.
+- `Ctrl+Shift+V` mở popup (`Command+Shift+V` trên macOS). Đổi được ở `chrome://extensions/shortcuts`.
 
 ### Fixed
 
@@ -23,6 +26,11 @@ since `v0.8.3` is collected under 0.10.0.
 ### Changed
 
 - Firefox tối thiểu nâng từ 109 lên 128, bản đầu hỗ trợ `world: "MAIN"` mà Google Docs cần.
+- Popup thiết kế lại: hai cột, theo dark mode của hệ thống, dùng font hệ thống.
+
+### Development
+
+- Thêm suite test chạy trên Firefox thật bằng geckodriver, và CI chạy cùng suite này.
 
 ## [0.10.2] - 2026-09-02
 

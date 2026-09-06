@@ -11,6 +11,8 @@ const PREF_KEYS = Object.keys(DEFAULT_PREFS);
 
 const SHORTCUTS_KEY = 'shortcuts';
 
+const DEMO_TEXT_KEY = 'demoText';
+
 /** A blank key is a row the user emptied out, which is how a shortcut is deleted. */
 function cleanShortcuts(list) {
 	if (!Array.isArray(list)) {
@@ -19,6 +21,16 @@ function cleanShortcuts(list) {
 	return list
 		.filter((entry) => entry && (typeof entry.key === 'string') && (entry.key.length > 0))
 		.map((entry) => ({ key: entry.key, value: String(entry.value ?? '') }));
+}
+
+/** Popup-only scratchpad, kept out of getPrefs() so it is never broadcast to every tab. */
+async function getDemoText() {
+	const stored = await chrome.storage.local.get({ [DEMO_TEXT_KEY]: '' });
+	return String(stored[DEMO_TEXT_KEY] ?? '');
+}
+
+async function saveDemoText(text) {
+	await chrome.storage.local.set({ [DEMO_TEXT_KEY]: String(text ?? '') });
 }
 
 async function getShortcuts() {
@@ -59,13 +71,17 @@ async function updateAllTabs(prefs) {
 	const tabs = await chrome.tabs.query({});
 	// A tab with no content script (chrome://, the web store) rejects; that is expected, not an error.
 	await Promise.all(tabs.map((tab) => chrome.tabs.sendMessage(tab.id, prefs).catch(() => {})));
+	// The popup is not a tab, so the query above never reaches it.
+	await chrome.runtime.sendMessage(prefs).catch(() => {});
 	await updateIcon(prefs);
 }
 
 async function turnAvim() {
 	const { onOff } = await getPrefs();
 	await chrome.storage.local.set({ onOff: onOff === 1 ? '0' : '1' });
-	await updateAllTabs(await getPrefs());
+	const flipped = await getPrefs();
+	await updateAllTabs(flipped);
+	return flipped;
 }
 
 async function savePrefs(request) {
@@ -90,8 +106,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		return true;
 	}
 
+	if (request.get_demo_text) {
+		getDemoText().then(sendResponse);
+		return true;
+	}
+
+	// Checked against undefined, not truthiness: clearing the scratchpad sends an empty string.
+	if (request.save_demo_text !== undefined) {
+		saveDemoText(request.save_demo_text).then(() => sendResponse());
+		return true;
+	}
+
 	if (request.turn_avim) {
-		turnAvim().then(() => sendResponse());
+		turnAvim().then(sendResponse);
 		return true;
 	}
 });

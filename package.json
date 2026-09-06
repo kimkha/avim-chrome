@@ -9,7 +9,9 @@
     "test": "node --test test/*.test.js",
     "test:browser": "node --test test/browser-smoke.test.js",
     "test:watch": "node --test --watch test/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
+    "firefox:install": "node test/helpers/install-firefox.mjs",
+    "test:firefox": "node --test test/firefox-smoke.test.js"
   },
   "engines": {
     "node": ">=24.0.0"

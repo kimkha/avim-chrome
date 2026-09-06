@@ -105,6 +105,48 @@ describe("The Google Docs bridge is wired for the main world", () => {
 	});
 });
 
+describe("The manifest grants what the popup actually calls", () => {
+	const popupSource = read(path.join("chrome", "popup.js"));
+
+	const apis = [
+		["chrome.search.query(", "search"],
+	];
+
+	for (const [call, permission] of apis) {
+		it(`declares "${permission}" because popup.js calls ${call}`, () => {
+			assert.ok(popupSource.includes(call), `popup.js no longer calls ${call}; drop this test`);
+			assert.ok(
+				manifest.permissions.includes(permission),
+				`popup.js calls ${call} but the manifest does not request "${permission}"`,
+			);
+		});
+	}
+
+	it("asks for nothing beyond storage and search", () => {
+		assert.deepEqual([...manifest.permissions].sort(), ["search", "storage"]);
+	});
+});
+
+describe("The keyboard shortcut that opens the popup", () => {
+	it("binds Ctrl+Shift+V to the reserved action command", () => {
+		assert.deepEqual(manifest.commands._execute_action.suggested_key, { default: "Ctrl+Shift+V" });
+	});
+
+	it("suggests at most four shortcuts, which is all Chrome accepts", () => {
+		assert.ok(Object.keys(manifest.commands).length <= 4);
+	});
+
+	it("uses a combination Chrome allows, so the binding is not silently dropped", () => {
+		for (const [name, command] of Object.entries(manifest.commands)) {
+			for (const [platform, combination] of Object.entries(command.suggested_key)) {
+				const where = `${name}.${platform}`;
+				assert.ok(/^(Ctrl|Alt|Command|MacCtrl)\+/.test(combination), `${where} must start with Ctrl or Alt`);
+				assert.ok(!/Ctrl\+Alt/.test(combination), `${where} may not use Ctrl+Alt, which collides with AltGr`);
+			}
+		}
+	});
+});
+
 describe("Locales agree on which messages exist", () => {
 	const [reference, ...others] = locales;
 

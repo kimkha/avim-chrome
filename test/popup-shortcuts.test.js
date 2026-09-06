@@ -1,6 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
+import fs from "node:fs";
+import path from "node:path";
+
 import { loadPopup, enMessages } from "./helpers/popup-harness.js";
 
 const STORED = [{ key: "w", value: "ư" }, { key: "uow", value: "ươ" }];
@@ -16,18 +19,18 @@ function openShortcuts(prefs = {}) {
 	return popup;
 }
 
-describe("The popup starts on the main screen", () => {
-	it("hides the shortcut screen", () => {
+describe("The popup starts with the shortcut modal closed", () => {
+	it("hides the modal", () => {
 		const popup = loadPopup({});
 
-		assert.equal(popup.element("mainScreen").style.display, "");
+		assert.notEqual(popup.element("mainScreen").style.display, "none");
 		assert.equal(popup.element("shortcutScreen").style.display, "none");
 	});
 
-	it("swaps the screens when Shortcut keys is pressed", () => {
+	it("opens the modal over the main screen, leaving it shown", () => {
 		const popup = openShortcuts();
 
-		assert.equal(popup.element("mainScreen").style.display, "none");
+		assert.notEqual(popup.element("mainScreen").style.display, "none");
 		assert.equal(popup.element("shortcutScreen").style.display, "");
 	});
 });
@@ -118,7 +121,7 @@ describe("Add a shortcut appends a row to type into", () => {
 
 		popup.fire("addShortcut", "click");
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 	});
 });
 
@@ -163,7 +166,7 @@ describe("Every row has a delete button", () => {
 
 		popup.fireOn(popup.shortcutRows()[0].removeButton, "click");
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 	});
 
 	it("carries the localised tooltip", () => {
@@ -286,12 +289,12 @@ describe("Save stores the rows and goes back", () => {
 		assert.deepEqual(popup.sent.at(-1).shortcuts[0], { key: "", value: "ư" });
 	});
 
-	it("returns to the main screen", () => {
+	it("closes the modal", () => {
 		const popup = openShortcuts(ENABLED);
 
 		popup.fire("saveShortcuts", "click");
 
-		assert.equal(popup.element("mainScreen").style.display, "");
+		assert.notEqual(popup.element("mainScreen").style.display, "none");
 		assert.equal(popup.element("shortcutScreen").style.display, "none");
 	});
 
@@ -304,13 +307,13 @@ describe("Save stores the rows and goes back", () => {
 	});
 });
 
-describe("Back leaves the shortcut screen", () => {
-	it("returns to the main screen", () => {
+describe("Back leaves the shortcut modal", () => {
+	it("closes the modal", () => {
 		const popup = openShortcuts(ENABLED);
 
 		popup.fire("backToMain", "click");
 
-		assert.equal(popup.element("mainScreen").style.display, "");
+		assert.notEqual(popup.element("mainScreen").style.display, "none");
 		assert.equal(popup.element("shortcutScreen").style.display, "none");
 	});
 
@@ -320,7 +323,7 @@ describe("Back leaves the shortcut screen", () => {
 
 		popup.fire("backToMain", "click");
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 		assert.deepEqual(popup.reloads, []);
 	});
 
@@ -383,4 +386,165 @@ describe("The shortcut screen labels come from the locale file", () => {
 			assert.equal(popup.element(elementId).textContent, enMessages[messageKey].message);
 		});
 	}
+});
+
+describe("Clicking the scrim closes the shortcut modal", () => {
+	it("closes when the click lands on the scrim itself", () => {
+		const popup = openShortcuts(ENABLED);
+
+		popup.fire("shortcutScreen", "click", { target: popup.element("shortcutScreen") });
+
+		assert.equal(popup.element("shortcutScreen").style.display, "none");
+	});
+
+	it("stays open when the click lands inside the card", () => {
+		const popup = openShortcuts(ENABLED);
+
+		popup.fire("shortcutScreen", "click", { target: popup.element("shortcutList") });
+
+		assert.equal(popup.element("shortcutScreen").style.display, "");
+	});
+
+	it("stores nothing, same as Back", () => {
+		const popup = openShortcuts(ENABLED);
+		popup.shortcutRows()[0].resultInput.value = "Ư";
+
+		popup.fire("shortcutScreen", "click", { target: popup.element("shortcutScreen") });
+
+		assert.deepEqual(popup.writes(), []);
+	});
+});
+
+describe("Opening the modal moves focus off the main screen", () => {
+	it("focuses Back", () => {
+		const popup = openShortcuts(ENABLED);
+
+		assert.equal(popup.element("backToMain").focused, true);
+	});
+
+	const inertCases = [
+		["while the modal is open", (popup) => popup, true],
+		["once Back closes it", (popup) => (popup.fire("backToMain", "click"), popup), false],
+		["once Save closes it", (popup) => (popup.fire("saveShortcuts", "click"), popup), false],
+	];
+
+	for (const [label, act, inert] of inertCases) {
+		it(`marks the main screen inert=${inert} ${label}`, () => {
+			const popup = act(openShortcuts(ENABLED));
+
+			assert.equal(popup.element("mainScreen").inert, inert);
+		});
+	}
+
+	it("leaves the main screen alive on load", () => {
+		const popup = loadPopup({ prefs: ENABLED });
+
+		assert.equal(popup.element("mainScreen").inert, false);
+	});
+});
+
+describe("Enter inside a row is the keyboard route to Add", () => {
+	function enter(key = "Enter") {
+		let prevented = false;
+		return { key, preventDefault() { prevented = true; }, wasPrevented: () => prevented };
+	}
+
+	const fields = ["keyInput", "resultInput"];
+
+	for (const field of fields) {
+		it(`adds a row from the ${field}`, () => {
+			const popup = openShortcuts(ENABLED);
+			const before = popup.shortcutRows().length;
+
+			popup.fireOn(popup.shortcutRows()[0][field], "keydown", enter());
+
+			assert.equal(popup.shortcutRows().length, before + 1);
+		});
+
+		it(`focuses the new row's key field from the ${field}`, () => {
+			const popup = openShortcuts(ENABLED);
+
+			popup.fireOn(popup.shortcutRows()[0][field], "keydown", enter());
+			const rows = popup.shortcutRows();
+
+			assert.equal(rows.at(-1).keyInput.focused, true);
+			assert.equal(rows.at(-1).keyInput.value, "");
+		});
+
+		it(`claims the event from the ${field}`, () => {
+			const popup = openShortcuts(ENABLED);
+			const event = enter();
+
+			popup.fireOn(popup.shortcutRows()[0][field], "keydown", event);
+
+			assert.equal(event.wasPrevented(), true);
+		});
+	}
+
+	it("leaves every other key alone", () => {
+		const popup = openShortcuts(ENABLED);
+		const before = popup.shortcutRows().length;
+		const event = enter("a");
+
+		popup.fireOn(popup.shortcutRows()[0].keyInput, "keydown", event);
+
+		assert.equal(popup.shortcutRows().length, before);
+		assert.equal(event.wasPrevented(), false);
+	});
+
+	it("stores nothing until Save", () => {
+		const popup = openShortcuts(ENABLED);
+
+		popup.fireOn(popup.shortcutRows()[0].keyInput, "keydown", enter());
+
+		assert.deepEqual(popup.writes(), []);
+	});
+});
+
+describe("Add and Save share one footer row", () => {
+	it("puts both buttons in the same parent", () => {
+		const html = fs.readFileSync(path.join(import.meta.dirname, "..", "src", "popup.html"), "utf8");
+		const footer = html.match(/<div class="buttonRow">\s*<button[^>]*id="addShortcut"[\s\S]*?<\/div>/);
+
+		assert.ok(footer, "addShortcut is no longer the first button of a buttonRow");
+		assert.match(footer[0], /id="saveShortcuts"/, "saveShortcuts left the row addShortcut is in");
+	});
+});
+
+describe("Closing the modal puts focus back in the fast input", () => {
+	const closers = [
+		["Back", (popup) => popup.fire("backToMain", "click")],
+		["Save", (popup) => popup.fire("saveShortcuts", "click")],
+		["the scrim", (popup) => popup.fire("shortcutScreen", "click", { target: popup.element("shortcutScreen") })],
+	];
+
+	for (const [label, close] of closers) {
+		it(`focuses the textarea after ${label}, whatever opened the modal`, () => {
+			const popup = loadPopup({ prefs: ENABLED, demoText: "chào" });
+			popup.element("openShortcuts").focus();
+
+			popup.fire("openShortcuts", "click");
+			assert.equal(popup.activeElement().id, "backToMain");
+			close(popup);
+
+			assert.equal(popup.activeElement().id, "inputDemo");
+			assert.equal(popup.element("inputDemo").focused, true);
+		});
+	}
+
+	it("leaves the autofocused textarea alone at load", () => {
+		const popup = loadPopup({ demoText: "chào" });
+
+		assert.equal(popup.activeElement().id, "inputDemo");
+	});
+
+	it("clears inert as it closes", () => {
+		const popup = loadPopup({ prefs: ENABLED, demoText: "chào" });
+
+		popup.fire("openShortcuts", "click");
+		popup.fire("backToMain", "click");
+
+		assert.equal(popup.element("mainScreen").inert, false);
+		assert.equal(popup.activeElement().id, "inputDemo");
+	});
 });

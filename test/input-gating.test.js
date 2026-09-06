@@ -7,6 +7,7 @@ import {
 	createInput,
 	pressKey,
 	pressKeyUp,
+	pressKeyDown,
 	countPreventDefaultCalls,
 	runTimersWithDelay,
 	capturedMessages,
@@ -215,5 +216,54 @@ describe("Preferences messaging", () => {
 		pressKeyUp(context, 17);
 		pressKeyUp(context, 17);
 		assert.deepEqual(capturedMessages(context), [{ turn_avim: "onOff" }, { turn_avim: "onOff" }]);
+	});
+
+	function pressShortcut(context) {
+		pressKeyDown(context, 17);
+		pressKeyDown(context, 16);
+		pressKeyDown(context, 86);
+		pressKeyUp(context, 86);
+		pressKeyUp(context, 16);
+		pressKeyUp(context, 17);
+	}
+
+	function tapCtrl(context) {
+		pressKeyDown(context, 17);
+		pressKeyUp(context, 17);
+	}
+
+	it("does not toggle when a Ctrl+Shift+V shortcut is followed by a single Ctrl tap", () => {
+		const context = loadEngine(TELEX);
+		clearCapturedMessages(context);
+		pressShortcut(context);
+		tapCtrl(context);
+		assert.deepEqual(capturedMessages(context), []);
+	});
+
+	it("toggles again once the user taps Ctrl twice after a shortcut", () => {
+		const context = loadEngine(TELEX);
+		clearCapturedMessages(context);
+		pressShortcut(context);
+		tapCtrl(context);
+		tapCtrl(context);
+		assert.deepEqual(capturedMessages(context), [{ turn_avim: "onOff" }]);
+	});
+
+	it("toggles for two Ctrl taps that each report a keydown", () => {
+		const context = loadEngine(TELEX);
+		clearCapturedMessages(context);
+		tapCtrl(context);
+		tapCtrl(context);
+		assert.deepEqual(capturedMessages(context), [{ turn_avim: "onOff" }]);
+	});
+
+	it("does not toggle when a letter is typed between the two Ctrl taps", () => {
+		const context = loadEngine(TELEX);
+		clearCapturedMessages(context);
+		tapCtrl(context);
+		pressKeyDown(context, 65);
+		pressKeyUp(context, 65);
+		tapCtrl(context);
+		assert.deepEqual(capturedMessages(context), []);
 	});
 });

@@ -198,3 +198,126 @@ describe("The badge follows the on/off state", () => {
 		assert.deepEqual(background.pushedToTabs.at(-1).prefs.shortcuts, [{ key: "vn", value: "Việt Nam" }]);
 	});
 });
+
+describe("The fast input text is stored apart from the prefs", () => {
+	const READ = { get_demo_text: "all" };
+
+	it("answers with an empty string on a fresh profile", async () => {
+		const background = loadBackground();
+
+		assert.equal(await background.send(READ), "");
+	});
+
+	it("answers with what was stored", async () => {
+		const background = loadBackground({ stored: { demoText: "tiếng Việt" } });
+
+		assert.equal(await background.send(READ), "tiếng Việt");
+	});
+
+	it("writes what the popup sends", async () => {
+		const background = loadBackground();
+
+		await background.send({ save_demo_text: "xin chào" });
+
+		assert.equal(background.storage.demoText, "xin chào");
+		assert.equal(await background.send(READ), "xin chào");
+	});
+
+	it("writes an empty string, so clearing the field sticks", async () => {
+		const background = loadBackground({ stored: { demoText: "cũ" } });
+
+		await background.send({ save_demo_text: "" });
+
+		assert.equal(background.storage.demoText, "");
+	});
+
+	it("never pushes it to the tabs", async () => {
+		const background = loadBackground({ tabs: [1, 2] });
+
+		await background.send({ save_demo_text: "xin chào" });
+
+		assert.deepEqual(background.pushedToTabs, []);
+	});
+
+	it("keeps it out of get_prefs", async () => {
+		const background = loadBackground({ stored: { demoText: "tiếng Việt" } });
+
+		const prefs = await background.send(GET);
+
+		assert.equal(prefs.demoText, undefined);
+	});
+
+	it("leaves the prefs alone", async () => {
+		const background = loadBackground({ stored: { method: "2", shortcuts: '[{"key":"vn","value":"Việt Nam"}]' } });
+
+		await background.send({ save_demo_text: "xin chào" });
+
+		const prefs = await background.send(GET);
+		assert.equal(prefs.method, 2);
+		assert.deepEqual(prefs.shortcuts, [{ key: "vn", value: "Việt Nam" }]);
+	});
+});
+
+describe("A pref change reaches the popup, which is not a tab", () => {
+	it("pushes the new prefs to extension pages as well as tabs", async () => {
+		const background = loadBackground({ stored: { onOff: '1', method: '0' } });
+
+		await background.send({ save_prefs: "all", method: 2 });
+
+		assert.equal(background.pushedToPages.length, 1);
+		assert.equal(background.pushedToPages[0].method, 2);
+		assert.deepEqual(background.pushedToTabs.map((push) => push.prefs.method), [2, 2]);
+	});
+
+	it("pushes the flipped state when Ctrl is tapped twice", async () => {
+		const background = loadBackground({ stored: { onOff: '1' } });
+
+		await background.send({ turn_avim: "onOff" });
+
+		assert.deepEqual(background.pushedToPages.map((prefs) => prefs.onOff), [0]);
+		assert.equal(background.badge.text, 'off');
+	});
+
+	it("still updates the badge when no popup is open to receive the push", async () => {
+		const background = loadBackground({ stored: { onOff: '1' }, noPageOpen: true });
+
+		await background.send({ turn_avim: "onOff" });
+
+		assert.deepEqual(background.pushedToPages, []);
+		assert.equal(background.badge.text, 'off');
+		assert.equal(background.storage.onOff, '0');
+	});
+});
+
+describe("turn_avim answers with the state it just wrote", () => {
+	it("replies with the flipped prefs, so the caller needs no broadcast", async () => {
+		const background = loadBackground({ stored: { onOff: '1', method: '2', ckSpell: '1' } });
+
+		const reply = await background.send({ turn_avim: "onOff" });
+
+		assert.equal(reply.onOff, 0);
+		assert.equal(reply.method, 2);
+		assert.equal(reply.ckSpell, 1);
+	});
+
+	it("replies with onOff back on when it was off", async () => {
+		const background = loadBackground({ stored: { onOff: '0' } });
+
+		assert.equal((await background.send({ turn_avim: "onOff" })).onOff, 1);
+	});
+
+	it("replies even when no popup is open to receive the push", async () => {
+		const background = loadBackground({ stored: { onOff: '1' }, noPageOpen: true });
+
+		assert.equal((await background.send({ turn_avim: "onOff" })).onOff, 0);
+	});
+
+	it("hands the caller the same prefs it pushed to tabs", async () => {
+		const background = loadBackground({ stored: { onOff: '1', method: '3' } });
+
+		const reply = await background.send({ turn_avim: "onOff" });
+
+		assert.deepEqual(background.pushedToTabs.map((push) => push.prefs.onOff), [0, 0]);
+		assert.deepEqual(background.pushedToPages, [reply]);
+	});
+});

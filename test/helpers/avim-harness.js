@@ -168,6 +168,10 @@ function pressKeyUp(context, keyCode) {
 	context.keyUpHandler({ which: keyCode });
 }
 
+function pressKeyDown(context, keyCode) {
+	context.keyDownHandler({ which: keyCode });
+}
+
 /** Messages are built inside the vm realm, so deepStrictEqual rejects them without this copy. */
 function capturedMessages(context) {
 	return JSON.parse(JSON.stringify(context.__messages));
@@ -400,6 +404,7 @@ export {
 	pressKey,
 	countPreventDefaultCalls,
 	pressKeyUp,
+	pressKeyDown,
 	capturedMessages,
 	clearCapturedMessages,
 	runTimersWithDelay,

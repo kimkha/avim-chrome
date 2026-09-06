@@ -47,6 +47,10 @@ jobs:
       - run: yarn build
       # The only check that exercises the minified build/ tree that actually ships.
       - run: yarn test:browser
+      - run: yarn firefox:install
+      - run: yarn test:firefox
+        env:
+          AVIM_REQUIRE_FIREFOX: '1'
 
       - name: Extract release notes
         run: |

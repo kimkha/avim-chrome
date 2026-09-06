@@ -11,6 +11,10 @@
 		"message" : "Options for AVIM",
 		"description" : "Default title of browser action"
 	},
+	"extPopupTitle" : {
+		"message" : "AVIM control panel",
+		"description" : "Heading at the top of the popup"
+	},
 	"extPopupSel" : {
 		"message" : "Select an option:",
 		"description" : ""
@@ -54,6 +58,10 @@
 	"extPopupDemo" : {
 		"message" : "Fast input",
 		"description" : ""
+	},
+	"extPopupSearch" : {
+		"message" : "Search",
+		"description" : "Button that opens a new tab to search for or visit what was typed"
 	},
 	"extPopupDemoCopy" : {
 		"message" : "Copy All",

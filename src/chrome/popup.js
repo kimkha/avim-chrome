@@ -1,6 +1,8 @@
 (() => {
 	/** Each key maps to a #txt<Key> element in popup.html and an extPopup<Key> locale message. */
 	const LABEL_KEYS = [
+		"Title",
+		"Search",
 		"Sel",
 		"Auto",
 		"Telex",
@@ -33,7 +35,10 @@
 
 	const COMBINING_MARKS = /[\u0300-\u036f]/g;
 
-	const SCREENS = ["mainScreen", "shortcutScreen"];
+	const EXPLICIT_URL = /^https?:\/\/\S+$/i;
+
+	/** A host with an ASCII tld, so a Vietnamese phrase like "tiếng.việt" is still a search. */
+	const BARE_HOST = /^[^\s/?#]+\.[a-z]{2,}(?:[/?#]\S*)?$/i;
 
 	/**
 	 * Key fields carry this name so the engine, which runs here too, skips them: Telex would turn
@@ -63,6 +68,37 @@
 		}
 	}
 
+	function saveDemoText() {
+		chrome.runtime.sendMessage({ save_demo_text: $g("inputDemo").value }, () => {});
+	}
+
+	/** The read is async, so a keystroke that beat it must win rather than be overwritten. */
+	function showDemoText(text) {
+		const inputDemo = $g("inputDemo");
+		if (inputDemo.value !== "") {
+			return;
+		}
+		inputDemo.value = text ?? "";
+		inputDemo.focus();
+		inputDemo.select();
+	}
+
+	function searchDemo() {
+		const text = $g("inputDemo").value.replace(/\s+/g, " ").trim();
+		if (text === "") {
+			return;
+		}
+		if (EXPLICIT_URL.test(text)) {
+			chrome.tabs.create({ url: text });
+			return;
+		}
+		if (BARE_HOST.test(text)) {
+			chrome.tabs.create({ url: `https://${text}` });
+			return;
+		}
+		chrome.search.query({ text, disposition: "NEW_TAB" });
+	}
+
 	function copyAllDemo() {
 		const inputDemo = $g("inputDemo");
 		inputDemo.focus();
@@ -79,14 +115,38 @@
 			.replace(COMBINING_MARKS, "")
 			.replace(/đ/g, "d")
 			.replace(/Đ/g, "D");
+		saveDemoText();
 		inputDemo.focus();
 		inputDemo.select();
 	}
 
-	function showScreen(shown) {
-		for (const screen of SCREENS) {
-			$g(screen).style.display = screen === shown ? "" : "none";
+	const isShortcutModalOpen = () => $g("shortcutScreen").style.display !== "none";
+
+	function showShortcutModal(open) {
+		const wasOpen = isShortcutModalOpen();
+		$g("shortcutScreen").style.display = open ? "" : "none";
+		$g("mainScreen").inert = open;
+		if (open) {
+			$g("backToMain").focus();
+			return;
 		}
+		if (wasOpen) {
+			$g("inputDemo").focus();
+		}
+	}
+
+	function closeModalOnBackdrop(event) {
+		if (event.target === $g("shortcutScreen")) {
+			showShortcutModal(false);
+		}
+	}
+
+	function addRowFromEnter(event) {
+		if (event.key !== "Enter") {
+			return;
+		}
+		event.preventDefault();
+		addShortcutRow().keyInput.focus();
 	}
 
 	function createShortcutInput(value, hint, name) {
@@ -95,9 +155,8 @@
 		input.name = name;
 		input.value = value;
 		input.placeholder = chrome.i18n.getMessage(hint);
-		// A share of the row rather than a fixed width, or the delete button wraps to its own line
-		input.style.flex = "1";
-		input.style.minWidth = "0";
+		input.className = "shortcutInput";
+		input.addEventListener("keydown", addRowFromEnter);
 		return input;
 	}
 
@@ -111,16 +170,16 @@
 
 	function addShortcutRow({ key = "", value = "" } = {}) {
 		const row = document.createElement("div");
-		row.style.display = "flex";
-		row.style.alignItems = "center";
-		row.style.gap = "4px";
+		row.className = "shortcutRow";
 		const arrow = document.createElement("span");
-		arrow.textContent = " → ";
+		arrow.className = "shortcutArrow";
+		arrow.textContent = "→";
 		const keyInput = createShortcutInput(key, "extPopupShortcutKeyHint", SHORTCUT_KEY_FIELD);
 		// Left nameless on purpose, so the engine stays on and a result can be typed in Telex
 		const resultInput = createShortcutInput(value, "extPopupShortcutResultHint", "");
 		const removeButton = document.createElement("button");
 		removeButton.type = "button";
+		removeButton.className = "button shortcutRemove";
 		removeButton.textContent = "✕";
 		removeButton.title = chrome.i18n.getMessage("extPopupRemoveShortcut");
 		row.appendChild(keyInput);
@@ -132,6 +191,7 @@
 		shortcutRows.push(entry);
 		removeButton.addEventListener("click", () => removeShortcutRow(entry));
 		applyShortcutsEnabled();
+		return entry;
 	}
 
 	/** Turning the feature off disables Save too, so the checkbox has to store itself. */
@@ -151,17 +211,14 @@
 			shortcutsOn: $g("shortcutsOn").checked ? 1 : 0,
 			shortcuts: shortcutRows.map((row) => ({ key: row.keyInput.value, value: row.resultInput.value }))
 		}, { reload: false });
-		showScreen("mainScreen");
+		showShortcutModal(false);
 	}
 
 	function showMethod(prefs) {
-		if (prefs.onOff === 0) {
-			$g("off").checked = true;
-			return;
-		}
-		const selected = Object.keys(METHOD_RADIOS).find((id) => METHOD_RADIOS[id] === prefs.method);
-		if (selected) {
-			$g(selected).checked = true;
+		const byMethod = Object.keys(METHOD_RADIOS).find((id) => METHOD_RADIOS[id] === prefs.method);
+		const selected = prefs.onOff === 0 ? "off" : byMethod;
+		for (const id of [...Object.keys(METHOD_RADIOS), "off"]) {
+			$g(id).checked = id === selected;
 		}
 	}
 
@@ -176,9 +233,15 @@
 		}
 	}
 
-	function showPrefs(prefs) {
+	function showControls(prefs) {
 		$g("spellCheck").checked = prefs.ckSpell === 1;
 		showMethod(prefs);
+		$g("shortcutsOn").checked = prefs.shortcutsOn === 1;
+		applyShortcutsEnabled();
+	}
+
+	function showPrefs(prefs) {
+		showControls(prefs);
 		showShortcuts(prefs);
 	}
 
@@ -186,9 +249,15 @@
 
 	function init() {
 		loadText();
-		showScreen("mainScreen");
+		showShortcutModal(false);
 		globalThis.exclude = [...(globalThis.exclude ?? []), SHORTCUT_KEY_FIELD];
 		chrome.runtime.sendMessage({ get_prefs: "all" }, showPrefs);
+		chrome.runtime.sendMessage({ get_demo_text: "all" }, showDemoText);
+		chrome.runtime.onMessage.addListener((pushed) => {
+			if (pushed?.onOff !== undefined) {
+				showControls(pushed);
+			}
+		});
 
 		for (const [id, method] of Object.entries(METHOD_RADIOS)) {
 			$g(id).addEventListener("click", selectMethod(method));
@@ -198,12 +267,15 @@
 			savePrefs({ ckSpell: $g("spellCheck").checked ? 1 : 0 });
 		});
 
+		$g("inputDemo").addEventListener("input", saveDemoText);
+		$g("searchDemo").addEventListener("click", searchDemo);
 		$g("demoCopy").addEventListener("click", copyAllDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);
 
-		$g("openShortcuts").addEventListener("click", () => showScreen("shortcutScreen"));
+		$g("openShortcuts").addEventListener("click", () => showShortcutModal(true));
+		$g("shortcutScreen").addEventListener("click", closeModalOnBackdrop);
 		// Deliberately outside applyShortcutsEnabled(): turning shortcuts off would trap the screen
-		$g("backToMain").addEventListener("click", () => showScreen("mainScreen"));
+		$g("backToMain").addEventListener("click", () => showShortcutModal(false));
 		$g("shortcutsOn").addEventListener("change", () => {
 			applyShortcutsEnabled();
 			savePrefs({ shortcutsOn: $g("shortcutsOn").checked ? 1 : 0 }, { reload: false });

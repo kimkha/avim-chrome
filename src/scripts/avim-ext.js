@@ -1440,10 +1440,26 @@ function gdocsInit() {
 const DOUBLE_TAP_MS = 300;
 
 let isPressCtrl = false;
+let isCtrlCombo = false;
+
+/** A shortcut like Ctrl+Shift+V ends in a bare Ctrl keyup with shiftKey already false, so only keydown separates the two. */
+function keyDownHandler(evt) {
+	if (evt.which === CTRL_KEY_CODE) {
+		isCtrlCombo = false;
+		return;
+	}
+	isCtrlCombo = true;
+	isPressCtrl = false;
+}
 
 /** Tapping Ctrl twice within 300ms toggles AVIM off and on. */
 function keyUpHandler(evt) {
 	if (evt.which !== CTRL_KEY_CODE) {
+		isPressCtrl = false;
+		return;
+	}
+	if (isCtrlCombo) {
+		isCtrlCombo = false;
 		isPressCtrl = false;
 		return;
 	}
@@ -1483,6 +1499,7 @@ function removeOldAVIM() {
 	}
 	document.removeEventListener("mouseup", rescanIframes, false);
 	document.removeEventListener("keypress", keyPressHandler, true);
+	document.removeEventListener("keydown", keyDownHandler, true);
 	document.removeEventListener("keyup", keyUpHandler, true);
 
 	AVIMInit(AVIMObj);
@@ -1499,6 +1516,7 @@ function newAVIMInit() {
 	watchForIframes();
 
 	document.addEventListener("mouseup", rescanIframes, false);
+	document.addEventListener("keydown", keyDownHandler, true);
 	document.addEventListener("keyup", keyUpHandler, true);
 	document.addEventListener("keypress", keyPressHandler, true);
 }

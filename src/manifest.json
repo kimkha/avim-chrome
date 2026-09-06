@@ -29,9 +29,16 @@
     "world": "MAIN"
   }],
   "default_locale": "en",
-  "permissions": ["storage"],
+  "permissions": ["storage", "search"],
   "background": {
     "service_worker": "chrome/background.js"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+V"
+      }
+    }
   },
   "browser_specific_settings": {
     "gecko": {
