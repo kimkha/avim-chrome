@@ -12,7 +12,6 @@ since `v0.8.3` is collected under 0.10.0.
 - Nút **Tìm kiếm** trong ô gõ nhanh: mở tab mới và tìm bằng công cụ tìm kiếm mặc định, hoặc vào
   thẳng địa chỉ nếu nội dung là một tên miền.
 - `Ctrl+Shift+V` mở popup (`Command+Shift+V` trên macOS). Đổi được ở `chrome://extensions/shortcuts`.
-- Nội dung ô gõ nhanh được giữ lại giữa các lần mở popup, và bôi đen sẵn khi mở để gõ đè ngay.
 
 ### Fixed
 
@@ -23,26 +22,15 @@ since `v0.8.3` is collected under 0.10.0.
 - Từ bị chia bởi thẻ inline nay biến đổi đúng, và không còn nối hai từ nằm hai bên một widget.
 - Gõ được vào input nằm trong shadow root.
 - Iframe xuất hiện sau khi trang tải giờ được bắt ngay, thay vì chờ tới 10 giây.
-- Nhấn Ctrl 2 lần khi popup đang mở: popup không đổi trạng thái theo, và ô gõ nhanh trong popup vẫn
-  gõ tiếng Việt dù AVIM đã tắt.
-- Nhấn Ctrl 2 lần bị tính sai sau một tổ hợp phím có Ctrl như `Ctrl+Shift+V`, làm AVIM tự tắt ngoài
-  ý muốn.
 
 ### Changed
 
 - Firefox tối thiểu nâng từ 109 lên 128, bản đầu hỗ trợ `world: "MAIN"` mà Google Docs cần.
-- Popup thiết kế lại: hai cột, theo dark mode của hệ thống, dùng font hệ thống, dựng bằng HTML có
-  nghĩa thay vì các thẻ `<br>`.
-- Bảng sửa phím tắt giờ là lớp phủ trên popup thay vì thay cả màn hình, nên vẫn thấy màn hình chính
-  phía sau.
+- Popup thiết kế lại: hai cột, theo dark mode của hệ thống, dùng font hệ thống.
 
 ### Development
 
-- Suite test Firefox thật bằng geckodriver: nạp `dist/avim-firefox-*.zip` làm temporary add-on rồi
-  kiểm popup, `chrome.search.query`, phím tắt, engine và các tính năng CSS/DOM mà popup dựa vào.
-  Chạy bằng `yarn firefox:install` rồi `yarn test:firefox`; CI chạy cùng suite này.
-- `resource/store/make-screenshots.mjs` dựng lại screenshot cho popup mới. Nó đã hỏng im lặng từ khi
-  vòng quét iframe bị thay bằng `MutationObserver`, vì còn chờ một biến đếm không còn tồn tại.
+- Thêm suite test chạy trên Firefox thật bằng geckodriver, và CI chạy cùng suite này.
 
 ## [0.10.2] - 2026-09-02
 
