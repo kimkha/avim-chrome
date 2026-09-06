@@ -25,6 +25,10 @@ const HEIGHT = 800;
 const PAGE_W = 1120;
 const PAGE_H = 560;
 
+// The popup lays itself out in two fixed panes, so this is its real size rather than a guess.
+const POPUP_W = 560;
+const POPUP_H = 416;
+
 // Chrome resolves _locales from --lang, so the popup screenshots come out genuinely localised.
 const LOCALES = {
 	en: {
@@ -37,6 +41,7 @@ const LOCALES = {
 			methods: ['Telex, VNI or VIQR', 'Pick one in the popup — the choice is kept for every tab'],
 			typing: ['Just type the way you already do', 'Tone marks appear as you go, in any text field'],
 			scratch: ['A quick scratchpad in the popup', 'Type a line, copy it, or remove the accents'],
+			dark: ['Light or dark, it follows your system', 'The popup takes your theme, with no setting to flip'],
 		},
 		annotate: { from: 'chaof', to: 'chào', label: 'you type (Telex)' },
 		scratch: { before: 'Đường vô xứ Nghệ quanh quanh', after: 'Duong vo xu Nghe quanh quanh' },
@@ -52,6 +57,7 @@ const LOCALES = {
 			methods: ['Telex, VNI hay VIQR', 'Chọn trong popup — được ghi nhớ cho mọi tab'],
 			typing: ['Cứ gõ như bạn vẫn gõ', 'Dấu hiện ra ngay khi gõ, trong mọi khung nhập liệu'],
 			scratch: ['Ô gõ nhanh ngay trong popup', 'Gõ một dòng, sao chép hoặc bỏ dấu'],
+			dark: ['Sáng hay tối, theo hệ thống của bạn', 'Popup tự đổi theo giao diện máy, không cần bật gì'],
 		},
 		annotate: { from: 'chaof', to: 'chào', label: 'bạn gõ (Telex)' },
 		scratch: { before: 'Đường vô xứ Nghệ quanh quanh', after: 'Duong vo xu Nghe quanh quanh' },
@@ -94,18 +100,16 @@ function assertTyped(where, actual, expected) {
 	}
 }
 
-// popup.html loads avim-ext.js as a page script, and its AVIMAJAXFix rescans for iframes 100 times
-// at 100ms intervals. Until that finishes the page never holds a stable frame, and screenshots time
-// out at random. ajaxCounter is a top-level binding in the same world, so the end is observable
-// rather than guessed at.
-async function waitForRescan(page) {
-	await page.waitForFunction(() => typeof ajaxCounter === 'number' && ajaxCounter >= 100, {
-		timeout: 25000,
-	});
+// The popup reads its preferences over messaging, so the radios are unchecked for the first frames
+// and a shot taken too early shows no input method selected.
+async function waitForPrefs(page) {
+	await page.waitForFunction(
+		() => ['auto', 'telex', 'vni', 'viqr', 'viqrStar', 'off'].some((id) => document.getElementById(id)?.checked),
+		{ timeout: 15000 },
+	);
 }
 
-// The demo page runs the same loop in an isolated world, where ajaxCounter cannot be read, so the
-// screenshot is simply retried.
+// Screenshots still time out occasionally on a busy machine, so each one is simply retried.
 async function stableShot(page, options = {}) {
 	let lastError;
 	for (let attempt = 0; attempt < 4; attempt++) {
@@ -163,9 +167,12 @@ const POSTER_CSS = `
 	.callout .v { color: #7ef0a8; }
 	.callout small { display: block; font-size: 11px; font-weight: 600; opacity: .55; text-transform: uppercase; letter-spacing: .8px; }
 	.pair { display: flex; gap: 26px; align-items: stretch; }
-	.strip { background: #14122e; border-radius: 12px; padding: 18px 22px; box-shadow: 0 16px 40px rgba(10, 6, 40, .45); }
-	.strip small { display: block; font-size: 11px; font-weight: 700; opacity: .55; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
-	.strip b { font-size: 21px; font-weight: 600; }
+	.strip {
+		flex: 1; display: flex; flex-direction: column; justify-content: center;
+		background: #14122e; border-radius: 12px; padding: 18px 22px; box-shadow: 0 16px 40px rgba(10, 6, 40, .45);
+	}
+	.strip small { display: block; font-size: 12px; font-weight: 700; opacity: .55; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+	.strip b { font-size: 24px; font-weight: 600; }
 `;
 
 async function poster(page, body) {
@@ -197,8 +204,8 @@ async function build(locale, cfg, origin) {
 		executablePath: resolveChromium(),
 		headless: true,
 		viewport: { width: WIDTH, height: HEIGHT },
-		// The posters scale the popup up, so capture it at 2x or the upscale looks soft next to
-		// the CSS-rendered headlines.
+		// Capturing at 2x makes the popup PNG 1120px wide, which is the ceiling a poster can display
+		// it at before the upscale goes soft.
 		deviceScaleFactor: 2,
 		args: [
 			`--disable-extensions-except=${SRC}`,
@@ -226,11 +233,18 @@ async function build(locale, cfg, origin) {
 	const pageShot = dataUri(await stableShot(demo));
 
 	const popup = await ctx.newPage();
-	await popup.setViewportSize({ width: 330, height: 470 });
+	await popup.setViewportSize({ width: POPUP_W, height: POPUP_H });
 	await popup.goto(`chrome-extension://${extensionId}/popup.html`);
-	await waitForRescan(popup);
+	await waitForPrefs(popup);
 	await popup.click('#telex');
 	const popupShot = dataUri(await stableShot(popup));
+
+	// The popup themes itself from prefers-color-scheme, which Chrome does honour inside an action popup.
+	await popup.emulateMedia({ colorScheme: 'dark' });
+	await popup.waitForTimeout(250);
+	const popupDark = dataUri(await stableShot(popup));
+	await popup.emulateMedia({ colorScheme: 'light' });
+	await popup.waitForTimeout(250);
 
 	await popup.click('#inputDemo');
 	await popup.keyboard.type(TELEX[cfg.scratch.before], { delay: 14 });
@@ -257,11 +271,11 @@ async function build(locale, cfg, origin) {
 	const shots = [
 		[
 			'01-hero.png',
-			`${head('hero')}<div class="stage">
+			`${head('hero')}<div class="stage" style="align-items:flex-end">
 				<div style="position:relative">
-					${windowFrame({ pageShot, iconUri, url: cfg.url, height: 470 })}
-					<div class="float popup" style="top:52px; right:14px; width:264px">
-						<img src="${popupShot}" width="264">
+					${windowFrame({ pageShot, iconUri, url: cfg.url, height: 500 })}
+					<div class="float popup" style="top:-90px; right:-20px; width:500px">
+						<img src="${popupShot}" width="500">
 					</div>
 				</div>
 			</div>`,
@@ -269,7 +283,7 @@ async function build(locale, cfg, origin) {
 		[
 			'02-methods.png',
 			`${head('methods')}<div class="stage">
-				<div class="popup" style="width:396px"><img src="${popupShot}" width="396"></div>
+				<div class="popup" style="width:800px"><img src="${popupShot}" width="800"></div>
 			</div>`,
 		],
 		[
@@ -288,14 +302,22 @@ async function build(locale, cfg, origin) {
 		[
 			'04-scratchpad.png',
 			`${head('scratch')}<div class="stage"><div class="pair">
-				<div class="popup" style="width:300px"><img src="${popupScratch}" width="300"></div>
-				<div style="display:flex; flex-direction:column; justify-content:center; gap:18px">
+				<div class="popup" style="width:660px"><img src="${popupScratch}" width="660"></div>
+				<div style="display:flex; flex-direction:column; gap:24px">
 					<div class="strip"><small>${cfg.scratchLabels[0]}</small><b>${scratchTyped}</b></div>
 					<div class="strip"><small>${cfg.scratchLabels[1]}</small><b>${scratchStripped}</b></div>
 				</div>
 			</div></div>`,
 		],
 	];
+
+	shots.push([
+		'05-dark.png',
+		`${head('dark')}<div class="stage"><div class="pair" style="align-items:flex-start">
+			<div class="popup" style="width:576px"><img src="${popupShot}" width="576"></div>
+			<div class="popup" style="width:576px; margin-top:150px"><img src="${popupDark}" width="576"></div>
+		</div></div>`,
+	]);
 
 	for (const [name, body] of shots) {
 		await writeFile(path.join(dir, name), await poster(stage, body));
