@@ -26,7 +26,7 @@ const DEFAULT_PREFS = {
 	shortcuts: [],
 };
 
-function createElement(id, tagName = "div") {
+function createElement(id, tagName = "div", onFocus) {
 	return {
 		id,
 		tagName,
@@ -55,6 +55,9 @@ function createElement(id, tagName = "div") {
 			return child;
 		},
 		focus() {
+			if (onFocus) {
+				onFocus(this);
+			}
 			this.focused = true;
 		},
 		select() {
@@ -66,17 +69,28 @@ function createElement(id, tagName = "div") {
 /**
  * @param {object} options
  * @param {object} options.prefs         what the background replies to `get_prefs`
+ * @param {string} options.demoText      what the background replies to `get_demo_text`
+ * @param {boolean} options.deferDemoText  hold that reply back until deliverDemoText() is called
  * @param {boolean} options.clipboardFails  make navigator.clipboard.writeText reject
  */
-function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
+function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false, clipboardFails = false } = {}) {
 	const prefs = { ...DEFAULT_PREFS, ...overrides };
 
-	const elements = new Map(ELEMENT_IDS.map((id) => [id, createElement(id)]));
+	let activeElement = null;
+	function noteFocus(element) {
+		if (activeElement) {
+			activeElement.focused = false;
+		}
+		activeElement = element;
+	}
+
+	const elements = new Map(ELEMENT_IDS.map((id) => [id, createElement(id, "div", noteFocus)]));
 	const sent = [];
 	const clipboardWrites = [];
 	const execCommands = [];
 	const reloads = [];
 	const searchQueries = [];
+	let pendingDemoText = null;
 	const createdTabs = [];
 	const rejection = new Error("Document is not focused.");
 	let pendingClipboard = Promise.resolve();
@@ -91,6 +105,14 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 					sent.push(JSON.parse(JSON.stringify(message)));
 					if (message.get_prefs) {
 						callback(prefs);
+						return;
+					}
+					if (message.get_demo_text) {
+						if (deferDemoText) {
+							pendingDemoText = callback;
+							return;
+						}
+						callback(demoText);
 						return;
 					}
 					callback({});
@@ -113,11 +135,14 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 			},
 		},
 		document: {
+			get activeElement() {
+				return activeElement;
+			},
 			getElementById(id) {
 				return elements.get(id) ?? null;
 			},
 			createElement(tagName) {
-				return createElement("", tagName);
+				return createElement("", tagName, noteFocus);
 			},
 			execCommand(command) {
 				execCommands.push(command);
@@ -186,12 +211,15 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 
 	return {
 		element,
+		activeElement: () => activeElement,
 		fire,
+		deliverDemoText: () => pendingDemoText(demoText),
 		fireOn,
 		shortcutRows,
 		// what popup.js left for the engine to skip; avim-ext.js owns this global in the real popup
 		excluded: () => sandbox.exclude ?? [],
 		sent,
+		writes: () => sent.filter((message) => !message.get_prefs && !message.get_demo_text),
 		searchQueries,
 		createdTabs,
 		clipboardWrites,

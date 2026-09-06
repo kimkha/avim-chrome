@@ -118,10 +118,11 @@ describe("The popup reflects the prefs the background reports", () => {
 		assert.equal(loadPopup({ prefs: { ckSpell: 0 } }).element("spellCheck").checked, false);
 	});
 
-	it("asks for the prefs on load", () => {
+	it("asks for the prefs and the saved fast input on load, and writes nothing", () => {
 		const popup = loadPopup({});
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.sent, [{ get_prefs: "all" }, { get_demo_text: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 	});
 });
 
@@ -276,5 +277,75 @@ describe("Search is the primary action of the fast input", () => {
 			.map((match) => match[1]);
 
 		assert.deepEqual(primaries, ["searchDemo", "saveShortcuts"]);
+	});
+});
+
+describe("The fast input keeps what was typed last time", () => {
+	it("restores the stored text", () => {
+		const popup = loadPopup({ demoText: "tiếng Việt" });
+
+		assert.equal(popup.element("inputDemo").value, "tiếng Việt");
+	});
+
+	it("selects all of it, so typing replaces it", () => {
+		const popup = loadPopup({ demoText: "tiếng Việt" });
+
+		assert.equal(popup.element("inputDemo").focused, true);
+		assert.equal(popup.element("inputDemo").selected, true);
+	});
+
+	it("asks the background for it on load", () => {
+		const popup = loadPopup({ demoText: "xin chào" });
+
+		assert.ok(popup.sent.some((message) => message.get_demo_text === "all"));
+	});
+
+	it("leaves the field empty when nothing was stored", () => {
+		const popup = loadPopup({});
+
+		assert.equal(popup.element("inputDemo").value, "");
+	});
+
+	it("does not clobber a keystroke that beat the async read", () => {
+		const popup = loadPopup({ demoText: "cũ", deferDemoText: true });
+		popup.element("inputDemo").value = "đang gõ";
+
+		popup.deliverDemoText();
+
+		assert.equal(popup.element("inputDemo").value, "đang gõ");
+	});
+
+	it("still restores when nothing was typed before the reply arrives", () => {
+		const popup = loadPopup({ demoText: "cũ", deferDemoText: true });
+
+		popup.deliverDemoText();
+
+		assert.equal(popup.element("inputDemo").value, "cũ");
+	});
+
+	it("stores every edit as it happens", () => {
+		const popup = loadPopup({});
+		popup.element("inputDemo").value = "chào";
+
+		popup.fire("inputDemo", "input");
+
+		assert.deepEqual(popup.sent.at(-1), { save_demo_text: "chào" });
+	});
+
+	it("stores an emptied field, so clearing sticks", () => {
+		const popup = loadPopup({ demoText: "chào" });
+		popup.element("inputDemo").value = "";
+
+		popup.fire("inputDemo", "input");
+
+		assert.deepEqual(popup.sent.at(-1), { save_demo_text: "" });
+	});
+
+	it("stores the stripped text after Remove accents", () => {
+		const popup = loadPopup({ demoText: "tiếng Việt" });
+
+		popup.fire("removeAccent", "click");
+
+		assert.deepEqual(popup.sent.at(-1), { save_demo_text: "tieng Viet" });
 	});
 });

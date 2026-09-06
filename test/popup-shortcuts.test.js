@@ -121,7 +121,7 @@ describe("Add a shortcut appends a row to type into", () => {
 
 		popup.fire("addShortcut", "click");
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 	});
 });
 
@@ -166,7 +166,7 @@ describe("Every row has a delete button", () => {
 
 		popup.fireOn(popup.shortcutRows()[0].removeButton, "click");
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 	});
 
 	it("carries the localised tooltip", () => {
@@ -323,7 +323,7 @@ describe("Back leaves the shortcut modal", () => {
 
 		popup.fire("backToMain", "click");
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 		assert.deepEqual(popup.reloads, []);
 	});
 
@@ -411,7 +411,7 @@ describe("Clicking the scrim closes the shortcut modal", () => {
 
 		popup.fire("shortcutScreen", "click", { target: popup.element("shortcutScreen") });
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 	});
 });
 
@@ -497,7 +497,7 @@ describe("Enter inside a row is the keyboard route to Add", () => {
 
 		popup.fireOn(popup.shortcutRows()[0].keyInput, "keydown", enter());
 
-		assert.deepEqual(popup.sent, [{ get_prefs: "all" }]);
+		assert.deepEqual(popup.writes(), []);
 	});
 });
 
@@ -508,5 +508,43 @@ describe("Add and Save share one footer row", () => {
 
 		assert.ok(footer, "addShortcut is no longer the first button of a buttonRow");
 		assert.match(footer[0], /id="saveShortcuts"/, "saveShortcuts left the row addShortcut is in");
+	});
+});
+
+describe("Closing the modal puts focus back in the fast input", () => {
+	const closers = [
+		["Back", (popup) => popup.fire("backToMain", "click")],
+		["Save", (popup) => popup.fire("saveShortcuts", "click")],
+		["the scrim", (popup) => popup.fire("shortcutScreen", "click", { target: popup.element("shortcutScreen") })],
+	];
+
+	for (const [label, close] of closers) {
+		it(`focuses the textarea after ${label}, whatever opened the modal`, () => {
+			const popup = loadPopup({ prefs: ENABLED, demoText: "chào" });
+			popup.element("openShortcuts").focus();
+
+			popup.fire("openShortcuts", "click");
+			assert.equal(popup.activeElement().id, "backToMain");
+			close(popup);
+
+			assert.equal(popup.activeElement().id, "inputDemo");
+			assert.equal(popup.element("inputDemo").focused, true);
+		});
+	}
+
+	it("leaves the autofocused textarea alone at load", () => {
+		const popup = loadPopup({ demoText: "chào" });
+
+		assert.equal(popup.activeElement().id, "inputDemo");
+	});
+
+	it("clears inert as it closes", () => {
+		const popup = loadPopup({ prefs: ENABLED, demoText: "chào" });
+
+		popup.fire("openShortcuts", "click");
+		popup.fire("backToMain", "click");
+
+		assert.equal(popup.element("mainScreen").inert, false);
+		assert.equal(popup.activeElement().id, "inputDemo");
 	});
 });

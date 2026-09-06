@@ -198,3 +198,62 @@ describe("The badge follows the on/off state", () => {
 		assert.deepEqual(background.pushedToTabs.at(-1).prefs.shortcuts, [{ key: "vn", value: "Việt Nam" }]);
 	});
 });
+
+describe("The fast input text is stored apart from the prefs", () => {
+	const READ = { get_demo_text: "all" };
+
+	it("answers with an empty string on a fresh profile", async () => {
+		const background = loadBackground();
+
+		assert.equal(await background.send(READ), "");
+	});
+
+	it("answers with what was stored", async () => {
+		const background = loadBackground({ stored: { demoText: "tiếng Việt" } });
+
+		assert.equal(await background.send(READ), "tiếng Việt");
+	});
+
+	it("writes what the popup sends", async () => {
+		const background = loadBackground();
+
+		await background.send({ save_demo_text: "xin chào" });
+
+		assert.equal(background.storage.demoText, "xin chào");
+		assert.equal(await background.send(READ), "xin chào");
+	});
+
+	it("writes an empty string, so clearing the field sticks", async () => {
+		const background = loadBackground({ stored: { demoText: "cũ" } });
+
+		await background.send({ save_demo_text: "" });
+
+		assert.equal(background.storage.demoText, "");
+	});
+
+	it("never pushes it to the tabs", async () => {
+		const background = loadBackground({ tabs: [1, 2] });
+
+		await background.send({ save_demo_text: "xin chào" });
+
+		assert.deepEqual(background.pushedToTabs, []);
+	});
+
+	it("keeps it out of get_prefs", async () => {
+		const background = loadBackground({ stored: { demoText: "tiếng Việt" } });
+
+		const prefs = await background.send(GET);
+
+		assert.equal(prefs.demoText, undefined);
+	});
+
+	it("leaves the prefs alone", async () => {
+		const background = loadBackground({ stored: { method: "2", shortcuts: '[{"key":"vn","value":"Việt Nam"}]' } });
+
+		await background.send({ save_demo_text: "xin chào" });
+
+		const prefs = await background.send(GET);
+		assert.equal(prefs.method, 2);
+		assert.deepEqual(prefs.shortcuts, [{ key: "vn", value: "Việt Nam" }]);
+	});
+});

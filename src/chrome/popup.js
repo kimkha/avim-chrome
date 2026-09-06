@@ -68,6 +68,21 @@
 		}
 	}
 
+	function saveDemoText() {
+		chrome.runtime.sendMessage({ save_demo_text: $g("inputDemo").value }, () => {});
+	}
+
+	/** The read is async, so a keystroke that beat it must win rather than be overwritten. */
+	function showDemoText(text) {
+		const inputDemo = $g("inputDemo");
+		if (inputDemo.value !== "") {
+			return;
+		}
+		inputDemo.value = text ?? "";
+		inputDemo.focus();
+		inputDemo.select();
+	}
+
 	function searchDemo() {
 		const text = $g("inputDemo").value.replace(/\s+/g, " ").trim();
 		if (text === "") {
@@ -100,15 +115,23 @@
 			.replace(COMBINING_MARKS, "")
 			.replace(/đ/g, "d")
 			.replace(/Đ/g, "D");
+		saveDemoText();
 		inputDemo.focus();
 		inputDemo.select();
 	}
 
+	const isShortcutModalOpen = () => $g("shortcutScreen").style.display !== "none";
+
 	function showShortcutModal(open) {
+		const wasOpen = isShortcutModalOpen();
 		$g("shortcutScreen").style.display = open ? "" : "none";
 		$g("mainScreen").inert = open;
 		if (open) {
 			$g("backToMain").focus();
+			return;
+		}
+		if (wasOpen) {
+			$g("inputDemo").focus();
 		}
 	}
 
@@ -226,6 +249,7 @@
 		showShortcutModal(false);
 		globalThis.exclude = [...(globalThis.exclude ?? []), SHORTCUT_KEY_FIELD];
 		chrome.runtime.sendMessage({ get_prefs: "all" }, showPrefs);
+		chrome.runtime.sendMessage({ get_demo_text: "all" }, showDemoText);
 
 		for (const [id, method] of Object.entries(METHOD_RADIOS)) {
 			$g(id).addEventListener("click", selectMethod(method));
@@ -235,6 +259,7 @@
 			savePrefs({ ckSpell: $g("spellCheck").checked ? 1 : 0 });
 		});
 
+		$g("inputDemo").addEventListener("input", saveDemoText);
 		$g("searchDemo").addEventListener("click", searchDemo);
 		$g("demoCopy").addEventListener("click", copyAllDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);
