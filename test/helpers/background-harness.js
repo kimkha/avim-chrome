@@ -16,10 +16,12 @@ const backgroundSource = fs.readFileSync(BACKGROUND_JS, "utf8");
  * @param {object} options.stored       what chrome.storage.local already holds
  * @param {number[]} options.tabs       ids of the open tabs
  * @param {number[]} options.mutedTabs  tabs that reject, as one with no content script does
+ * @param {boolean} options.noPageOpen   make the page push reject, as it does with no popup open
  */
-function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [] } = {}) {
+function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen = false } = {}) {
 	const storage = { ...stored };
 	const pushedToTabs = [];
+	const pushedToPages = [];
 	const badge = {};
 	let onMessage = null;
 
@@ -59,6 +61,13 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [] } = {}) {
 				},
 			},
 			runtime: {
+				sendMessage(prefs) {
+					if (noPageOpen) {
+						return Promise.reject(new Error("Receiving end does not exist."));
+					}
+					pushedToPages.push(JSON.parse(JSON.stringify(prefs)));
+					return Promise.resolve();
+				},
 				onMessage: {
 					addListener(handler) {
 						onMessage = handler;
@@ -84,7 +93,7 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [] } = {}) {
 		});
 	}
 
-	return { send, storage, pushedToTabs, badge };
+	return { send, storage, pushedToTabs, pushedToPages, badge };
 }
 
 export { loadBackground };

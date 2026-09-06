@@ -349,3 +349,54 @@ describe("The fast input keeps what was typed last time", () => {
 		assert.deepEqual(popup.sent.at(-1), { save_demo_text: "tieng Viet" });
 	});
 });
+
+describe("A pref pushed from the background updates the open popup", () => {
+	it("flips the radios to off, so double-Ctrl is reflected", () => {
+		const popup = loadPopup({ prefs: { onOff: 1, method: 0 } });
+		assert.equal(popup.element("auto").checked, true);
+
+		popup.pushPrefs({ onOff: 0, method: 0, ckSpell: 1, shortcutsOn: 0, shortcuts: [] });
+
+		assert.equal(popup.element("off").checked, true);
+		assert.equal(popup.element("auto").checked, false);
+	});
+
+	it("flips them back on, picking the method that came with it", () => {
+		const popup = loadPopup({ prefs: { onOff: 0 } });
+		assert.equal(popup.element("off").checked, true);
+
+		popup.pushPrefs({ onOff: 1, method: 2, ckSpell: 1, shortcutsOn: 0, shortcuts: [] });
+
+		assert.equal(popup.element("vni").checked, true);
+		assert.equal(popup.element("off").checked, false);
+	});
+
+	it("follows spell check and the shortcut switch", () => {
+		const popup = loadPopup({ prefs: { onOff: 1, ckSpell: 1, shortcutsOn: 0 } });
+
+		popup.pushPrefs({ onOff: 1, method: 0, ckSpell: 0, shortcutsOn: 1, shortcuts: [] });
+
+		assert.equal(popup.element("spellCheck").checked, false);
+		assert.equal(popup.element("shortcutsOn").checked, true);
+		assert.equal(popup.element("saveShortcuts").disabled, false);
+	});
+
+	it("leaves the shortcut rows untouched, so a push cannot duplicate or wipe them", () => {
+		const popup = loadPopup({ prefs: { onOff: 1, shortcutsOn: 1, shortcuts: [{ key: "vn", value: "Việt Nam" }] } });
+		const values = () => popup.shortcutRows().map((row) => [row.keyInput.value, row.resultInput.value]);
+		assert.deepEqual(values(), [["vn", "Việt Nam"]]);
+
+		popup.pushPrefs({ onOff: 0, method: 0, ckSpell: 1, shortcutsOn: 1, shortcuts: [{ key: "hn", value: "Hà Nội" }] });
+
+		assert.deepEqual(values(), [["vn", "Việt Nam"]]);
+	});
+
+	it("ignores a message that is not a pref payload", () => {
+		const popup = loadPopup({ prefs: { onOff: 1, method: 0 } });
+
+		popup.pushPrefs({ some_other_message: "all" });
+		popup.pushPrefs(undefined);
+
+		assert.equal(popup.element("auto").checked, true);
+	});
+});

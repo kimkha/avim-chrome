@@ -215,13 +215,10 @@
 	}
 
 	function showMethod(prefs) {
-		if (prefs.onOff === 0) {
-			$g("off").checked = true;
-			return;
-		}
-		const selected = Object.keys(METHOD_RADIOS).find((id) => METHOD_RADIOS[id] === prefs.method);
-		if (selected) {
-			$g(selected).checked = true;
+		const byMethod = Object.keys(METHOD_RADIOS).find((id) => METHOD_RADIOS[id] === prefs.method);
+		const selected = prefs.onOff === 0 ? "off" : byMethod;
+		for (const id of [...Object.keys(METHOD_RADIOS), "off"]) {
+			$g(id).checked = id === selected;
 		}
 	}
 
@@ -236,9 +233,15 @@
 		}
 	}
 
-	function showPrefs(prefs) {
+	function showControls(prefs) {
 		$g("spellCheck").checked = prefs.ckSpell === 1;
 		showMethod(prefs);
+		$g("shortcutsOn").checked = prefs.shortcutsOn === 1;
+		applyShortcutsEnabled();
+	}
+
+	function showPrefs(prefs) {
+		showControls(prefs);
 		showShortcuts(prefs);
 	}
 
@@ -250,6 +253,11 @@
 		globalThis.exclude = [...(globalThis.exclude ?? []), SHORTCUT_KEY_FIELD];
 		chrome.runtime.sendMessage({ get_prefs: "all" }, showPrefs);
 		chrome.runtime.sendMessage({ get_demo_text: "all" }, showDemoText);
+		chrome.runtime.onMessage.addListener((pushed) => {
+			if (pushed?.onOff !== undefined) {
+				showControls(pushed);
+			}
+		});
 
 		for (const [id, method] of Object.entries(METHOD_RADIOS)) {
 			$g(id).addEventListener("click", selectMethod(method));

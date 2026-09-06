@@ -71,13 +71,17 @@ async function updateAllTabs(prefs) {
 	const tabs = await chrome.tabs.query({});
 	// A tab with no content script (chrome://, the web store) rejects; that is expected, not an error.
 	await Promise.all(tabs.map((tab) => chrome.tabs.sendMessage(tab.id, prefs).catch(() => {})));
+	// The popup is not a tab, so the query above never reaches it.
+	await chrome.runtime.sendMessage(prefs).catch(() => {});
 	await updateIcon(prefs);
 }
 
 async function turnAvim() {
 	const { onOff } = await getPrefs();
 	await chrome.storage.local.set({ onOff: onOff === 1 ? '0' : '1' });
-	await updateAllTabs(await getPrefs());
+	const flipped = await getPrefs();
+	await updateAllTabs(flipped);
+	return flipped;
 }
 
 async function savePrefs(request) {
@@ -114,7 +118,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	}
 
 	if (request.turn_avim) {
-		turnAvim().then(() => sendResponse());
+		turnAvim().then(sendResponse);
 		return true;
 	}
 });

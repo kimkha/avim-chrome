@@ -439,6 +439,46 @@ for (const dir of extensionDirs()) {
 			});
 		});
 
+		describe("Tapping Ctrl twice with the popup open", () => {
+			async function tapCtrlTwice(popup) {
+				await popup.click("#inputDemo");
+				await popup.keyboard.press("Control");
+				await popup.waitForTimeout(60);
+				await popup.keyboard.press("Control");
+				await popup.waitForTimeout(500);
+			}
+			async function typed(popup) {
+				await popup.fill("#inputDemo", "");
+				await popup.click("#inputDemo");
+				await popup.keyboard.type("chaof", { delay: 15 });
+				return popup.inputValue("#inputDemo");
+			}
+			const radios = (popup) => popup.evaluate(() => ({
+				off: document.getElementById("off").checked,
+				auto: document.getElementById("auto").checked,
+			}));
+
+			// Leaves AVIM back on, because the suites after this one expect it.
+			it("turns the popup's own controls off and on again", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.waitForTimeout(300);
+				assert.deepEqual(await radios(popup), { off: false, auto: true });
+				assert.equal(await typed(popup), "chào");
+
+				await tapCtrlTwice(popup);
+
+				assert.deepEqual(await radios(popup), { off: true, auto: false });
+				assert.equal(await typed(popup), "chaof");
+
+				await tapCtrlTwice(popup);
+
+				assert.deepEqual(await radios(popup), { off: false, auto: true });
+				assert.equal(await typed(popup), "chào");
+				await popup.close();
+			});
+		});
+
 		describe("An input inside a shadow root converts too", () => {
 			// A document-level capture listener sees e.target retargeted to the shadow host, a DIV
 			// whose .type is undefined, so keyPressHandler reads e.composedPath()[0] instead.

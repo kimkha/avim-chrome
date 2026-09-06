@@ -86,6 +86,7 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 
 	const elements = new Map(ELEMENT_IDS.map((id) => [id, createElement(id, "div", noteFocus)]));
 	const sent = [];
+	const pushListeners = [];
 	const clipboardWrites = [];
 	const execCommands = [];
 	const reloads = [];
@@ -100,6 +101,11 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 		Promise,
 		chrome: {
 			runtime: {
+				onMessage: {
+					addListener(listener) {
+						pushListeners.push(listener);
+					},
+				},
 				sendMessage(message, callback) {
 					// copied into this realm: a vm-created object fails deepStrictEqual on prototype
 					sent.push(JSON.parse(JSON.stringify(message)));
@@ -212,6 +218,7 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 	return {
 		element,
 		activeElement: () => activeElement,
+		pushPrefs: (prefs) => pushListeners.forEach((listener) => listener(prefs)),
 		fire,
 		deliverDemoText: () => pendingDemoText(demoText),
 		fireOn,
