@@ -477,6 +477,22 @@ for (const dir of extensionDirs()) {
 				assert.equal(await typed(popup), "chào");
 				await popup.close();
 			});
+
+			it("ignores the Ctrl that ends the Ctrl+Shift+V shortcut", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.waitForTimeout(300);
+				await popup.click("#inputDemo");
+
+				await popup.keyboard.press("Control+Shift+V");
+				await popup.waitForTimeout(60);
+				await popup.keyboard.press("Control");
+				await popup.waitForTimeout(500);
+
+				assert.deepEqual(await radios(popup), { off: false, auto: true });
+				assert.equal(await typed(popup), "chào");
+				await popup.close();
+			});
 		});
 
 		describe("An input inside a shadow root converts too", () => {

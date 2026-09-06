@@ -32,3 +32,18 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: yarn build
       - run: yarn test:browser
+
+  firefox:
+    runs-on: ubuntu-latest
+    env:
+      # Without this the suite would skip itself here and report green while checking nothing.
+      AVIM_REQUIRE_FIREFOX: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+      - run: yarn install --frozen-lockfile
+      - run: yarn firefox:install
+      - run: yarn build
+      - run: yarn test:firefox

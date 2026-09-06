@@ -36,6 +36,17 @@ node --test test/framework-editors.test.js   # cần thêm mạng, nạp editor 
 
 Đặt `AVIM_CHROME_PATH` nếu muốn chỉ vào một bản Chromium khác.
 
+Firefox chạy riêng vì playwright không nạp được extension trên Firefox — suite này dùng geckodriver
+và cài bản `dist/avim-firefox-*.zip` làm temporary add-on, nên phải `yarn build` trước:
+
+```sh
+yarn firefox:install                         # tải Firefox + geckodriver vào ~/.cache/avim-firefox-test
+yarn build
+yarn test:firefox
+```
+
+Đặt `AVIM_FIREFOX_PATH` / `AVIM_GECKODRIVER_PATH` nếu đã có binary sẵn ở chỗ khác.
+
 ### Đóng gói
 
 ```sh
