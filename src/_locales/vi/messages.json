@@ -59,6 +59,10 @@
 		"message" : "Gõ nhanh",
 		"description" : ""
 	},
+	"extPopupSearch" : {
+		"message" : "Tìm kiếm",
+		"description" : "Nút mở tab mới để tìm kiếm hoặc truy cập nội dung đã gõ"
+	},
 	"extPopupDemoCopy" : {
 		"message" : "Sao chép toàn bộ",
 		"description" : ""

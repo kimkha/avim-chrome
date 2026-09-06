@@ -29,7 +29,7 @@
     "world": "MAIN"
   }],
   "default_locale": "en",
-  "permissions": ["storage"],
+  "permissions": ["storage", "search"],
   "background": {
     "service_worker": "chrome/background.js"
   },

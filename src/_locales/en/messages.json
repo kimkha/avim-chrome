@@ -59,6 +59,10 @@
 		"message" : "Fast input",
 		"description" : ""
 	},
+	"extPopupSearch" : {
+		"message" : "Search",
+		"description" : "Button that opens a new tab to search for or visit what was typed"
+	},
 	"extPopupDemoCopy" : {
 		"message" : "Copy All",
 		"description" : ""

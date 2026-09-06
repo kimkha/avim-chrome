@@ -105,6 +105,28 @@ describe("The Google Docs bridge is wired for the main world", () => {
 	});
 });
 
+describe("The manifest grants what the popup actually calls", () => {
+	const popupSource = read(path.join("chrome", "popup.js"));
+
+	const apis = [
+		["chrome.search.query(", "search"],
+	];
+
+	for (const [call, permission] of apis) {
+		it(`declares "${permission}" because popup.js calls ${call}`, () => {
+			assert.ok(popupSource.includes(call), `popup.js no longer calls ${call}; drop this test`);
+			assert.ok(
+				manifest.permissions.includes(permission),
+				`popup.js calls ${call} but the manifest does not request "${permission}"`,
+			);
+		});
+	}
+
+	it("asks for nothing beyond storage and search", () => {
+		assert.deepEqual([...manifest.permissions].sort(), ["search", "storage"]);
+	});
+});
+
 describe("Locales agree on which messages exist", () => {
 	const [reference, ...others] = locales;
 

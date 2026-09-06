@@ -1,6 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
+import fs from "node:fs";
+import path from "node:path";
+
 import { loadPopup, enMessages } from "./helpers/popup-harness.js";
 
 describe("Copy All puts the demo text on the clipboard", () => {
@@ -169,6 +172,7 @@ describe("Choosing an option saves it and reloads the popup", () => {
 
 describe("Labels come from the locale file, not the hardcoded fallbacks", () => {
 	const labels = [
+		["txtSearch", "extPopupSearch"],
 		["txtDemoCopy", "extPopupDemoCopy"],
 		["txtRemoveAccent", "extPopupRemoveAccent"],
 		["txtSpellCheck", "extPopupSpellCheck"],
@@ -182,4 +186,95 @@ describe("Labels come from the locale file, not the hardcoded fallbacks", () => 
 			assert.equal(popup.element(elementId).textContent, enMessages[messageKey].message);
 		});
 	}
+});
+
+describe("Search sends the fast input to a new tab", () => {
+	function search(value) {
+		const popup = loadPopup({});
+		popup.element("inputDemo").value = value;
+		popup.fire("searchDemo", "click");
+		return popup;
+	}
+
+	const quiet = ["", "   ", "\n\t "];
+
+	for (const value of quiet) {
+		it(`does nothing for ${JSON.stringify(value)}`, () => {
+			const popup = search(value);
+
+			assert.deepEqual(popup.createdTabs, []);
+			assert.deepEqual(popup.searchQueries, []);
+		});
+	}
+
+	const searches = [
+		["xin chào", "xin chào"],
+		["chào", "chào"],
+		["tiếng.việt", "tiếng.việt"],
+		["abc.công", "abc.công"],
+		["tiếng việt.com", "tiếng việt.com"],
+		["1.2.3.4", "1.2.3.4"],
+		["a.b", "a.b"],
+		["vn", "vn"],
+		["  nhiều   khoảng   trắng  ", "nhiều khoảng trắng"],
+		["hai\ndòng", "hai dòng"],
+	];
+
+	for (const [typed, text] of searches) {
+		it(`searches for ${JSON.stringify(typed)}`, () => {
+			const popup = search(typed);
+
+			assert.deepEqual(popup.searchQueries, [{ text, disposition: "NEW_TAB" }]);
+			assert.deepEqual(popup.createdTabs, []);
+		});
+	}
+
+	const visits = [
+		["https://google.com", "https://google.com"],
+		["http://a.b/c", "http://a.b/c"],
+		["google.com", "https://google.com"],
+		["GOOGLE.COM", "https://GOOGLE.COM"],
+		["example.co.uk", "https://example.co.uk"],
+		["google.com/search?q=x", "https://google.com/search?q=x"],
+		["phở.vn", "https://phở.vn"],
+	];
+
+	for (const [typed, url] of visits) {
+		it(`opens ${JSON.stringify(typed)} as ${JSON.stringify(url)}`, () => {
+			const popup = search(typed);
+
+			assert.deepEqual(popup.createdTabs, [{ url }]);
+			assert.deepEqual(popup.searchQueries, []);
+		});
+	}
+
+	const rejected = ["javascript://evil", "javascript:alert(1)", "data:text/html,x", "file:///etc/passwd", "chrome://settings"];
+
+	for (const typed of rejected) {
+		it(`refuses to navigate to ${JSON.stringify(typed)}`, () => {
+			const popup = search(typed);
+
+			assert.deepEqual(popup.createdTabs, []);
+			assert.equal(popup.searchQueries.length, 1);
+		});
+	}
+});
+
+describe("Search is the primary action of the fast input", () => {
+	const html = fs.readFileSync(path.join(import.meta.dirname, "..", "src", "popup.html"), "utf8");
+
+	it("comes before Copy and Remove accents, so Tab from the textarea lands on it", () => {
+		const order = ["inputDemo", "searchDemo", "demoCopy", "removeAccent"]
+			.map((id) => html.indexOf(`id="${id}"`));
+
+		assert.deepEqual(order, [...order].sort((a, b) => a - b));
+		assert.ok(order.every((index) => index > -1));
+	});
+
+	it("is the only primary button on the main screen", () => {
+		const primaries = [...html.matchAll(/<button[^>]*class="[^"]*buttonPrimary[^"]*"[^>]*id="([^"]+)"/g)]
+			.map((match) => match[1]);
+
+		assert.deepEqual(primaries, ["searchDemo", "saveShortcuts"]);
+	});
 });

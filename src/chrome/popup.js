@@ -2,6 +2,7 @@
 	/** Each key maps to a #txt<Key> element in popup.html and an extPopup<Key> locale message. */
 	const LABEL_KEYS = [
 		"Title",
+		"Search",
 		"Sel",
 		"Auto",
 		"Telex",
@@ -34,6 +35,11 @@
 
 	const COMBINING_MARKS = /[\u0300-\u036f]/g;
 
+	const EXPLICIT_URL = /^https?:\/\/\S+$/i;
+
+	/** A host with an ASCII tld, so a Vietnamese phrase like "tiếng.việt" is still a search. */
+	const BARE_HOST = /^[^\s/?#]+\.[a-z]{2,}(?:[/?#]\S*)?$/i;
+
 	/**
 	 * Key fields carry this name so the engine, which runs here too, skips them: Telex would turn
 	 * a key like "uw" into "ư". It seeds `exclude` at load, hence the script order in popup.html.
@@ -60,6 +66,22 @@
 		for (const key of LABEL_KEYS) {
 			$g(`txt${key}`).textContent = chrome.i18n.getMessage(`extPopup${key}`);
 		}
+	}
+
+	function searchDemo() {
+		const text = $g("inputDemo").value.replace(/\s+/g, " ").trim();
+		if (text === "") {
+			return;
+		}
+		if (EXPLICIT_URL.test(text)) {
+			chrome.tabs.create({ url: text });
+			return;
+		}
+		if (BARE_HOST.test(text)) {
+			chrome.tabs.create({ url: `https://${text}` });
+			return;
+		}
+		chrome.search.query({ text, disposition: "NEW_TAB" });
 	}
 
 	function copyAllDemo() {
@@ -213,6 +235,7 @@
 			savePrefs({ ckSpell: $g("spellCheck").checked ? 1 : 0 });
 		});
 
+		$g("searchDemo").addEventListener("click", searchDemo);
 		$g("demoCopy").addEventListener("click", copyAllDemo);
 		$g("removeAccent").addEventListener("click", removeAccent);
 

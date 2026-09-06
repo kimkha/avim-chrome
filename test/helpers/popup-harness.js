@@ -76,6 +76,8 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 	const clipboardWrites = [];
 	const execCommands = [];
 	const reloads = [];
+	const searchQueries = [];
+	const createdTabs = [];
 	const rejection = new Error("Document is not focused.");
 	let pendingClipboard = Promise.resolve();
 
@@ -97,6 +99,16 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 			i18n: {
 				getMessage(name) {
 					return enMessages[name] ? enMessages[name].message : "";
+				},
+			},
+			search: {
+				query(queryInfo) {
+					searchQueries.push(JSON.parse(JSON.stringify(queryInfo)));
+				},
+			},
+			tabs: {
+				create(properties) {
+					createdTabs.push(JSON.parse(JSON.stringify(properties)));
 				},
 			},
 		},
@@ -180,6 +192,8 @@ function loadPopup({ prefs: overrides = {}, clipboardFails = false } = {}) {
 		// what popup.js left for the engine to skip; avim-ext.js owns this global in the real popup
 		excluded: () => sandbox.exclude ?? [],
 		sent,
+		searchQueries,
+		createdTabs,
 		clipboardWrites,
 		execCommands,
 		reloads,
