@@ -7,6 +7,8 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Added
 
+- Bật/tắt AVIM riêng cho từng trang ([#22](https://github.com/kimkha/avim-chrome/issues/22)).
+- Nhấn Ctrl ba lần để bật/tắt AVIM cho trang đang mở.
 - Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)).
 - Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
 - Nút **Tìm kiếm** trong ô gõ nhanh: mở tab mới và tìm bằng công cụ tìm kiếm mặc định, hoặc vào

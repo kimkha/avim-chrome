@@ -52,7 +52,7 @@
 		"description" : ""
 	},
 	"extPopupTipsCtrl" : {
-		"message" : "Nhấn Ctrl 2 lần để bật/tắt nhanh.",
+		"message" : "Nhấn Ctrl 2 lần để bật/tắt nhanh, 3 lần để bật/tắt riêng trang này.",
 		"description" : ""
 	},
 	"extPopupDemo" : {
@@ -106,5 +106,53 @@
 	"extPopupShortcutResultHint" : {
 		"message" : "đổi thành",
 		"description" : "Chữ mờ trong ô kết quả"
+	},
+	"extPopupOpenPatterns" : {
+		"message" : "Cài đặt trang",
+		"description" : "Nút mở màn hình cài đặt theo trang"
+	},
+	"extPopupPatterns" : {
+		"message" : "Cài đặt trang",
+		"description" : "Tiêu đề màn hình cài đặt theo trang"
+	},
+	"extPopupPatternsBack" : {
+		"message" : "← Trở về",
+		"description" : "Nút rời màn hình mẫu URL mà không lưu"
+	},
+	"extPopupPatternsNote" : {
+		"message" : "Mỗi trang một dòng. * khớp mọi ký tự, /…/ là biểu thức chính quy, và dòng cụ thể nhất sẽ thắng.",
+		"description" : "Giải thích cách viết mẫu trên màn hình mẫu URL"
+	},
+	"extPopupAddPattern" : {
+		"message" : "Thêm mẫu",
+		"description" : "Nút thêm một dòng mẫu URL trống"
+	},
+	"extPopupSavePatterns" : {
+		"message" : "Lưu mẫu",
+		"description" : "Nút lưu các dòng mẫu URL rồi trở về màn hình chính"
+	},
+	"extPopupRemovePattern" : {
+		"message" : "Xoá mẫu này",
+		"description" : "Chú thích của nút xoá một dòng mẫu URL"
+	},
+	"extPopupPatternHint" : {
+		"message" : "trang hoặc mẫu",
+		"description" : "Chữ mờ trong ô mẫu URL"
+	},
+	"extPopupPatternModeDefault" : {
+		"message" : "Mặc định",
+		"description" : "Chế độ giữ nguyên lựa chọn ở bảng chính"
+	},
+	"extPopupPatternModeOn" : {
+		"message" : "Bật",
+		"description" : "Chế độ buộc bật AVIM cho trang này"
+	},
+	"extPopupPatternModeOff" : {
+		"message" : "Tắt",
+		"description" : "Chế độ buộc tắt AVIM cho trang này"
+	},
+	"extPopupQuickPatternHint" : {
+		"message" : "Bấm để đổi trang này giữa Mặc định, Bật và Tắt",
+		"description" : "Chú thích của cài đặt nhanh cạnh tiêu đề"
 	}
 }

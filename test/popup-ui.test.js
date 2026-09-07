@@ -126,7 +126,7 @@ describe("The popup reflects the prefs the background reports", () => {
 	});
 });
 
-describe("Choosing an option saves it and reloads the popup", () => {
+describe("Choosing an option saves it without reloading the popup", () => {
 	const methods = [
 		["auto", 0],
 		["telex", 1],
@@ -142,9 +142,32 @@ describe("Choosing an option saves it and reloads the popup", () => {
 			popup.fire(id, "click");
 
 			assert.deepEqual(popup.sent.at(-1), { save_prefs: "all", method, onOff: 1 });
-			assert.deepEqual(popup.reloads, [true]);
+			assert.deepEqual(popup.reloads, []);
 		});
 	}
+
+	it("shows the chosen method once the background pushes it back", () => {
+		const popup = loadPopup({ prefs: { onOff: 0 } });
+
+		popup.fire("vni", "click");
+		popup.pushPrefs({ onOff: 1, method: 2, ckSpell: 1, shortcutsOn: 0, shortcuts: [], patterns: [] });
+
+		assert.equal(popup.element("vni").checked, true);
+		assert.equal(popup.element("off").checked, false);
+		assert.deepEqual(popup.reloads, []);
+	});
+
+	it("keeps the site settings rows a reload used to wipe", () => {
+		const popup = loadPopup({ prefs: { patterns: [{ pattern: "*://a.test/*", mode: "off" }] } });
+		popup.fire("openPatterns", "click");
+		popup.patternRows()[0].patternInput.value = "*://edited.test/*";
+
+		popup.fire("telex", "click");
+		popup.pushPrefs({ onOff: 1, method: 1, ckSpell: 1, shortcutsOn: 0, shortcuts: [], patterns: [] });
+
+		assert.deepEqual(popup.patternRows().map((row) => row.patternInput.value), ["*://edited.test/*"]);
+		assert.equal(popup.element("patternScreen").style.display, "");
+	});
 
 	it("#off turns AVIM off without touching the method", () => {
 		const popup = loadPopup({});
@@ -152,6 +175,7 @@ describe("Choosing an option saves it and reloads the popup", () => {
 		popup.fire("off", "click");
 
 		assert.deepEqual(popup.sent.at(-1), { save_prefs: "all", onOff: 0 });
+		assert.deepEqual(popup.reloads, []);
 	});
 
 	const spellCheckCases = [
@@ -167,6 +191,7 @@ describe("Choosing an option saves it and reloads the popup", () => {
 			popup.fire("spellCheck", "change");
 
 			assert.deepEqual(popup.sent.at(-1), { save_prefs: "all", ckSpell: saved });
+			assert.deepEqual(popup.reloads, []);
 		});
 	}
 });
@@ -276,7 +301,7 @@ describe("Search is the primary action of the fast input", () => {
 		const primaries = [...html.matchAll(/<button[^>]*class="[^"]*buttonPrimary[^"]*"[^>]*id="([^"]+)"/g)]
 			.map((match) => match[1]);
 
-		assert.deepEqual(primaries, ["searchDemo", "saveShortcuts"]);
+		assert.deepEqual(primaries, ["searchDemo", "saveShortcuts", "savePatterns"]);
 	});
 });
 

@@ -52,7 +52,7 @@
 		"description" : ""
 	},
 	"extPopupTipsCtrl" : {
-		"message" : "Press Ctrl twice to turn AVIM on or off.",
+		"message" : "Press Ctrl twice to turn AVIM on or off, or three times for this site only.",
 		"description" : ""
 	},
 	"extPopupDemo" : {
@@ -106,5 +106,53 @@
 	"extPopupShortcutResultHint" : {
 		"message" : "becomes",
 		"description" : "Placeholder of the replacement input"
+	},
+	"extPopupOpenPatterns" : {
+		"message" : "Site settings",
+		"description" : "Button that opens the per-site screen"
+	},
+	"extPopupPatterns" : {
+		"message" : "Site settings",
+		"description" : "Heading of the per-site screen"
+	},
+	"extPopupPatternsBack" : {
+		"message" : "← Back",
+		"description" : "Button that leaves the URL pattern screen without saving"
+	},
+	"extPopupPatternsNote" : {
+		"message" : "One row per site. * matches anything, /…/ is a regular expression, and the most specific row wins.",
+		"description" : "Explains the pattern syntax on the URL pattern screen"
+	},
+	"extPopupAddPattern" : {
+		"message" : "Add a pattern",
+		"description" : "Button that appends an empty URL pattern row"
+	},
+	"extPopupSavePatterns" : {
+		"message" : "Save patterns",
+		"description" : "Button that stores the URL pattern rows and returns to the main screen"
+	},
+	"extPopupRemovePattern" : {
+		"message" : "Delete this pattern",
+		"description" : "Tooltip of the button that removes one URL pattern row"
+	},
+	"extPopupPatternHint" : {
+		"message" : "site or pattern",
+		"description" : "Placeholder of the URL pattern input"
+	},
+	"extPopupPatternModeDefault" : {
+		"message" : "Default",
+		"description" : "Pattern mode that leaves the site on whatever the main panel selected"
+	},
+	"extPopupPatternModeOn" : {
+		"message" : "On",
+		"description" : "Pattern mode that forces AVIM on for the site"
+	},
+	"extPopupPatternModeOff" : {
+		"message" : "Off",
+		"description" : "Pattern mode that forces AVIM off for the site"
+	},
+	"extPopupQuickPatternHint" : {
+		"message" : "Click to switch this site between Default, On and Off",
+		"description" : "Tooltip of the quick setting next to the popup heading"
 	}
 }

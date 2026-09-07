@@ -23,7 +23,18 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen
 	const pushedToTabs = [];
 	const pushedToPages = [];
 	const badge = {};
+	const tabBadges = new Map();
 	let onMessage = null;
+
+	function badgeFor(tabId) {
+		if (tabId === undefined) {
+			return badge;
+		}
+		if (!tabBadges.has(tabId)) {
+			tabBadges.set(tabId, {});
+		}
+		return tabBadges.get(tabId);
+	}
 
 	const sandbox = {
 		console: { log() {}, warn() {}, error() {} },
@@ -53,11 +64,14 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen
 				},
 			},
 			action: {
-				async setBadgeText({ text }) {
-					badge.text = text;
+				async setBadgeText({ text, tabId }) {
+					badgeFor(tabId).text = text;
 				},
-				async setBadgeBackgroundColor({ color }) {
-					badge.color = [...color];
+				async setBadgeBackgroundColor({ color, tabId }) {
+					badgeFor(tabId).color = [...color];
+				},
+				async setBadgeTextColor({ color, tabId }) {
+					badgeFor(tabId).textColor = [...color];
 				},
 			},
 			runtime: {
@@ -81,19 +95,19 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen
 	vm.runInContext(backgroundSource, sandbox, { filename: "background.js" });
 
 	/** Resolves with what the service worker hands to sendResponse, copied into this realm. */
-	function send(message) {
+	function send(message, sender = {}) {
 		return new Promise((resolve, reject) => {
 			const reply = (response) => {
 				resolve(response === undefined ? undefined : JSON.parse(JSON.stringify(response)));
 			};
-			const keepsChannelOpen = onMessage(message, {}, reply);
+			const keepsChannelOpen = onMessage(message, sender, reply);
 			if (keepsChannelOpen !== true) {
 				reject(new Error(`background.js ignored ${JSON.stringify(message)}`));
 			}
 		});
 	}
 
-	return { send, storage, pushedToTabs, pushedToPages, badge };
+	return { send, storage, pushedToTabs, pushedToPages, badge, tabBadge: (id) => tabBadges.get(id) };
 }
 
 export { loadBackground };

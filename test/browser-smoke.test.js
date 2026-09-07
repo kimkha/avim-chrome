@@ -75,6 +75,33 @@ for (const dir of extensionDirs()) {
 				await popup.close();
 			});
 
+			it("switches the input method without reloading itself", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.waitForTimeout(400);
+				// A reload would wipe this, so it is the proof the page survived the change
+				await popup.evaluate(() => {
+					window.__survived = true;
+				});
+
+				await popup.locator("#vni").click();
+				await popup.waitForFunction(() => document.getElementById("vni").checked);
+				const seen = {
+					survived: await popup.evaluate(() => window.__survived === true),
+					offCleared: await popup.evaluate(() => document.getElementById("off").checked === false),
+					typedInVni: await typeUntil(popup, "#inputDemo", "chao2", "chào"),
+				};
+
+				// Put the shared profile back before asserting: every later test types Telex
+				await popup.locator("#auto").click();
+				await popup.waitForFunction(() => document.getElementById("auto").checked);
+				await popup.close();
+
+				assert.equal(seen.survived, true, "the popup reloaded instead of updating in place");
+				assert.equal(seen.offCleared, true);
+				assert.equal(seen.typedInVni, "chào");
+			});
+
 			it("puts Copy All on the real system clipboard", async () => {
 				const popup = await extension.context.newPage();
 				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
@@ -748,6 +775,267 @@ for (const dir of extensionDirs()) {
 
 				assert.equal(await typeOnce(page, "#eventProbe", "chaof"), "chào");
 				assert.equal(await page.evaluate(() => window.__inputEvents), 5);
+			});
+		});
+
+		describe("A URL pattern row turns AVIM off for one site", () => {
+			let extensionPage;
+
+			// Every write goes through the real background, so the push to each tab is exercised too
+			const savePatterns = (patterns) =>
+				extensionPage.evaluate(
+					(rows) => new Promise((done) => {
+						chrome.runtime.sendMessage({ save_prefs: "all", patterns: rows }, () => done());
+					}),
+					patterns,
+				);
+
+			/** tabs.query hands back ids but no urls without the "tabs" permission, so each tab is asked. */
+			const findFixtureTab = (origin) =>
+				extensionPage.evaluate(
+					(prefix) => new Promise((done) => {
+						chrome.tabs.query({}, async (tabs) => {
+							for (const tab of tabs) {
+								const state = await new Promise((reply) => {
+									chrome.tabs.sendMessage(tab.id, { get_tab_pattern: "all" }, { frameId: 0 }, (answer) => {
+										void chrome.runtime.lastError;
+										reply(answer ?? null);
+									});
+								});
+								if (state && state.url.startsWith(prefix)) {
+									done({ tabId: tab.id, state });
+									return;
+								}
+							}
+							done(null);
+						});
+					}),
+					origin,
+				);
+
+			const badgeOf = (tabId) =>
+				extension.context.serviceWorkers()[0].evaluate(async (id) => ({
+					text: await chrome.action.getBadgeText({ tabId: id }),
+					color: await chrome.action.getBadgeBackgroundColor({ tabId: id }),
+				}), tabId);
+
+			before(async () => {
+				extensionPage = await extension.context.newPage();
+				await extensionPage.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+			});
+
+			after(async () => {
+				await savePatterns([]);
+				if (extensionPage) {
+					await extensionPage.close();
+				}
+			});
+
+			it("stops converting on the site the row names", async () => {
+				await savePatterns([{ pattern: new URL(server.origin).host, mode: "off" }]);
+
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chaof"), "chaof");
+			});
+
+			it("converts again once the row is gone", async () => {
+				await savePatterns([{ pattern: new URL(server.origin).host, mode: "off" }]);
+				await savePatterns([]);
+
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chào"), "chào");
+			});
+
+			it("leaves the site alone when the row names another host", async () => {
+				await savePatterns([{ pattern: "not-this-host.test", mode: "off" }]);
+
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chào"), "chào");
+			});
+
+			it("answers the popup with the row that won and its mode", async () => {
+				const host = new URL(server.origin).host;
+				await savePatterns([{ pattern: host, mode: "off" }]);
+
+				const found = await findFixtureTab(server.origin);
+
+				assert.ok(found, "no tab answered get_tab_pattern");
+				assert.equal(found.state.pattern, host);
+				assert.equal(found.state.mode, "off");
+			});
+
+			it("offers a ready-made pattern when no row matches yet", async () => {
+				await savePatterns([]);
+
+				const found = await findFixtureTab(server.origin);
+
+				assert.equal(found.state.pattern, `*://${new URL(server.origin).host}/*`);
+				assert.equal(found.state.mode, "default");
+			});
+
+			it("switches the site off with the very pattern it offered", async () => {
+				await savePatterns([]);
+				const offered = (await findFixtureTab(server.origin)).state.pattern;
+
+				await savePatterns([{ pattern: offered, mode: "off" }]);
+
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chaof"), "chaof");
+			});
+
+			// sender.tab.id is readable with no "tabs" permission, which is what keeps this per-tab
+			it("washes out the badge of the tab a row decided", async () => {
+				await savePatterns([{ pattern: new URL(server.origin).host, mode: "off" }]);
+				const found = await findFixtureTab(server.origin);
+
+				const badge = await badgeOf(found.tabId);
+
+				assert.equal(badge.text, "off");
+				assert.deepEqual(badge.color, [251, 211, 188, 255]);
+			});
+
+			it("puts the solid badge back when no row decides the tab", async () => {
+				await savePatterns([]);
+				const found = await findFixtureTab(server.origin);
+
+				const badge = await badgeOf(found.tabId);
+
+				assert.equal(badge.text, "on");
+				assert.deepEqual(badge.color, [0, 128, 0, 255]);
+			});
+		});
+
+		describe("A row decides a whole tab, frame by frame", () => {
+			let extensionPage;
+			const savePatterns = (patterns) =>
+				extensionPage.evaluate(
+					(rows) => new Promise((done) => {
+						chrome.runtime.sendMessage({ save_prefs: "all", patterns: rows }, () => done());
+					}),
+					patterns,
+				);
+
+			before(async () => {
+				extensionPage = await extension.context.newPage();
+				await extensionPage.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				// Anchored to the top page only: a frame matching this had to have read window.top
+				const root = `/^${server.origin.replace(/[.:/]/g, (char) => `\\${char}`)}\\/$/`;
+				await savePatterns([{ pattern: root, mode: "off" }]);
+			});
+
+			after(async () => {
+				await savePatterns([]);
+				if (extensionPage) {
+					await extensionPage.close();
+				}
+			});
+
+			it("switches the top frame off", async () => {
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chaof"), "chaof");
+			});
+
+			it("switches a same-origin iframe off with it, whose own URL never matched", async () => {
+				const nested = { frame: "#sameOrigin", selector: "#nested" };
+
+				assert.equal(await typeUntil(page, nested, "chaof", "chaof"), "chaof");
+			});
+
+			it("leaves a cross-origin iframe converting, because it cannot read the top URL", async () => {
+				const nested = { frame: "#crossOrigin", selector: "#nested" };
+
+				assert.equal(await typeUntil(page, nested, "chaof", "chào"), "chào");
+			});
+		});
+
+		describe("Tapping Ctrl three times turns just this site off", () => {
+			let extensionPage;
+			const host = () => new URL(server.origin).host;
+
+			const readPrefs = () =>
+				extensionPage.evaluate(() => new Promise((done) => {
+					chrome.runtime.sendMessage({ get_prefs: "all" }, done);
+				}));
+
+			const write = (payload) =>
+				extensionPage.evaluate(
+					(body) => new Promise((done) => {
+						chrome.runtime.sendMessage({ save_prefs: "all", ...body }, () => done());
+					}),
+					payload,
+				);
+
+			// The gesture crosses two background round trips, so the write is polled for
+			async function waitForPatterns(count) {
+				for (let attempt = 0; attempt < 20; attempt++) {
+					const prefs = await readPrefs();
+					if (prefs.patterns.length === count) {
+						return prefs;
+					}
+					await page.waitForTimeout(100);
+				}
+				return readPrefs();
+			}
+
+			async function tapCtrl(times) {
+				await page.locator("#textarea").click();
+				for (let i = 0; i < times; i++) {
+					await page.keyboard.down("Control");
+					await page.keyboard.up("Control");
+				}
+			}
+
+			const forgetTaps = () => page.waitForTimeout(400);
+
+			before(async () => {
+				extensionPage = await extension.context.newPage();
+				await extensionPage.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+			});
+
+			after(async () => {
+				await write({ patterns: [], onOff: 1 });
+				if (extensionPage) {
+					await extensionPage.close();
+				}
+			});
+
+			it("stops converting on this site while the panel switch stays on", async () => {
+				await write({ patterns: [], onOff: 1 });
+				await forgetTaps();
+
+				await tapCtrl(3);
+				const prefs = await waitForPatterns(1);
+
+				assert.equal(prefs.onOff, 1, "the panel switch was left flipped");
+				assert.deepEqual(prefs.patterns, [{ pattern: `*://${host()}/*`, mode: "off" }]);
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chaof"), "chaof");
+			});
+
+			it("hands the site back to the panel on the next three taps", async () => {
+				await write({ patterns: [{ pattern: `*://${host()}/*`, mode: "off" }], onOff: 1 });
+				await forgetTaps();
+
+				await tapCtrl(3);
+
+				for (let attempt = 0; attempt < 20; attempt++) {
+					const prefs = await readPrefs();
+					if (prefs.patterns[0]?.mode === "default") {
+						break;
+					}
+					await page.waitForTimeout(100);
+				}
+				const prefs = await readPrefs();
+
+				assert.equal(prefs.onOff, 1);
+				assert.deepEqual(prefs.patterns, [{ pattern: `*://${host()}/*`, mode: "default" }]);
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chào"), "chào");
+			});
+
+			it("still flips only the panel switch on two taps", async () => {
+				await write({ patterns: [], onOff: 1 });
+				await forgetTaps();
+
+				await tapCtrl(2);
+				await page.waitForTimeout(500);
+				const prefs = await readPrefs();
+
+				assert.equal(prefs.onOff, 0);
+				assert.deepEqual(prefs.patterns, []);
 			});
 		});
 	});

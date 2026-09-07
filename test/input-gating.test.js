@@ -208,14 +208,28 @@ describe("Preferences messaging", () => {
 		assert.deepEqual(capturedMessages(context), []);
 	});
 
-	it("toggles twice for four consecutive Ctrl releases", () => {
+	// The third tap is the per-site gesture, so a run of taps no longer flips the panel repeatedly
+	it("flips the panel switch once for four consecutive Ctrl releases", () => {
 		const context = loadEngine(TELEX);
 		clearCapturedMessages(context);
 		pressKeyUp(context, 17);
 		pressKeyUp(context, 17);
 		pressKeyUp(context, 17);
 		pressKeyUp(context, 17);
-		assert.deepEqual(capturedMessages(context), [{ turn_avim: "onOff" }, { turn_avim: "onOff" }]);
+		const flips = capturedMessages(context).filter((message) => message.turn_avim);
+		assert.deepEqual(flips, [{ turn_avim: "onOff" }]);
+	});
+
+	it("flips it a second time only once the tap count starts over", () => {
+		const context = loadEngine(TELEX);
+		clearCapturedMessages(context);
+		pressKeyUp(context, 17);
+		pressKeyUp(context, 17);
+		pressKeyUp(context, 17);
+		pressKeyUp(context, 17);
+		pressKeyUp(context, 17);
+		const flips = capturedMessages(context).filter((message) => message.turn_avim);
+		assert.deepEqual(flips, [{ turn_avim: "onOff" }, { turn_avim: "onOff" }]);
 	});
 
 	function pressShortcut(context) {

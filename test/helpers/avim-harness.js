@@ -43,6 +43,7 @@ const DEFAULT_CONFIG = {
 	oldAccent: 1,
 	shortcutsOn: 0,
 	shortcuts: [],
+	patterns: [],
 };
 
 class FakeText {
@@ -109,11 +110,16 @@ function createSandbox() {
 			this.disconnected = true;
 		}
 	};
+	sandbox.__pendingReplies = [];
 	sandbox.chrome = {
 		runtime: {
-			// deliberately never invokes the callback: loadEngine drives configAVIM itself
-			sendMessage(message) {
+			// deliberately never invokes the callback: loadEngine drives configAVIM itself, and a
+			// test that needs one delivered calls replyTo() to invoke it by hand
+			sendMessage(message, respond) {
 				sandbox.__messages.push(message);
+				if (respond) {
+					sandbox.__pendingReplies.push({ message, respond });
+				}
 			},
 			onMessage: { addListener() {} },
 		},
@@ -161,6 +167,10 @@ function createSandbox() {
 		document: sandbox.document,
 		getSelection: () => sandbox.__selection || null,
 	};
+	// The engine matches URL patterns against the top frame, so both have to exist to be read
+	sandbox.location = { href: "https://example.test/page" };
+	sandbox.window.location = sandbox.location;
+	sandbox.window.top = sandbox.window;
 	return sandbox;
 }
 
@@ -182,6 +192,16 @@ function clearCapturedMessages(context) {
 }
 
 /** Runs only the timers registered with exactly `delay` ms, so unrelated ones stay pending. */
+/** Delivers the answer to the newest unanswered message carrying `key`, as the background would. */
+function replyTo(context, key, response) {
+	const index = context.__pendingReplies.findLastIndex((pending) => pending.message[key] !== undefined);
+	if (index === -1) {
+		throw new Error(`no pending message with key ${key}`);
+	}
+	const [pending] = context.__pendingReplies.splice(index, 1);
+	pending.respond(response);
+}
+
 function runTimersWithDelay(context, delay) {
 	const due = context.__timers.filter((timer) => timer.delay === delay);
 	context.__timers = context.__timers.filter((timer) => timer.delay !== delay);
@@ -197,6 +217,8 @@ const CONFIG_KEYS = [
 	"oldAccent",
 	"shortcutsOn",
 	"shortcuts",
+	"patterns",
+	"url",
 	"exclude",
 	"autoConfig",
 	"element",
@@ -210,6 +232,9 @@ function loadEngine(config = {}) {
 	}
 	const settings = { ...DEFAULT_CONFIG, ...config };
 	const sandbox = createSandbox();
+	if (settings.url) {
+		sandbox.location.href = settings.url;
+	}
 	vm.createContext(sandbox);
 	vm.runInContext(avimSource, sandbox, { filename: AVIM_PATH });
 
@@ -228,6 +253,7 @@ function loadEngine(config = {}) {
 		oldAccent: settings.oldAccent,
 		shortcutsOn: settings.shortcutsOn,
 		shortcuts: settings.shortcuts,
+		patterns: settings.patterns,
 	});
 	return sandbox;
 }
@@ -407,6 +433,7 @@ export {
 	pressKeyDown,
 	capturedMessages,
 	clearCapturedMessages,
+	replyTo,
 	runTimersWithDelay,
 	typeInto,
 	type,
