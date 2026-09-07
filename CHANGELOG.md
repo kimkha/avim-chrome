@@ -7,13 +7,8 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Added
 
-- Bật/tắt AVIM theo mẫu URL từng trang ([#22](https://github.com/kimkha/avim-chrome/issues/22)):
-  mỗi dòng gồm một mẫu và một chế độ Bật/Tắt/Mặc định, mở bằng nút **Cài đặt trang** trong popup.
-  `*` khớp mọi ký tự, `/…/` là biểu thức chính quy, và dòng cụ thể nhất thắng.
-- Cài đặt nhanh cạnh tiêu đề popup: hiện mẫu và trạng thái của tab đang mở, bấm để đổi giữa Mặc
-  định, Bật và Tắt. Tab nào bị một dòng quyết định thì huy hiệu on/off có màu nhạt hơn.
-- Nhấn Ctrl ba lần bật/tắt AVIM cho riêng trang đang mở: trang thành ngược với trạng thái nó đang
-  có, và ghi thành Mặc định nếu lựa chọn chung vốn đã cho đúng trạng thái đó.
+- Bật/tắt AVIM riêng cho từng trang ([#22](https://github.com/kimkha/avim-chrome/issues/22)).
+- Nhấn Ctrl ba lần để bật/tắt AVIM cho trang đang mở.
 - Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)).
 - Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
 - Nút **Tìm kiếm** trong ô gõ nhanh: mở tab mới và tìm bằng công cụ tìm kiếm mặc định, hoặc vào
@@ -32,8 +27,6 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Changed
 
-- Đổi kiểu gõ hoặc bật/tắt spell check không còn load lại popup, nên không nháy và không mất những
-  dòng đang sửa dở trong Phím tắt hay Cài đặt trang.
 - Firefox tối thiểu nâng từ 109 lên 128, bản đầu hỗ trợ `world: "MAIN"` mà Google Docs cần.
 - Popup thiết kế lại: hai cột, theo dark mode của hệ thống, dùng font hệ thống.
 
