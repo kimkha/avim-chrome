@@ -32,6 +32,8 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Changed
 
+- Đổi kiểu gõ hoặc bật/tắt spell check không còn load lại popup, nên không nháy và không mất những
+  dòng đang sửa dở trong Phím tắt hay Cài đặt trang.
 - Firefox tối thiểu nâng từ 109 lên 128, bản đầu hỗ trợ `world: "MAIN"` mà Google Docs cần.
 - Popup thiết kế lại: hai cột, theo dark mode của hệ thống, dùng font hệ thống.
 

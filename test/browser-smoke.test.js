@@ -75,6 +75,33 @@ for (const dir of extensionDirs()) {
 				await popup.close();
 			});
 
+			it("switches the input method without reloading itself", async () => {
+				const popup = await extension.context.newPage();
+				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+				await popup.waitForTimeout(400);
+				// A reload would wipe this, so it is the proof the page survived the change
+				await popup.evaluate(() => {
+					window.__survived = true;
+				});
+
+				await popup.locator("#vni").click();
+				await popup.waitForFunction(() => document.getElementById("vni").checked);
+				const seen = {
+					survived: await popup.evaluate(() => window.__survived === true),
+					offCleared: await popup.evaluate(() => document.getElementById("off").checked === false),
+					typedInVni: await typeUntil(popup, "#inputDemo", "chao2", "chào"),
+				};
+
+				// Put the shared profile back before asserting: every later test types Telex
+				await popup.locator("#auto").click();
+				await popup.waitForFunction(() => document.getElementById("auto").checked);
+				await popup.close();
+
+				assert.equal(seen.survived, true, "the popup reloaded instead of updating in place");
+				assert.equal(seen.offCleared, true);
+				assert.equal(seen.typedInVni, "chào");
+			});
+
 			it("puts Copy All on the real system clipboard", async () => {
 				const popup = await extension.context.newPage();
 				await popup.goto(`chrome-extension://${extension.extensionId}/popup.html`);

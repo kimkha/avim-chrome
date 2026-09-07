@@ -72,15 +72,11 @@
 	const capitalize = (word) => word.charAt(0).toUpperCase() + word.slice(1);
 
 	/**
-	 * The background stores the prefs and pushes them to every tab; the reload re-reads them.
-	 * The shortcut screen opts out, because a reload would drop back to the main screen.
+	 * The background stores the prefs, then pushes them back here, which is what redraws the
+	 * controls and reconfigures the engine running in this popup. Nothing reloads the page.
 	 */
-	function savePrefs(prefs, { reload = true, then } = {}) {
+	function savePrefs(prefs, { then } = {}) {
 		chrome.runtime.sendMessage({ save_prefs: "all", ...prefs }, () => {
-			if (reload) {
-				window.location.reload();
-				return;
-			}
 			if (then) {
 				then();
 			}
@@ -235,7 +231,7 @@
 		savePrefs({
 			shortcutsOn: $g("shortcutsOn").checked ? 1 : 0,
 			shortcuts: shortcutRows.map((row) => ({ key: row.keyInput.value, value: row.resultInput.value }))
-		}, { reload: false });
+		});
 		showShortcutModal(false);
 	}
 
@@ -314,7 +310,7 @@
 		storedPatterns = patternRows
 			.filter((row) => row.patternInput.value !== "")
 			.map((row) => ({ pattern: row.patternInput.value, mode: row.modeSelect.value }));
-		savePrefs({ patterns: storedPatterns }, { reload: false, then: askTabPattern });
+		savePrefs({ patterns: storedPatterns }, { then: askTabPattern });
 		showPatternModal(false);
 	}
 
@@ -360,7 +356,7 @@
 		}
 		const next = PATTERN_MODES[(PATTERN_MODES.indexOf(tabPattern.mode) + 1) % PATTERN_MODES.length];
 		storedPatterns = upsertPattern(storedPatterns, tabPattern.pattern, next);
-		savePrefs({ patterns: storedPatterns }, { reload: false, then: askTabPattern });
+		savePrefs({ patterns: storedPatterns }, { then: askTabPattern });
 	}
 
 	function showMethod(prefs) {
@@ -441,7 +437,7 @@
 		$g("backToMain").addEventListener("click", () => showShortcutModal(false));
 		$g("shortcutsOn").addEventListener("change", () => {
 			applyShortcutsEnabled();
-			savePrefs({ shortcutsOn: $g("shortcutsOn").checked ? 1 : 0 }, { reload: false });
+			savePrefs({ shortcutsOn: $g("shortcutsOn").checked ? 1 : 0 });
 		});
 		$g("addShortcut").addEventListener("click", () => addShortcutRow());
 		$g("saveShortcuts").addEventListener("click", saveShortcuts);
