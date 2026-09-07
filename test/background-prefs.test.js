@@ -193,7 +193,7 @@ describe("The badge follows the on/off state", () => {
 
 		assert.equal(background.storage.onOff, "1");
 		assert.equal(background.badge.text, "on");
-		assert.deepEqual(background.badge.color, [0, 255, 0, 255]);
+		assert.deepEqual(background.badge.color, [0, 128, 0, 255]);
 	});
 
 	it("leaves the shortcuts alone while toggling", async () => {
@@ -438,7 +438,7 @@ describe("A tab a URL pattern decided gets a washed-out badge of its own", () =>
 
 		await background.send(REPORT({ onOff: 1, overridden: false }), FROM_TAB);
 
-		assert.deepEqual(background.tabBadge(42).color, [0, 255, 0, 255]);
+		assert.deepEqual(background.tabBadge(42).color, [0, 128, 0, 255]);
 		assert.deepEqual(background.tabBadge(42).textColor, [255, 255, 255, 255]);
 	});
 

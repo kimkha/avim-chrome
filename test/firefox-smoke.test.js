@@ -86,7 +86,7 @@ describe("dist/avim-firefox zip loaded in Firefox", { skip: firefox.skip }, () =
 				textareaHeight: Math.round(textarea.height),
 			};
 		`);
-		assert.equal(box.bodyWidth, 560);
+		assert.equal(box.bodyWidth, 600);
 		assert.equal(box.textareaWidth, 302);
 		assert.ok(box.textareaHeight > 200, `fast input shrank to ${box.textareaHeight}px`);
 	});

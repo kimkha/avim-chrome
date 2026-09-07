@@ -12,6 +12,8 @@ since `v0.8.3` is collected under 0.10.0.
   `*` khớp mọi ký tự, `/…/` là biểu thức chính quy, và dòng cụ thể nhất thắng.
 - Cài đặt nhanh cạnh tiêu đề popup: hiện mẫu và trạng thái của tab đang mở, bấm để đổi giữa Mặc
   định, Bật và Tắt. Tab nào bị một dòng quyết định thì huy hiệu on/off có màu nhạt hơn.
+- Nhấn Ctrl ba lần bật/tắt AVIM cho riêng trang đang mở: trang thành ngược với trạng thái nó đang
+  có, và ghi thành Mặc định nếu lựa chọn chung vốn đã cho đúng trạng thái đó.
 - Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)).
 - Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
 - Nút **Tìm kiếm** trong ô gõ nhanh: mở tab mới và tìm bằng công cụ tìm kiếm mặc định, hoặc vào

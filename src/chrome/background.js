@@ -70,7 +70,7 @@ async function getPatterns() {
 
 /** The washed-out pair marks a tab a URL row decided, next to the solid pair the popup set. */
 const BADGE = {
-	on: { text: 'on', color: [0, 255, 0, 255], textColor: [255, 255, 255, 255] },
+	on: { text: 'on', color: [0, 128, 0, 255], textColor: [255, 255, 255, 255] },
 	off: { text: 'off', color: [255, 0, 0, 255], textColor: [255, 255, 255, 255] },
 	onPattern: { text: 'on', color: [168, 240, 168, 255], textColor: [0, 0, 0, 255] },
 	offPattern: { text: 'off', color: [255, 180, 180, 255], textColor: [0, 0, 0, 255] }

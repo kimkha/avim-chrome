@@ -176,18 +176,26 @@ describe("A default row carves an exception out of a broader row", () => {
 describe("The quick setting reads the state off the page it is asked about", () => {
 	const ask = (config) => copy(loadEngine(config).tabPatternState());
 
-	it("offers the host when no row matches yet", () => {
+	it("offers a ready-made pattern for the host when no row matches yet", () => {
 		const state = ask({ url: "https://example.test/some/page?q=1" });
 
 		assert.deepEqual(state, {
 			url: "https://example.test/some/page?q=1",
-			pattern: "example.test",
+			pattern: "*://example.test/*",
 			mode: "default",
 		});
 	});
 
 	it("keeps the port, which is part of the host", () => {
-		assert.equal(ask({ url: "http://localhost:3000/app" }).pattern, "localhost:3000");
+		assert.equal(ask({ url: "http://localhost:3000/app" }).pattern, "*://localhost:3000/*");
+	});
+
+	it("offers a pattern that matches the page it came from, and no lookalike host", () => {
+		const offered = ask({ url: "https://example.test/page" }).pattern;
+
+		assert.ok(loadEngine().matchPattern(rows([offered, "off"]), "https://example.test/page"));
+		assert.ok(loadEngine().matchPattern(rows([offered, "off"]), "http://example.test/"));
+		assert.ok(!loadEngine().matchPattern(rows([offered, "off"]), "https://example.test.evil.test/"));
 	});
 
 	it("reports the row that won, not the host", () => {

@@ -27,7 +27,7 @@ const DEFAULT_PREFS = {
 	patterns: [],
 };
 
-const DEFAULT_TAB_PATTERN = { url: "https://example.test/page", pattern: "example.test", mode: "default" };
+const DEFAULT_TAB_PATTERN = { url: "https://example.test/page", pattern: "*://example.test/*", mode: "default" };
 
 function createElement(id, tagName = "div", onFocus) {
 	return {

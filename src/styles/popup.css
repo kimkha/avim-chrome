@@ -45,7 +45,7 @@
 }
 
 body {
-	width: 560px;
+	width: 600px;
 	margin: 0;
 	padding: 12px;
 	background: var(--bg);
@@ -135,7 +135,7 @@ body {
 
 #mainScreen {
 	display: grid;
-	grid-template-columns: 220px minmax(0, 1fr);
+	grid-template-columns: 260px minmax(0, 1fr);
 	gap: 10px 14px;
 }
 

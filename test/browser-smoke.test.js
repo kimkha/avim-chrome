@@ -834,13 +834,22 @@ for (const dir of extensionDirs()) {
 				assert.equal(found.state.mode, "off");
 			});
 
-			it("offers the bare host when no row matches yet", async () => {
+			it("offers a ready-made pattern when no row matches yet", async () => {
 				await savePatterns([]);
 
 				const found = await findFixtureTab(server.origin);
 
-				assert.equal(found.state.pattern, new URL(server.origin).host);
+				assert.equal(found.state.pattern, `*://${new URL(server.origin).host}/*`);
 				assert.equal(found.state.mode, "default");
+			});
+
+			it("switches the site off with the very pattern it offered", async () => {
+				await savePatterns([]);
+				const offered = (await findFixtureTab(server.origin)).state.pattern;
+
+				await savePatterns([{ pattern: offered, mode: "off" }]);
+
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chaof"), "chaof");
 			});
 
 			// sender.tab.id is readable with no "tabs" permission, which is what keeps this per-tab
@@ -861,7 +870,7 @@ for (const dir of extensionDirs()) {
 				const badge = await badgeOf(found.tabId);
 
 				assert.equal(badge.text, "on");
-				assert.deepEqual(badge.color, [0, 255, 0, 255]);
+				assert.deepEqual(badge.color, [0, 128, 0, 255]);
 			});
 		});
 
@@ -904,6 +913,102 @@ for (const dir of extensionDirs()) {
 				const nested = { frame: "#crossOrigin", selector: "#nested" };
 
 				assert.equal(await typeUntil(page, nested, "chaof", "chào"), "chào");
+			});
+		});
+
+		describe("Tapping Ctrl three times turns just this site off", () => {
+			let extensionPage;
+			const host = () => new URL(server.origin).host;
+
+			const readPrefs = () =>
+				extensionPage.evaluate(() => new Promise((done) => {
+					chrome.runtime.sendMessage({ get_prefs: "all" }, done);
+				}));
+
+			const write = (payload) =>
+				extensionPage.evaluate(
+					(body) => new Promise((done) => {
+						chrome.runtime.sendMessage({ save_prefs: "all", ...body }, () => done());
+					}),
+					payload,
+				);
+
+			// The gesture crosses two background round trips, so the write is polled for
+			async function waitForPatterns(count) {
+				for (let attempt = 0; attempt < 20; attempt++) {
+					const prefs = await readPrefs();
+					if (prefs.patterns.length === count) {
+						return prefs;
+					}
+					await page.waitForTimeout(100);
+				}
+				return readPrefs();
+			}
+
+			async function tapCtrl(times) {
+				await page.locator("#textarea").click();
+				for (let i = 0; i < times; i++) {
+					await page.keyboard.down("Control");
+					await page.keyboard.up("Control");
+				}
+			}
+
+			const forgetTaps = () => page.waitForTimeout(400);
+
+			before(async () => {
+				extensionPage = await extension.context.newPage();
+				await extensionPage.goto(`chrome-extension://${extension.extensionId}/popup.html`);
+			});
+
+			after(async () => {
+				await write({ patterns: [], onOff: 1 });
+				if (extensionPage) {
+					await extensionPage.close();
+				}
+			});
+
+			it("stops converting on this site while the panel switch stays on", async () => {
+				await write({ patterns: [], onOff: 1 });
+				await forgetTaps();
+
+				await tapCtrl(3);
+				const prefs = await waitForPatterns(1);
+
+				assert.equal(prefs.onOff, 1, "the panel switch was left flipped");
+				assert.deepEqual(prefs.patterns, [{ pattern: `*://${host()}/*`, mode: "off" }]);
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chaof"), "chaof");
+			});
+
+			it("hands the site back to the panel on the next three taps", async () => {
+				await write({ patterns: [{ pattern: `*://${host()}/*`, mode: "off" }], onOff: 1 });
+				await forgetTaps();
+
+				await tapCtrl(3);
+
+				for (let attempt = 0; attempt < 20; attempt++) {
+					const prefs = await readPrefs();
+					if (prefs.patterns[0]?.mode === "default") {
+						break;
+					}
+					await page.waitForTimeout(100);
+				}
+				const prefs = await readPrefs();
+
+				assert.equal(prefs.onOff, 1);
+				assert.deepEqual(prefs.patterns, [{ pattern: `*://${host()}/*`, mode: "default" }]);
+				assert.equal(await typeUntil(page, "#textarea", "chaof", "chào"), "chào");
+			});
+
+			it("still flips only the panel switch on two taps", async () => {
+				await write({ patterns: [], onOff: 1 });
+				await forgetTaps();
+
+				await tapCtrl(2);
+				await page.waitForTimeout(500);
+				const prefs = await readPrefs();
+
+				assert.equal(prefs.onOff, 0);
+				assert.deepEqual(prefs.patterns, []);
 			});
 		});
 	});

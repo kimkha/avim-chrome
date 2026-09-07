@@ -1296,8 +1296,9 @@ function matchPattern(rows, url) {
 	return best;
 }
 
-function hostOfUrl(url) {
-	return url.replace(HTTP_URL, "").replace(/[/?#].*$/, "");
+function hostPattern(url) {
+	const host = url.replace(HTTP_URL, "").replace(/[/?#].*$/, "");
+	return `*://${host}/*`;
 }
 
 /** Reading a cross-origin `window.top.location` throws, and that frame keeps its own URL. */
@@ -1351,7 +1352,7 @@ function tabPatternState() {
 	const row = matchPattern(patterns, url);
 	return {
 		url,
-		pattern: row ? row.pattern : hostOfUrl(url),
+		pattern: row ? row.pattern : hostPattern(url),
 		mode: row ? row.mode : "default"
 	};
 }
@@ -1568,8 +1569,13 @@ function gdocsInit() {
 
 const DOUBLE_TAP_MS = 300;
 
-let isPressCtrl = false;
+let ctrlTaps = 0;
+let ctrlTapTimer = 0;
 let isCtrlCombo = false;
+/** Sampled before the double tap flips anything, so a third tap can reason about the real state. */
+let stateBeforeTaps = { global: 1, pattern: "", mode: "default" };
+let isFlipInFlight = false;
+let isSiteTurnQueued = false;
 
 /** A shortcut like Ctrl+Shift+V ends in a bare Ctrl keyup with shiftKey already false, so only keydown separates the two. */
 function keyDownHandler(evt) {
@@ -1578,29 +1584,70 @@ function keyDownHandler(evt) {
 		return;
 	}
 	isCtrlCombo = true;
-	isPressCtrl = false;
+	ctrlTaps = 0;
 }
 
-/** Tapping Ctrl twice within 300ms toggles AVIM off and on. */
+function withRow(rows, pattern, mode) {
+	if (rows.some((row) => row && (row.pattern === pattern))) {
+		return rows.map((row) => (row.pattern === pattern ? { pattern, mode } : row));
+	}
+	return [...rows, { pattern, mode }];
+}
+
+function turnSite() {
+	const { global, pattern, mode } = stateBeforeTaps;
+	if (pattern === "") {
+		return;
+	}
+	const effective = mode === "default" ? global : (mode === "on" ? 1 : 0);
+	const wanted = effective === 1 ? "off" : "on";
+	const fromPanel = global === 1 ? "on" : "off";
+	sendRequest({
+		save_prefs: "all",
+		onOff: global,
+		// The panel already says what we want, so the row goes back to "default" instead of repeating it
+		patterns: withRow(patterns, pattern, wanted === fromPanel ? "default" : wanted)
+	}, () => {});
+}
+
+/** Tapping Ctrl twice within 300ms toggles AVIM everywhere; a third tap moves only this site. */
 function keyUpHandler(evt) {
 	if (evt.which !== CTRL_KEY_CODE) {
-		isPressCtrl = false;
+		ctrlTaps = 0;
 		return;
 	}
 	if (isCtrlCombo) {
 		isCtrlCombo = false;
-		isPressCtrl = false;
+		ctrlTaps = 0;
 		return;
 	}
-	if (isPressCtrl) {
-		isPressCtrl = false;
-		sendRequest({ turn_avim: "onOff" }, configAVIM);
-		return;
-	}
-	isPressCtrl = true;
-	setTimeout(() => {
-		isPressCtrl = false;
+	ctrlTaps += 1;
+	clearTimeout(ctrlTapTimer);
+	ctrlTapTimer = setTimeout(() => {
+		ctrlTaps = 0;
 	}, DOUBLE_TAP_MS);
+
+	if (ctrlTaps === 2) {
+		stateBeforeTaps = { global: globalOnOff, ...tabPatternState() };
+		isFlipInFlight = true;
+		sendRequest({ turn_avim: "onOff" }, (data) => {
+			configAVIM(data);
+			isFlipInFlight = false;
+			if (isSiteTurnQueued) {
+				isSiteTurnQueued = false;
+				turnSite();
+			}
+		});
+		return;
+	}
+	if (ctrlTaps === 3) {
+		ctrlTaps = 0;
+		// The reply proves the flip is stored, so restoring it cannot land ahead of the flip
+		isSiteTurnQueued = isFlipInFlight;
+		if (!isFlipInFlight) {
+			turnSite();
+		}
+	}
 }
 
 function rescanIframes() {

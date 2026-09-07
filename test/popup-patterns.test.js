@@ -252,12 +252,12 @@ describe("Clicking the quick setting cycles the site and stores the row", () => 
 		assert.equal(cycle(popup), "Default");
 	});
 
-	it("creates the row on the first click, using the host it offered", () => {
+	it("creates the row on the first click, using the pattern it offered", () => {
 		const popup = loadPopup();
 
 		popup.fire("quickPattern", "click");
 
-		assert.deepEqual(savedPatterns(popup), rows(["example.test", "on"]));
+		assert.deepEqual(savedPatterns(popup), rows(["*://example.test/*", "on"]));
 	});
 
 	it("keeps the row rather than deleting it once it is back to default", () => {
@@ -267,7 +267,7 @@ describe("Clicking the quick setting cycles the site and stores the row", () => 
 		popup.fire("quickPattern", "click");
 		popup.fire("quickPattern", "click");
 
-		assert.deepEqual(savedPatterns(popup), rows(["example.test", "default"]));
+		assert.deepEqual(savedPatterns(popup), rows(["*://example.test/*", "default"]));
 	});
 
 	it("updates the stored row in place instead of adding a second one", () => {
@@ -280,13 +280,13 @@ describe("Clicking the quick setting cycles the site and stores the row", () => 
 	});
 
 	it("leaves the other rows untouched", () => {
-		const patterns = rows(["keep.test", "on"], ["example.test", "off"]);
-		const tabPattern = { url: "https://example.test/", pattern: "example.test", mode: "off" };
+		const patterns = rows(["keep.test", "on"], ["*://example.test/*", "off"]);
+		const tabPattern = { url: "https://example.test/", pattern: "*://example.test/*", mode: "off" };
 		const popup = loadPopup({ prefs: { patterns }, tabPattern });
 
 		popup.fire("quickPattern", "click");
 
-		assert.deepEqual(savedPatterns(popup), rows(["keep.test", "on"], ["example.test", "default"]));
+		assert.deepEqual(savedPatterns(popup), rows(["keep.test", "on"], ["*://example.test/*", "default"]));
 	});
 
 	it("cycles the row the engine matched, not the host of the tab", () => {
