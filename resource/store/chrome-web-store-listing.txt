@@ -1,0 +1,109 @@
+================================================================================
+ENGLISH
+================================================================================
+
+DETAILED DESCRIPTION
+--------------------
+AVIM lets you type Vietnamese in any text field on the web, without installing a system-wide input method or changing your keyboard layout.
+
+INPUT METHODS
+• Auto — accepts Telex and VNI at the same time, so you never have to choose
+• Telex
+• VNI
+• VIQR and VIQR*
+
+Pick one from the toolbar popup. Your choice is remembered and applies to every tab.
+
+WHERE IT WORKS
+• Text areas, and text, search and tel inputs
+• Rich text editors built on contenteditable, including the ones that re-render their content from their own model
+• Google Docs
+• Editors inside iframes, and inputs inside a shadow root
+• Fields and frames added to the page after it loads, so single-page apps and dynamically built forms work too
+
+PER-SITE CONTROL
+Site settings in the popup takes one row per site, each set to On, Off or Default. * matches anything, /…/ is a regular expression, and the most specific row wins. Or press Ctrl three times to flip just the page you have open.
+
+SHORTCUT KEYS
+Define your own: type vn then a space and get Việt Nam. Off by default; turn it on in the popup.
+
+QUICK INPUT BOX
+The popup has a box for a quick line of Vietnamese, with buttons to copy it, search it in a new tab, or strip the diacritics back out — handy for filenames, search queries, and forms that reject accented characters.
+
+HANDY TO KNOW
+• Tap Ctrl twice to turn AVIM off and back on everywhere, or three times for the open page only
+• Ctrl+Shift+V opens the popup, Command+Shift+V on macOS, and you can remap it
+• The toolbar badge reads on or off, so the current state is always visible
+• Optional Vietnamese spell check, which stops the engine from forming syllables that do not exist in Vietnamese
+• The popup follows your system light or dark theme
+
+WHAT IT LEAVES ALONE
+AVIM only ever touches text areas, text/search/tel inputs, and contenteditable editors. Password, email, URL, number and date fields are never touched, and neither is any read-only field, so it cannot corrupt a login or an address you paste in.
+
+PRIVACY
+AVIM sends nothing anywhere. No analytics, no remote code, no account, and it works offline. What you type is transformed inside the page and is never recorded or transmitted.
+
+Kept locally in your browser and nowhere else: your input method and options, your shortcut rows, your per-site rows, and whatever you leave in the popup's quick input box.
+
+The Search button is the only thing that reaches the network, and only when you press it: it opens an ordinary search in a new tab using the search engine you already have set as default.
+
+OPEN SOURCE
+GPL-3.0. Source, issue tracker and release notes: https://github.com/kimkha/avim-chrome
+
+
+SEARCH PERMISSION JUSTIFICATION
+-------------------------------
+The popup has a quick input box for typing a line of Vietnamese. Its Search button hands that line to chrome.search.query, which opens a new tab and searches with the user's own default search engine. The permission is used only in response to that click, and the extension sends nothing anywhere itself.
+
+
+================================================================================
+VIETNAMESE
+================================================================================
+
+DETAILED DESCRIPTION
+--------------------
+AVIM cho bạn gõ tiếng Việt trong mọi khung nhập liệu trên web, không cần cài bộ gõ cho cả máy, cũng không cần đổi bố cục bàn phím.
+
+KIỂU GÕ
+• Kết hợp — nhận cả Telex và VNI cùng lúc, nên bạn không phải chọn
+• Telex
+• VNI
+• VIQR và VIQR*
+
+Chọn một kiểu trong popup ở thanh công cụ. Lựa chọn được ghi nhớ và áp cho mọi tab.
+
+CHẠY Ở ĐÂU
+• Vùng văn bản, và các ô nhập text, search, tel
+• Trình soạn thảo dựng trên contenteditable, kể cả loại tự vẽ lại nội dung từ model của chính nó
+• Google Docs
+• Trình soạn thảo trong iframe, và ô nhập nằm trong shadow root
+• Khung và iframe xuất hiện sau khi trang đã tải, nên ứng dụng một trang và biểu mẫu dựng động vẫn gõ được
+
+BẬT TẮT THEO TRANG
+Cài đặt trang trong popup nhận mỗi trang một dòng, mỗi dòng đặt Bật, Tắt hoặc Mặc định. * khớp mọi ký tự, /…/ là biểu thức chính quy, và dòng cụ thể nhất sẽ thắng. Hoặc nhấn Ctrl ba lần để đổi riêng trang đang mở.
+
+PHÍM TẮT
+Bạn tự đặt: gõ vn rồi một khoảng trắng sẽ ra Việt Nam. Mặc định tắt, bật trong popup.
+
+Ô GÕ NHANH
+Popup có một ô để gõ nhanh một dòng tiếng Việt, kèm các nút sao chép, tìm kiếm trong tab mới, hoặc bỏ dấu — tiện cho tên tệp, từ khoá tìm kiếm, và những biểu mẫu không nhận chữ có dấu.
+
+VÀI ĐIỀU NÊN BIẾT
+• Nhấn Ctrl hai lần để bật tắt AVIM ở mọi nơi, ba lần để bật tắt riêng trang đang mở
+• Ctrl+Shift+V mở popup, trên macOS là Command+Shift+V, và bạn đổi được tổ hợp này
+• Nhãn trên biểu tượng hiện on hay off, nên luôn thấy được trạng thái hiện tại
+• Có thể bật kiểm tra chính tả tiếng Việt, để bộ gõ không tạo ra âm không có trong tiếng Việt
+• Popup tự đổi theo giao diện sáng tối của hệ thống
+
+KHÔNG CAN THIỆP VÀO ĐÂU
+AVIM chỉ chạm vào vùng văn bản, ô nhập text/search/tel, và trình soạn thảo contenteditable. Ô mật khẩu, email, URL, số và ngày thì không bao giờ, ô chỉ đọc cũng vậy, nên nó không thể làm hỏng một lần đăng nhập hay một địa chỉ bạn dán vào.
+
+QUYỀN RIÊNG TƯ
+AVIM không gửi gì đi đâu cả. Không thống kê, không tải mã từ xa, không cần tài khoản, và chạy được khi không có mạng. Chữ bạn gõ được biến đổi ngay trong trang, không bị ghi lại hay truyền đi.
+
+Lưu trong trình duyệt của bạn và không lưu ở đâu khác: kiểu gõ và các tuỳ chọn, các dòng phím tắt, các dòng cài đặt trang, và những gì bạn để lại trong ô gõ nhanh.
+
+Nút Tìm kiếm là thứ duy nhất chạm tới mạng, và chỉ khi bạn bấm: nó mở một tab mới và tìm bằng đúng công cụ tìm kiếm mặc định của bạn.
+
+NGUỒN MỞ
+GPL-3.0. Mã nguồn, nơi báo lỗi và ghi chú phát hành: https://github.com/kimkha/avim-chrome

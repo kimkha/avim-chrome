@@ -4,7 +4,7 @@
 		"description" : "Extension name"
 	},
 	"extDescription" : {
-		"message" : "Bộ gõ tiếng Việt, hoạt động tốt trên hầu hết các trang web hiện có.",
+		"message" : "Gõ tiếng Việt trong mọi khung nhập liệu trên web — Telex, VNI hay VIQR. Không cần bộ gõ hệ thống, không cần đổi bàn phím.",
 		"description" : "Extension description"
 	},
 	"extAction" : {
@@ -58,6 +58,10 @@
 	"extPopupDemo" : {
 		"message" : "Gõ nhanh",
 		"description" : ""
+	},
+	"extPopupDemoHint" : {
+		"message" : "Gõ nhanh tiếng Việt tại đây",
+		"description" : "Chữ mờ trong ô gõ nhanh"
 	},
 	"extPopupSearch" : {
 		"message" : "Tìm kiếm",

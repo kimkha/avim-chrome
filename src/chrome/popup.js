@@ -408,6 +408,7 @@
 		showShortcutModal(false);
 		showPatternModal(false);
 		$g("quickPattern").title = chrome.i18n.getMessage("extPopupQuickPatternHint");
+		$g("inputDemo").placeholder = chrome.i18n.getMessage("extPopupDemoHint");
 		globalThis.exclude = [...(globalThis.exclude ?? []), SHORTCUT_KEY_FIELD, PATTERN_FIELD];
 		chrome.runtime.sendMessage({ get_prefs: "all" }, showPrefs);
 		chrome.runtime.sendMessage({ get_demo_text: "all" }, showDemoText);
