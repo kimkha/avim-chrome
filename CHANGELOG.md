@@ -1,9 +1,6 @@
 # Changelog
 
-Notable changes per release. `0.8.5` and `0.9.0` exist in git but were never tagged, so everything
-since `v0.8.3` is collected under 0.10.0.
-
-## [Next]
+## [1.0.0] - 2026-09-07
 
 ### Added
 

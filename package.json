@@ -1,6 +1,6 @@
 {
   "name": "avim-chrome",
-  "version": "0.10.2",
+  "version": "1.0.0",
   "description": "avim-chrome ===========",
   "type": "module",
   "scripts": {
