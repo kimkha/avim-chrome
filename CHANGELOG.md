@@ -7,6 +7,11 @@ since `v0.8.3` is collected under 0.10.0.
 
 ### Added
 
+- Bật/tắt AVIM theo mẫu URL từng trang ([#22](https://github.com/kimkha/avim-chrome/issues/22)):
+  mỗi dòng gồm một mẫu và một chế độ Bật/Tắt/Mặc định, mở bằng nút **Cài đặt trang** trong popup.
+  `*` khớp mọi ký tự, `/…/` là biểu thức chính quy, và dòng cụ thể nhất thắng.
+- Cài đặt nhanh cạnh tiêu đề popup: hiện mẫu và trạng thái của tab đang mở, bấm để đổi giữa Mặc
+  định, Bật và Tắt. Tab nào bị một dòng quyết định thì huy hiệu on/off có màu nhạt hơn.
 - Gõ được trong Google Docs ([#21](https://github.com/kimkha/avim-chrome/issues/21)).
 - Phím tắt do người dùng tự đặt trong popup: gõ `vn` rồi khoảng trắng ra `Việt Nam`. Mặc định tắt.
 - Nút **Tìm kiếm** trong ô gõ nhanh: mở tab mới và tìm bằng công cụ tìm kiếm mặc định, hoặc vào

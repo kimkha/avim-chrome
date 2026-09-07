@@ -1050,6 +1050,7 @@ function ifMoz(e) {
 	if (e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
 		return;
 	}
+	syncPatterns();
 
 	// Inside a shadow root the document selection ends at the host; the root holds the real one
 	const root = target.getRootNode ? target.getRootNode() : document;
@@ -1230,6 +1231,132 @@ const sendRequest = extension.sendMessage;
 
 const INPUT_TYPES = ["textarea", "text", "search", "tel"];
 
+
+/* ---- URL pattern overrides ---- */
+
+/** A row the popup stores: `{ pattern, mode }` with mode "on", "off" or "default". */
+let patterns = [];
+let globalOnOff = 1;
+let matchedUrl = "";
+let matchedRow = null;
+
+const AS_REGEX = /^\/(.+)\/([gimsuy]*)$/;
+const GLOB_META = /[.*+?^${}()|[\]\\]/g;
+const REGEX_META = /[*.+?^${}()|[\]\\]/g;
+const HTTP_URL = /^https?:\/\//i;
+
+/** A bare host gets a scheme and a path, so `canva.com` cannot match `https://canva.com.evil.test/`. */
+function normalizePattern(pattern) {
+	const withScheme = pattern.includes("://") ? pattern : `*://${pattern}`;
+	const afterScheme = withScheme.slice(withScheme.indexOf("://") + 3);
+	return afterScheme.includes("/") ? withScheme : `${withScheme}/`;
+}
+
+/** `/…/flags` is a real regex; anything else is a glob where `*` is the only wildcard. */
+function patternToRegex(pattern) {
+	const asRegex = AS_REGEX.exec(pattern);
+	try {
+		if (asRegex) {
+			return new RegExp(asRegex[1], asRegex[2]);
+		}
+		const escaped = normalizePattern(pattern).replace(GLOB_META, "\\$&").replace(/\\\*/g, ".*");
+		return new RegExp(`^${escaped}`, "i");
+	} catch (e) {
+		return null;
+	}
+}
+
+/** Count of URL characters the row pins down. */
+function patternWeight(pattern) {
+	const asRegex = AS_REGEX.exec(pattern);
+	if (asRegex) {
+		return asRegex[1].replace(REGEX_META, "").length;
+	}
+	return normalizePattern(pattern).replace(/\*/g, "").length;
+}
+
+/** Heaviest row wins; a tie goes to the row the user put first. */
+function matchPattern(rows, url) {
+	let best = null;
+	let bestWeight = -1;
+	for (const row of rows) {
+		if (!row || (typeof row.pattern !== "string") || (row.pattern === "")) {
+			continue;
+		}
+		const regex = patternToRegex(row.pattern);
+		if (!regex || !regex.test(url)) {
+			continue;
+		}
+		const weight = patternWeight(row.pattern);
+		if (weight > bestWeight) {
+			best = row;
+			bestWeight = weight;
+		}
+	}
+	return best;
+}
+
+function hostOfUrl(url) {
+	return url.replace(HTTP_URL, "").replace(/[/?#].*$/, "");
+}
+
+/** Reading a cross-origin `window.top.location` throws, and that frame keeps its own URL. */
+function urlForPatterns() {
+	try {
+		return window.top.location.href;
+	} catch (e) {
+		try {
+			return location.href;
+		} catch (noLocation) {
+			return "";
+		}
+	}
+}
+
+/** A matched row with mode "default" carves an exception out rather than forcing a state. */
+function isOverridden() {
+	return Boolean(matchedRow) && (matchedRow.mode !== "default");
+}
+
+function applyPatterns() {
+	matchedUrl = urlForPatterns();
+	// http(s) only: popup.html loads this engine too, and a catch-all row would gag its scratchpad
+	matchedRow = HTTP_URL.test(matchedUrl) ? matchPattern(patterns, matchedUrl) : null;
+	onOff = isOverridden() ? (matchedRow.mode === "on" ? 1 : 0) : globalOnOff;
+}
+
+/** One badge per tab, so frames stay quiet. */
+function reportPatterns() {
+	if ((window.top !== window) || !HTTP_URL.test(matchedUrl)) {
+		return;
+	}
+	sendRequest({ report_pattern: { onOff, overridden: isOverridden() } }, () => {});
+}
+
+/** A pushState route change keeps this content script alive, so the URL is re-read as keys arrive. */
+function syncPatterns() {
+	if (urlForPatterns() === matchedUrl) {
+		return;
+	}
+	applyPatterns();
+	reportPatterns();
+}
+
+/** Answers the popup's quick setting: the row that won, or the host to offer a new row for. */
+function tabPatternState() {
+	const url = urlForPatterns();
+	if (!HTTP_URL.test(url)) {
+		return { url, pattern: "", mode: "default" };
+	}
+	const row = matchPattern(patterns, url);
+	return {
+		url,
+		pattern: row ? row.pattern : hostOfUrl(url),
+		mode: row ? row.mode : "default"
+	};
+}
+
+
 /** Attaches the contenteditable handler to every designMode iframe on the page. */
 function AVIMInit(avim) {
 	gdocsInit();
@@ -1269,6 +1396,7 @@ function keyPressHandler(e) {
 	if (e.altKey && (code !== 92) && (code !== 126)) {
 		return;
 	}
+	syncPatterns();
 	if (!INPUT_TYPES.includes(el.type)) {
 		if (el.isContentEditable) {
 			ifMoz(e);
@@ -1414,6 +1542,7 @@ function gdocsRewrite(key, code) {
 
 function gdocsKeyPress(e) {
 	const code = e.which;
+	syncPatterns();
 	if ((onOff === 0) || e.ctrlKey || (e.altKey && (code !== 92) && (code !== 126))) {
 		return;
 	}
@@ -1525,10 +1654,13 @@ function newAVIMInit() {
 function configAVIM(data) {
 	if (data) {
 		method = data.method;
-		onOff = data.onOff;
+		globalOnOff = data.onOff;
 		checkSpell = data.ckSpell;
 		oldAccent = data.oldAccent;
+		patterns = Array.isArray(data.patterns) ? data.patterns : [];
 		shortcutMap = data.shortcutsOn === 1 ? buildShortcutMap(data.shortcuts) : new Map();
+		applyPatterns();
+		reportPatterns();
 	}
 
 	newAVIMInit();
@@ -1536,5 +1668,11 @@ function configAVIM(data) {
 
 sendRequest({ get_prefs: "all" }, configAVIM);
 
-extension.onMessage.addListener(configAVIM);
+extension.onMessage.addListener((message, sender, respond) => {
+	if (message && message.get_tab_pattern) {
+		respond(tabPatternState());
+		return;
+	}
+	configAVIM(message);
+});
 

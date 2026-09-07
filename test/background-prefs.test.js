@@ -16,7 +16,14 @@ describe("A fresh profile gets the shipped defaults", () => {
 			oldAccent: 1,
 			shortcutsOn: 0,
 			shortcuts: [],
+			patterns: [],
 		});
+	});
+
+	it("ships no URL pattern rows, so nothing overrides the panel", async () => {
+		const background = loadBackground();
+
+		assert.deepEqual((await background.send(GET)).patterns, []);
 	});
 
 	it("ships the shortcuts switched off, with no rows at all", async () => {
@@ -319,5 +326,136 @@ describe("turn_avim answers with the state it just wrote", () => {
 
 		assert.deepEqual(background.pushedToTabs.map((push) => push.prefs.onOff), [0, 0]);
 		assert.deepEqual(background.pushedToPages, [reply]);
+	});
+});
+
+describe("Stored URL patterns survive a hand-edited profile", () => {
+	it("parses the stored JSON into rows", async () => {
+		const stored = { patterns: '[{"pattern":"docs.google.com","mode":"off"}]' };
+		const background = loadBackground({ stored });
+
+		assert.deepEqual((await background.send(GET)).patterns, [
+			{ pattern: "docs.google.com", mode: "off" },
+		]);
+	});
+
+	it("falls back to no rows when the JSON is corrupt", async () => {
+		const background = loadBackground({ stored: { patterns: "{not json" } });
+
+		assert.deepEqual((await background.send(GET)).patterns, []);
+	});
+
+	it("falls back to no rows when the JSON is not an array", async () => {
+		const background = loadBackground({ stored: { patterns: '{"pattern":"a.test"}' } });
+
+		assert.deepEqual((await background.send(GET)).patterns, []);
+	});
+
+	it("drops a row whose pattern is blank, which is how one is deleted", async () => {
+		const stored = { patterns: '[{"pattern":"","mode":"off"},{"pattern":"a.test","mode":"on"}]' };
+		const background = loadBackground({ stored });
+
+		assert.deepEqual((await background.send(GET)).patterns, [{ pattern: "a.test", mode: "on" }]);
+	});
+
+	it("rewrites an unknown mode to default rather than dropping the row", async () => {
+		const stored = { patterns: '[{"pattern":"a.test","mode":"sometimes"}]' };
+		const background = loadBackground({ stored });
+
+		assert.deepEqual((await background.send(GET)).patterns, [{ pattern: "a.test", mode: "default" }]);
+	});
+
+	it("keeps a row the user cycled back to default", async () => {
+		const stored = { patterns: '[{"pattern":"a.test","mode":"default"}]' };
+		const background = loadBackground({ stored });
+
+		assert.deepEqual((await background.send(GET)).patterns, [{ pattern: "a.test", mode: "default" }]);
+	});
+});
+
+describe("save_prefs stores the URL pattern rows", () => {
+	it("writes them as JSON, cleaned", async () => {
+		const background = loadBackground();
+
+		await background.send({
+			save_prefs: "all",
+			patterns: [{ pattern: "a.test", mode: "on" }, { pattern: "", mode: "off" }],
+		});
+
+		assert.equal(background.storage.patterns, '[{"pattern":"a.test","mode":"on"}]');
+	});
+
+	it("leaves the rows alone when the popup sends only a method", async () => {
+		const stored = { patterns: '[{"pattern":"a.test","mode":"on"}]' };
+		const background = loadBackground({ stored });
+
+		await background.send({ save_prefs: "all", method: 2 });
+
+		assert.equal(background.storage.patterns, '[{"pattern":"a.test","mode":"on"}]');
+	});
+
+	it("pushes the rows to every tab, so each one can match its own URL", async () => {
+		const background = loadBackground();
+
+		await background.send({ save_prefs: "all", patterns: [{ pattern: "a.test", mode: "off" }] });
+
+		for (const push of background.pushedToTabs) {
+			assert.deepEqual(push.prefs.patterns, [{ pattern: "a.test", mode: "off" }]);
+		}
+	});
+});
+
+describe("A tab a URL pattern decided gets a washed-out badge of its own", () => {
+	const REPORT = (state) => ({ report_pattern: state });
+	const FROM_TAB = { tab: { id: 42 } };
+
+	it("paints pale green when a row forced it on", async () => {
+		const background = loadBackground();
+
+		await background.send(REPORT({ onOff: 1, overridden: true }), FROM_TAB);
+
+		assert.deepEqual(background.tabBadge(42), {
+			text: "on",
+			color: [168, 240, 168, 255],
+			textColor: [0, 0, 0, 255],
+		});
+	});
+
+	it("paints pale red when a row forced it off", async () => {
+		const background = loadBackground();
+
+		await background.send(REPORT({ onOff: 0, overridden: true }), FROM_TAB);
+
+		assert.deepEqual(background.tabBadge(42), {
+			text: "off",
+			color: [255, 180, 180, 255],
+			textColor: [0, 0, 0, 255],
+		});
+	});
+
+	it("paints the solid colour when no row decided, so the tab matches the panel", async () => {
+		const background = loadBackground();
+
+		await background.send(REPORT({ onOff: 1, overridden: false }), FROM_TAB);
+
+		assert.deepEqual(background.tabBadge(42).color, [0, 255, 0, 255]);
+		assert.deepEqual(background.tabBadge(42).textColor, [255, 255, 255, 255]);
+	});
+
+	it("leaves the default badge for tabs that never reported", async () => {
+		const background = loadBackground({ stored: { onOff: "1" } });
+		await background.send({ save_prefs: "all", ckSpell: 1 });
+
+		await background.send(REPORT({ onOff: 0, overridden: true }), FROM_TAB);
+
+		assert.equal(background.tabBadge(42).text, "off");
+		assert.equal(background.badge.text, "on");
+	});
+
+	it("ignores a report with no tab, which is how the popup's own engine reports", async () => {
+		const background = loadBackground();
+
+		await assert.rejects(() => background.send(REPORT({ onOff: 0, overridden: true })));
+		assert.equal(background.tabBadge(42), undefined);
 	});
 });

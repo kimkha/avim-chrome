@@ -276,7 +276,7 @@ describe("Search is the primary action of the fast input", () => {
 		const primaries = [...html.matchAll(/<button[^>]*class="[^"]*buttonPrimary[^"]*"[^>]*id="([^"]+)"/g)]
 			.map((match) => match[1]);
 
-		assert.deepEqual(primaries, ["searchDemo", "saveShortcuts"]);
+		assert.deepEqual(primaries, ["searchDemo", "saveShortcuts", "savePatterns"]);
 	});
 });
 

@@ -73,8 +73,64 @@ body {
 
 .headerTitle {
 	margin: 0;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	font-size: 14px;
 	font-weight: 600;
+}
+
+.quickPattern {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 6px;
+	max-width: 55%;
+	margin-left: auto;
+	padding: 3px 6px;
+	border: 0;
+	border-radius: var(--radius);
+	background: none;
+	color: var(--text);
+	font: inherit;
+	cursor: pointer;
+}
+
+/** A class-level display beats the UA rule for [hidden], so hiding it has to be spelled out. */
+.quickPattern[hidden] {
+	display: none;
+}
+
+.quickPattern:hover {
+	background: var(--surface);
+}
+
+.quickPatternName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.quickPatternMode {
+	flex: none;
+	padding: 1px 7px;
+	border-radius: 999px;
+	background: var(--surface-hover);
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.quickPatternMode-on {
+	background: var(--accent-soft);
+	color: var(--accent-text);
+}
+
+.quickPatternMode-off {
+	background: var(--danger-soft);
+	color: var(--danger);
 }
 
 #mainScreen {
@@ -283,7 +339,8 @@ body {
 	box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-#shortcutScreen {
+#shortcutScreen,
+#patternScreen {
 	position: fixed;
 	inset: 0;
 	display: flex;
@@ -325,9 +382,29 @@ body {
 	font-weight: 600;
 }
 
-#shortcutList {
+#shortcutList,
+#patternList {
 	min-height: 0;
 	overflow-y: auto;
+}
+
+.patternNote {
+	flex: none;
+	margin: 0;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.patternMode {
+	flex: none;
+	width: 96px;
+	padding: 6px 4px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	cursor: pointer;
 }
 
 .shortcutRow {

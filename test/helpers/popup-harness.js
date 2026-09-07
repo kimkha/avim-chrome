@@ -24,7 +24,10 @@ const DEFAULT_PREFS = {
 	oldAccent: 1,
 	shortcutsOn: 0,
 	shortcuts: [],
+	patterns: [],
 };
+
+const DEFAULT_TAB_PATTERN = { url: "https://example.test/page", pattern: "example.test", mode: "default" };
 
 function createElement(id, tagName = "div", onFocus) {
 	return {
@@ -72,9 +75,22 @@ function createElement(id, tagName = "div", onFocus) {
  * @param {string} options.demoText      what the background replies to `get_demo_text`
  * @param {boolean} options.deferDemoText  hold that reply back until deliverDemoText() is called
  * @param {boolean} options.clipboardFails  make navigator.clipboard.writeText reject
+ * @param {object} options.tabPattern    what the active tab's content script replies to get_tab_pattern
+ * @param {boolean} options.noContentScript  make that reply fail, as a chrome:// tab does
+ * @param {boolean} options.noActiveTab  make tabs.query come back empty
  */
-function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false, clipboardFails = false } = {}) {
+function loadPopup({
+	prefs: overrides = {},
+	demoText = "",
+	deferDemoText = false,
+	clipboardFails = false,
+	tabPattern = DEFAULT_TAB_PATTERN,
+	noContentScript = false,
+	noActiveTab = false,
+} = {}) {
 	const prefs = { ...DEFAULT_PREFS, ...overrides };
+	const ACTIVE_TAB_ID = 7;
+	let tabState = tabPattern;
 
 	let activeElement = null;
 	function noteFocus(element) {
@@ -93,6 +109,8 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 	const searchQueries = [];
 	let pendingDemoText = null;
 	const createdTabs = [];
+	const tabQueries = [];
+	const tabMessages = [];
 	const rejection = new Error("Document is not focused.");
 	let pendingClipboard = Promise.resolve();
 
@@ -121,6 +139,11 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 						callback(demoText);
 						return;
 					}
+					// Stands in for the engine recomputing: the saved row for this exact tab wins
+					if (message.patterns !== undefined && tabState) {
+						const saved = message.patterns.find((row) => row.pattern === tabState.pattern);
+						tabState = { ...tabState, mode: saved ? saved.mode : "default" };
+					}
 					callback({});
 				},
 			},
@@ -137,6 +160,23 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 			tabs: {
 				create(properties) {
 					createdTabs.push(JSON.parse(JSON.stringify(properties)));
+				},
+				query(queryInfo, callback) {
+					tabQueries.push(JSON.parse(JSON.stringify(queryInfo)));
+					callback(noActiveTab ? [] : [{ id: ACTIVE_TAB_ID }]);
+				},
+				sendMessage(tabId, message, options, callback) {
+					tabMessages.push({
+						tabId,
+						message: JSON.parse(JSON.stringify(message)),
+						options: JSON.parse(JSON.stringify(options)),
+					});
+					// lastError is how Chrome reports a tab with no listener, and it clears after
+					sandbox.chrome.runtime.lastError = noContentScript
+						? { message: "Could not establish connection. Receiving end does not exist." }
+						: undefined;
+					callback(noContentScript ? undefined : JSON.parse(JSON.stringify(tabState)));
+					sandbox.chrome.runtime.lastError = undefined;
 				},
 			},
 		},
@@ -204,6 +244,15 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 		});
 	}
 
+	function patternRows() {
+		return element("patternList").children.map((row) => {
+			const [patternInput] = row.children.filter((child) => child.tagName === "input");
+			const [modeSelect] = row.children.filter((child) => child.tagName === "select");
+			const [removeButton] = row.children.filter((child) => child.tagName === "button");
+			return { row, patternInput, modeSelect, removeButton };
+		});
+	}
+
 	/** Runs the listeners of an element the page built itself, which has no id to look up. */
 	function fireOn(target, event, eventObject) {
 		const handlers = target.listeners[event] || [];
@@ -223,6 +272,10 @@ function loadPopup({ prefs: overrides = {}, demoText = "", deferDemoText = false
 		deliverDemoText: () => pendingDemoText(demoText),
 		fireOn,
 		shortcutRows,
+		patternRows,
+		tabQueries,
+		tabMessages,
+		tabPattern: () => tabState,
 		// what popup.js left for the engine to skip; avim-ext.js owns this global in the real popup
 		excluded: () => sandbox.exclude ?? [],
 		sent,

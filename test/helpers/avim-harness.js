@@ -43,6 +43,7 @@ const DEFAULT_CONFIG = {
 	oldAccent: 1,
 	shortcutsOn: 0,
 	shortcuts: [],
+	patterns: [],
 };
 
 class FakeText {
@@ -161,6 +162,10 @@ function createSandbox() {
 		document: sandbox.document,
 		getSelection: () => sandbox.__selection || null,
 	};
+	// The engine matches URL patterns against the top frame, so both have to exist to be read
+	sandbox.location = { href: "https://example.test/page" };
+	sandbox.window.location = sandbox.location;
+	sandbox.window.top = sandbox.window;
 	return sandbox;
 }
 
@@ -197,6 +202,8 @@ const CONFIG_KEYS = [
 	"oldAccent",
 	"shortcutsOn",
 	"shortcuts",
+	"patterns",
+	"url",
 	"exclude",
 	"autoConfig",
 	"element",
@@ -210,6 +217,9 @@ function loadEngine(config = {}) {
 	}
 	const settings = { ...DEFAULT_CONFIG, ...config };
 	const sandbox = createSandbox();
+	if (settings.url) {
+		sandbox.location.href = settings.url;
+	}
 	vm.createContext(sandbox);
 	vm.runInContext(avimSource, sandbox, { filename: AVIM_PATH });
 
@@ -228,6 +238,7 @@ function loadEngine(config = {}) {
 		oldAccent: settings.oldAccent,
 		shortcutsOn: settings.shortcutsOn,
 		shortcuts: settings.shortcuts,
+		patterns: settings.patterns,
 	});
 	return sandbox;
 }
