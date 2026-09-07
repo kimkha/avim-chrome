@@ -416,7 +416,7 @@ describe("A tab a URL pattern decided gets a washed-out badge of its own", () =>
 
 		assert.deepEqual(background.tabBadge(42), {
 			text: "on",
-			color: [168, 240, 168, 255],
+			color: [199, 240, 226, 255],
 			textColor: [0, 0, 0, 255],
 		});
 	});
@@ -428,7 +428,7 @@ describe("A tab a URL pattern decided gets a washed-out badge of its own", () =>
 
 		assert.deepEqual(background.tabBadge(42), {
 			text: "off",
-			color: [255, 180, 180, 255],
+			color: [251, 211, 188, 255],
 			textColor: [0, 0, 0, 255],
 		});
 	});

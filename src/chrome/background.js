@@ -72,8 +72,8 @@ async function getPatterns() {
 const BADGE = {
 	on: { text: 'on', color: [0, 128, 0, 255], textColor: [255, 255, 255, 255] },
 	off: { text: 'off', color: [255, 0, 0, 255], textColor: [255, 255, 255, 255] },
-	onPattern: { text: 'on', color: [168, 240, 168, 255], textColor: [0, 0, 0, 255] },
-	offPattern: { text: 'off', color: [255, 180, 180, 255], textColor: [0, 0, 0, 255] }
+	onPattern: { text: 'on', color: [199, 240, 226, 255], textColor: [0, 0, 0, 255] },
+	offPattern: { text: 'off', color: [251, 211, 188, 255], textColor: [0, 0, 0, 255] }
 };
 
 /** Every consumer wants numbers, so the stored strings are parsed here once. */

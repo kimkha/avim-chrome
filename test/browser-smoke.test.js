@@ -860,7 +860,7 @@ for (const dir of extensionDirs()) {
 				const badge = await badgeOf(found.tabId);
 
 				assert.equal(badge.text, "off");
-				assert.deepEqual(badge.color, [255, 180, 180, 255]);
+				assert.deepEqual(badge.color, [251, 211, 188, 255]);
 			});
 
 			it("puts the solid badge back when no row decides the tab", async () => {

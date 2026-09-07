@@ -88,7 +88,7 @@ describe("dist/avim-firefox zip loaded in Firefox", { skip: firefox.skip }, () =
 		`);
 		assert.equal(box.bodyWidth, 600);
 		assert.equal(box.textareaWidth, 302);
-		assert.ok(box.textareaHeight > 200, `fast input shrank to ${box.textareaHeight}px`);
+		assert.ok(box.textareaHeight > 150, `fast input collapsed to its floor at ${box.textareaHeight}px`);
 	});
 
 	it("runs the tip across both columns, above them, without spreading the left column", async () => {
@@ -107,6 +107,24 @@ describe("dist/avim-firefox zip loaded in Firefox", { skip: firefox.skip }, () =
 		assert.ok(box.spansBothColumns, "the tip no longer runs the full width");
 		assert.equal(box.sitsAboveThem, 10);
 		assert.equal(box.methodsToToggles, 10, `the left column spread to ${box.methodsToToggles}px`);
+	});
+
+	it("lines the four bottom buttons up in one row, both columns ending together", async () => {
+		const box = await popup.evaluate(`
+			const rows = [...document.querySelectorAll(".paneScratch .buttonRow")];
+			const right = rows[rows.length - 1].getBoundingClientRect();
+			const left = document.querySelector(".paneToggles .buttonRow").getBoundingClientRect();
+			const toggles = document.querySelector(".paneToggles").getBoundingClientRect();
+			const scratch = document.querySelector(".paneScratch").getBoundingClientRect();
+			return {
+				leftTop: Math.round(left.top),
+				rightTop: Math.round(right.top),
+				leftBottom: Math.round(toggles.bottom),
+				rightBottom: Math.round(scratch.bottom),
+			};
+		`);
+		assert.equal(box.rightTop, box.leftTop, "the fast input is no longer sized to line the buttons up");
+		assert.equal(box.rightBottom, box.leftBottom);
 	});
 
 	it("opens the shortcut modal over a main screen that stays visible but inert", async () => {

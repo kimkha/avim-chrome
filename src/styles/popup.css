@@ -153,7 +153,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	grid-column: 2;
-	grid-row: 2 / span 3;
+	grid-row: 2 / span 2;
 }
 
 .sectionTitle {
@@ -322,7 +322,7 @@ body {
 	display: block;
 	flex: 1;
 	width: 100%;
-	min-height: 235px;
+	min-height: 110px;
 	padding: 8px 10px;
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
