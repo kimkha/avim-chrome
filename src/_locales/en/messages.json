@@ -52,7 +52,7 @@
 		"description" : ""
 	},
 	"extPopupTipsCtrl" : {
-		"message" : "Press Ctrl twice to turn AVIM on or off.",
+		"message" : "Press Ctrl twice to turn AVIM on or off, or three times for this site only.",
 		"description" : ""
 	},
 	"extPopupDemo" : {

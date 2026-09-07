@@ -141,19 +141,19 @@ body {
 
 .paneMethods {
 	grid-column: 1;
-	grid-row: 1;
+	grid-row: 2;
 }
 
 .paneToggles {
 	grid-column: 1;
-	grid-row: 2;
+	grid-row: 3;
 }
 
 .paneScratch {
 	display: flex;
 	flex-direction: column;
 	grid-column: 2;
-	grid-row: 1 / span 3;
+	grid-row: 2 / span 3;
 }
 
 .sectionTitle {
@@ -303,9 +303,8 @@ body {
 }
 
 .tip {
-	grid-column: 1;
-	grid-row: 3;
-	align-self: end;
+	grid-column: 1 / -1;
+	grid-row: 1;
 	margin: 0;
 	padding: 8px 10px;
 	background: var(--surface);
@@ -323,7 +322,7 @@ body {
 	display: block;
 	flex: 1;
 	width: 100%;
-	min-height: 110px;
+	min-height: 235px;
 	padding: 8px 10px;
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
