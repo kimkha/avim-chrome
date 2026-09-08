@@ -19,7 +19,7 @@ yarn build    # -> dist/avim-chrome-<version>.zip và dist/avim-firefox-<version
 
 Cũng có `yarn test:watch` và `yarn test:coverage`.
 
-Test nào cần Chromium thật hoặc cần mạng sẽ **tự skip**, nên máy trắng vẫn xanh. Chạy thật:
+Test nào cần Chromium thật hoặc cần mạng sẽ **tự skip**. Còn muốn chạy đầy đủ thì:
 
 ```sh
 yarn install && npx playwright install chromium
@@ -30,8 +30,8 @@ node --test test/framework-editors.test.js   # nạp editor thật từ esm.sh
 yarn firefox:install && yarn build && yarn test:firefox
 ```
 
-Trỏ sang binary có sẵn bằng `AVIM_CHROME_PATH`, `AVIM_FIREFOX_PATH`, `AVIM_GECKODRIVER_PATH`.
-Lý do đằng sau cách test nằm trong comment đầu mỗi file `test/helpers/*.js`.
+Nếu bạn đã cài từ trước, thì trỏ binary bằng `AVIM_CHROME_PATH`, `AVIM_FIREFOX_PATH`, `AVIM_GECKODRIVER_PATH`.
+Cách test cụ thể nằm trong comment đầu mỗi file `test/helpers/*.js`.
 
 ## Giấy phép
 
