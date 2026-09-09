@@ -19,6 +19,16 @@ const TERSER_OPTIONS = {
 	mangle: { toplevel: true, eval: true, reserved: ['chrome'] },
 };
 
+// One mangle pass for the whole extension. terser records every top-level declaration it renames in
+// `nameCache`, and renames a later file's free reference to the same name to match — so avim-dom.js
+// keeps calling into avim-engine.js with both fully mangled, and no name has to be reserved by hand.
+// The price is an order contract: a file may only be minified after everything it references.
+const nameCache = {};
+
+const SCRIPT_ORDER = ['scripts/avim-engine.js'];
+
+const SCRIPT_TREES = ['scripts', 'chrome'];
+
 // Copied verbatim into build/ under the same relative path. Absent trees are skipped.
 const ASSET_TREES = ['icons', '_locales', 'fonts', 'styles', 'scripts/vendors'];
 
@@ -65,7 +75,7 @@ async function writeOut(target, contents) {
 }
 
 async function minifyTo(source, target) {
-	const { code } = await minify(source, TERSER_OPTIONS);
+	const { code } = await minify(source, { ...TERSER_OPTIONS, nameCache });
 	await writeOut(target, code);
 }
 
@@ -108,12 +118,22 @@ async function writeManifest(target) {
 	await writeOut(path.join(BUILD, 'manifest.json'), JSON.stringify(shaped, null, 2) + '\n');
 }
 
-// Each file is minified on its own, so `mangle.toplevel` must never rename something another
-// file depends on: keep every script self-contained.
-async function buildScripts(tree) {
-	for (const file of await jsFiles(path.join(SRC, tree))) {
-		const relative = path.relative(path.join(SRC, tree), file);
-		await minifyTo(await readFile(file, 'utf8'), path.join(BUILD, tree, relative));
+async function scriptFiles() {
+	const found = (
+		await Promise.all(
+			SCRIPT_TREES.map(async (tree) =>
+				(await jsFiles(path.join(SRC, tree))).map((file) => path.relative(SRC, file)),
+			),
+		)
+	).flat();
+	const first = SCRIPT_ORDER.filter((name) => found.includes(name));
+	return [...first, ...found.filter((name) => !first.includes(name))];
+}
+
+// Sequential, because every call reads and extends the shared nameCache.
+async function buildScripts() {
+	for (const relative of await scriptFiles()) {
+		await minifyTo(await readFile(path.join(SRC, relative), 'utf8'), path.join(BUILD, relative));
 	}
 }
 
@@ -159,8 +179,7 @@ await rm(BUILD, { recursive: true, force: true });
 await Promise.all([
 	copyAssets(),
 	buildHtml(),
-	buildScripts('chrome'),
-	buildScripts('scripts'),
+	buildScripts(),
 ]);
 const version = await readVersion();
 // Firefox first, Chromium last: test:browser loads build/ via --load-extension in Chromium,

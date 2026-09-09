@@ -8,9 +8,10 @@ import vm from "node:vm";
 import path from "node:path";
 
 const SCRIPTS_DIR = path.join(import.meta.dirname, "..", "..", "src", "scripts");
-const AVIM_PATH = path.join(SCRIPTS_DIR, "avim-ext.js");
+const ENGINE_PATH = path.join(SCRIPTS_DIR, "avim-engine.js");
+const AVIM_PATHS = [ENGINE_PATH, path.join(SCRIPTS_DIR, "avim-dom.js")];
 
-const avimSource = fs.readFileSync(AVIM_PATH, "utf8");
+const avimSources = AVIM_PATHS.map((file) => ({ file, source: fs.readFileSync(file, "utf8") }));
 
 const METHOD = {
 	AUTO: 0,
@@ -236,7 +237,9 @@ function loadEngine(config = {}) {
 		sandbox.location.href = settings.url;
 	}
 	vm.createContext(sandbox);
-	vm.runInContext(avimSource, sandbox, { filename: AVIM_PATH });
+	for (const { file, source } of avimSources) {
+		vm.runInContext(source, sandbox, { filename: file });
+	}
 
 	if (settings.exclude) {
 		sandbox.exclude = settings.exclude;
@@ -422,7 +425,7 @@ export {
 	METHOD,
 	TONE_TABLE,
 	toneMatrixCases,
-	AVIM_PATH,
+	ENGINE_PATH,
 	FakeText,
 	FakeRange,
 	loadEngine,

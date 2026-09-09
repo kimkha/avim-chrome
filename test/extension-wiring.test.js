@@ -67,14 +67,31 @@ describe("popup.html loads the same engine bundle as the content script", () => 
 		assert.deepEqual(loaded, declared);
 	});
 
-	// popup.js appends its key-field name to globalThis.exclude, which avim-ext.js overwrites
+	// popup.js appends its key-field name to globalThis.exclude, which avim-engine.js overwrites
 	// wholesale when it loads. Later, and the popup's own shortcut fields are transformed again.
 	it("loads the engine before its own popup.js", () => {
 		const srcs = scriptSrcs(read("popup.html"));
 
-		assert.ok(srcs.includes("scripts/avim-ext.js"), "popup.html no longer loads the engine");
 		assert.ok(srcs.includes("chrome/popup.js"), "popup.html no longer loads chrome/popup.js");
-		assert.ok(srcs.indexOf("scripts/avim-ext.js") < srcs.indexOf("chrome/popup.js"));
+		for (const script of declared) {
+			assert.ok(srcs.includes(script), `popup.html no longer loads ${script}`);
+			assert.ok(srcs.indexOf(script) < srcs.indexOf("chrome/popup.js"), `${script} loads after popup.js`);
+		}
+	});
+});
+
+describe("The build mangles the two content scripts against one nameCache", () => {
+	// Without the shared cache, terser renames avim-engine.js's top-level declarations and leaves
+	// avim-dom.js calling the old names: src/ keeps working and only the built zip is broken.
+	const build = fs.readFileSync(path.join(import.meta.dirname, "..", "build.mjs"), "utf8");
+
+	it("passes the cache into every minify call", () => {
+		assert.match(build, /minify\(source, \{ \.\.\.TERSER_OPTIONS, nameCache \}\)/);
+	});
+
+	it("minifies the engine before anything that calls into it", () => {
+		const order = build.match(/const SCRIPT_ORDER = \[([^\]]*)\]/)[1];
+		assert.equal(order.split(",")[0].trim(), "'scripts/avim-engine.js'");
 	});
 });
 
@@ -83,7 +100,7 @@ describe("The Google Docs bridge is wired for the main world", () => {
 
 	// The popup test above reads content_scripts[0] as the engine entry
 	it("keeps the engine as the first content script", () => {
-		assert.deepEqual(manifest.content_scripts[0].js, ["scripts/avim-ext.js"]);
+		assert.deepEqual(manifest.content_scripts[0].js, ["scripts/avim-engine.js", "scripts/avim-dom.js"]);
 	});
 
 	it("declares the bridge at all", () => {

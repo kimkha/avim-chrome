@@ -9,6 +9,19 @@
 		"InputEvent": false,
 		"StaticRange": false,
 		"exclude": true,
-		"AVIMAutoConfig": true
+		"AVIMAutoConfig": true,
+		"AVIM": false,
+		"start": false,
+		"fromCharCode": false,
+		"createTextEditor": false,
+		"notWord": false,
+		"promoteHornPair": false,
+		"upperCase": false,
+		"AVIMObj": true,
+		"method": true,
+		"onOff": true,
+		"checkSpell": true,
+		"oldAccent": true,
+		"shortcutMap": true
 	}
 }

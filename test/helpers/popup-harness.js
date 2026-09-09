@@ -276,7 +276,7 @@ function loadPopup({
 		tabQueries,
 		tabMessages,
 		tabPattern: () => tabState,
-		// what popup.js left for the engine to skip; avim-ext.js owns this global in the real popup
+		// what popup.js left for the engine to skip; avim-engine.js owns this global in the real popup
 		excluded: () => sandbox.exclude ?? [],
 		sent,
 		writes: () => sent.filter((message) => !message.get_prefs && !message.get_demo_text),

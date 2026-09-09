@@ -18,7 +18,7 @@
     "default_popup": "popup.html"
   },
   "content_scripts": [{
-    "js": [ "scripts/avim-ext.js" ],
+    "js": [ "scripts/avim-engine.js", "scripts/avim-dom.js" ],
     "matches": ["http://*/*", "https://*/*"],
     "run_at": "document_idle",
     "all_frames": true

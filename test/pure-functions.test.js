@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import {
-	AVIM_PATH,
+	ENGINE_PATH,
 	METHOD,
 	loadEngine,
 	createInput,
@@ -165,7 +165,7 @@ describe("retKC returns the 24 accented code points for a tone key", () => {
 describe("upperCase fallback table", () => {
 	// unreachable while toUpperCase handles every entry, so behaviour cannot guard it
 	it("pairs every source character with its correct uppercase form", () => {
-		const source = readFileSync(AVIM_PATH, "utf8");
+		const source = readFileSync(ENGINE_PATH, "utf8");
 		const lower = Array.from(source.match(/const LOWER_VIET = "([^"]+)"/)[1]);
 		const upper = Array.from(source.match(/const UPPER_VIET = "([^"]+)"/)[1]);
 		assert.equal(lower.length, upper.length);
