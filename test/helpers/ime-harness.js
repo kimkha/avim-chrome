@@ -95,6 +95,7 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 					setComposition: record("setComposition"),
 					clearComposition: record("clearComposition"),
 					commitText: record("commitText"),
+					deleteSurroundingText: record("deleteSurroundingText"),
 					setMenuItems: record("setMenuItems"),
 					onActivate: event("onActivate"),
 					onDeactivated: event("onDeactivated"),
@@ -102,6 +103,7 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 					onBlur: event("onBlur"),
 					onReset: event("onReset"),
 					onKeyEvent: event("onKeyEvent"),
+					onSurroundingTextChanged: event("onSurroundingTextChanged"),
 					onMenuItemActivated: event("onMenuItemActivated"),
 				},
 			},
@@ -128,6 +130,19 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 		return handler(...args);
 	};
 
+	/** ime.js writes compositions through a promise chain; let it drain before anything is read. */
+	const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+	/** What the field holds around a collapsed caret, as the OS reports it. */
+	async function field(text, caret = text.length) {
+		await fire("onSurroundingTextChanged", "avim", { text, anchor: caret, focus: caret, offset: 0 });
+	}
+
+	/** Same, with a selection open, which is when the word before the caret is not the target. */
+	async function selection(text, anchor, focus) {
+		await fire("onSurroundingTextChanged", "avim", { text, anchor, focus, offset: 0 });
+	}
+
 	/** keydown then keyup, because the real API sends both and only one may act. */
 	async function press(key, modifiers = {}) {
 		const down = await fire("onKeyEvent", "avim", { type: "keydown", key, code: `Key${key}`, ...modifiers });
@@ -135,6 +150,7 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 		if (up !== false) {
 			throw new Error(`keyup for ${key} was consumed; it must always fall through`);
 		}
+		await settle();
 		return down;
 	}
 
@@ -180,6 +196,8 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 	return {
 		start,
 		send,
+		field,
+		selection,
 		press,
 		type,
 		fire,
@@ -189,6 +207,9 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 		storage,
 		pushedToTabs,
 		menu: () => calls.filter((entry) => entry.call === "setMenuItems").at(-1)?.items,
+		/** Just the composition traffic, in the order the OS received it. */
+		writes: () => calls.filter((entry) => entry.call !== "setMenuItems").map((entry) => entry.call),
+		deletes: () => calls.filter((entry) => entry.call === "deleteSurroundingText"),
 		reset: () => calls.splice(0, calls.length),
 	};
 }

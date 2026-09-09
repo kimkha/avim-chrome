@@ -128,7 +128,9 @@ describe("Typing through the input method", { skip: resolved.skip }, () => {
 
 	before(async () => {
 		session = await launchChromeOs(resolved.build);
-		fixture = await serveTextField();
+		fixture = await serveTextField(
+			"<!doctype html><meta charset=utf-8><body><input id=probe><div id=rich contenteditable></div>",
+		);
 		usKeyboard = await session.currentInputMethod();
 		page = await session.openUrl(fixture.origin);
 	});
@@ -155,6 +157,34 @@ describe("Typing through the input method", { skip: resolved.skip }, () => {
 		return page.evaluate(() => document.getElementById("probe").value);
 	}
 
+	/** Presets text the IME did not type, then puts the caret in it: the Step 4 starting point. */
+	async function typeAfter(value, caret, keys, id = "probe") {
+		await page.evaluate(({ value, caret, id }) => {
+			const node = document.getElementById(id);
+			node.blur();
+			if (node.tagName === "INPUT") {
+				node.value = value;
+				node.focus();
+				node.setSelectionRange(caret, caret);
+				return;
+			}
+			node.textContent = value;
+			node.focus();
+			const range = document.createRange();
+			range.setStart(node.firstChild ?? node, caret);
+			range.collapse(true);
+			const selection = getSelection();
+			selection.removeAllRanges();
+			selection.addRange(range);
+		}, { value, caret, id });
+		await page.waitForTimeout(600);
+		await session.typeKeys(page, keys);
+		return page.evaluate((id) => {
+			const node = document.getElementById(id);
+			return node.tagName === "INPUT" ? node.value : node.textContent;
+		}, id);
+	}
+
 	it("switches the OS to AVIM", async () => {
 		assert.equal(await session.setInputMethod(session.imeId), session.imeId);
 	});
@@ -173,6 +203,38 @@ describe("Typing through the input method", { skip: resolved.skip }, () => {
 
 	it("takes a key back on backspace", async () => {
 		assert.equal(await typeInto(["c", "h", "a", "o", "f", "BackSpace"]), "chà");
+	});
+
+	it("puts the tone on a word it never typed", async () => {
+		assert.equal(await typeAfter("hoa", 3, ["f"]), "hòa");
+	});
+
+	it("fixes the word the caret is in, leaving the rest of the line", async () => {
+		assert.equal(await typeAfter("hoa binh", 3, ["f"]), "hòa binh");
+	});
+
+	it("keeps spelling a word that was already there", async () => {
+		assert.equal(await typeAfter("ngu", 3, ["o", "w", "i"]), "ngươi");
+	});
+
+	it("starts a new word rather than reaching across a space", async () => {
+		assert.equal(await typeAfter("hoa ", 4, ["b", "a", "n"]), "hoa ban");
+	});
+
+	it("leaves existing text alone when the key changes nothing", async () => {
+		assert.equal(await typeAfter("hoa", 3, ["space"]), "hoa ");
+	});
+
+	it("fixes a word in a contenteditable too", async () => {
+		assert.equal(await typeAfter("hoa", 3, ["f"], "rich"), "hòa");
+	});
+
+	// Adopting a word puts it into an unfinished composition, so losing focus must not lose the text.
+	it("keeps the word when focus leaves mid-composition", async () => {
+		assert.equal(await typeAfter("hoa", 3, ["f"]), "hòa");
+		await page.evaluate(() => document.getElementById("rich").focus());
+		await page.waitForTimeout(600);
+		assert.equal(await page.evaluate(() => document.getElementById("probe").value), "hòa");
 	});
 
 	/**

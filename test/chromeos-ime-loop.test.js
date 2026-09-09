@@ -276,3 +276,150 @@ describe("Context lifecycle", () => {
 		assert.equal(ime.calls.at(-1).contextID, 42);
 	});
 });
+
+/**
+ * Fixing a word that is already in the field. A composition-only IME cannot: once the word is
+ * committed it belongs to the app. Reading the text around the caret is what buys it back, and it is
+ * the one thing Unikey's IME does not do.
+ */
+describe("Adopting the word before the caret", () => {
+	it("puts the tone on a word typed earlier", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("hoa");
+
+		const consumed = await ime.press("f");
+
+		assert.equal(consumed, true);
+		assert.equal(ime.composed(), "hòa");
+	});
+
+	it("takes the word out of the field before composing it back", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("hoa");
+
+		await ime.press("f");
+
+		assert.deepEqual(ime.writes(), ["deleteSurroundingText", "setComposition"], "order matters");
+		assert.deepEqual(ime.deletes(), [
+			{ call: "deleteSurroundingText", engineID: "avim", contextID: 7, offset: -3, length: 3 },
+		]);
+	});
+
+	it("adopts only the last word, not the whole line", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("xin chao ban hoa");
+
+		await ime.press("f");
+
+		assert.equal(ime.composed(), "hòa");
+		assert.equal(ime.deletes()[0].length, 3);
+	});
+
+	it("reads the word before the caret, not the text after it", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("hoa binh", 3);
+
+		await ime.press("f");
+
+		assert.equal(ime.composed(), "hòa");
+		assert.equal(ime.deletes()[0].length, 3);
+	});
+
+	it("keeps composing from the adopted word", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("ngu");
+
+		await ime.press("o");
+		await ime.press("w");
+		await ime.press("i");
+
+		assert.equal(ime.composed(), "ngươi", "the adopted word stays in hand for the keys after it");
+		assert.equal(ime.deletes()[0].length, 3, "adopted once, on the first key");
+	});
+
+	it("commits when the adopted word plus the key ends it", async () => {
+		const ime = loadIme({ stored: { ...TELEX, shortcutsOn: "1", shortcuts: JSON.stringify([{ key: "vn", value: "Việt Nam" }]) } });
+		await ime.start();
+		await ime.field("vn");
+
+		const consumed = await ime.press(" ");
+
+		assert.equal(consumed, true);
+		assert.deepEqual(ime.committed(), ["Việt Nam "]);
+		assert.equal(ime.deletes()[0].length, 2);
+	});
+
+	// Nothing to fix, so nothing may be rewritten: the delete would be visible for no reason.
+	it("leaves the field alone when the key changes nothing", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("hoa");
+
+		const consumed = await ime.press(" ");
+
+		assert.equal(consumed, false);
+		assert.deepEqual(ime.writes(), []);
+	});
+
+	it("starts a fresh word after a boundary", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("hoa ");
+
+		await ime.press("b");
+
+		assert.equal(ime.composed(), "b");
+		assert.deepEqual(ime.deletes(), []);
+	});
+
+	it("does not touch a word while a selection is open", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.selection("hoa", 0, 3);
+
+		await ime.press("f");
+
+		assert.deepEqual(ime.deletes(), [], "the selection is what the key replaces, not the word");
+		assert.equal(ime.composed(), "f");
+	});
+
+	it("waits for fresh surrounding text after its own commit", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+		await ime.field("hoa");
+
+		await ime.press("f");
+		await ime.press(" ");
+		await ime.press("f");
+
+		assert.deepEqual(ime.committed(), ["hòa "]);
+		assert.equal(ime.composed(), "f", "stale text would have adopted the committed word again");
+	});
+
+	it("has nothing to adopt before the OS reports the field", async () => {
+		const ime = loadIme({ stored: TELEX });
+		await ime.start();
+
+		await ime.press("f");
+
+		assert.deepEqual(ime.deletes(), []);
+		assert.equal(ime.composed(), "f");
+	});
+
+	/** VIQR spends a full stop on a tone, so a boundary-looking key still has a word to fix. */
+	it("fixes a word with a VIQR tone key", async () => {
+		const ime = loadIme({ stored: VIQR });
+		await ime.start();
+		await ime.field("hoa");
+
+		const consumed = await ime.press(".");
+
+		assert.equal(consumed, true);
+		assert.equal(ime.composed(), "họa");
+	});
+});

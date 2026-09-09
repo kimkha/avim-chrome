@@ -24,6 +24,14 @@ const VIQR_ALT_KEYS = ["\\", "~"];
 
 let contextID = null;
 let buffer = "";
+/** What the field holds around the caret, or null while unknown: see onSurroundingTextChanged. */
+let surrounding = null;
+/** Composition writes are async but must land in call order, deleting before replacing. */
+let pending = Promise.resolve();
+
+function queue(work) {
+	pending = pending.then(work).catch(() => {});
+}
 
 function methodMenu() {
 	return METHOD_LABELS.map((label, index) => ({
@@ -64,10 +72,10 @@ function render() {
 		return;
 	}
 	if (buffer === "") {
-		chrome.input.ime.clearComposition({ contextID });
+		queue(() => chrome.input.ime.clearComposition({ contextID }));
 		return;
 	}
-	chrome.input.ime.setComposition({ contextID, text: buffer, cursor: buffer.length });
+	queue(() => chrome.input.ime.setComposition({ contextID, text: buffer, cursor: buffer.length }));
 }
 
 /** Ends the word: what is composed becomes real text, and the buffer starts over. */
@@ -76,7 +84,32 @@ function commit(text) {
 	if ((contextID === null) || (text === "")) {
 		return;
 	}
-	chrome.input.ime.commitText({ contextID, text });
+	// The field is about to change, so what we know about it is stale until the next event.
+	surrounding = null;
+	queue(() => chrome.input.ime.commitText({ contextID, text }));
+}
+
+/**
+ * Hands back the word already sitting before the caret, so a tone key can still fix a word typed
+ * earlier — the thing a composition-only IME cannot do. Empty when there is no word there, when a
+ * selection is open, or whenever the field's contents are not currently known.
+ */
+function wordBeforeCaret() {
+	if ((surrounding === null) || (buffer !== "")) {
+		return "";
+	}
+	return wordBefore(surrounding.text.slice(0, surrounding.caret));
+}
+
+/** Takes the word out of the field and into the composition, ours to rewrite from here on. */
+function adopt(length) {
+	surrounding = null;
+	queue(() => chrome.input.ime.deleteSurroundingText({
+		engineID: IME_ENGINE_ID,
+		contextID,
+		offset: -length,
+		length,
+	}));
 }
 
 function typedChar(keyData) {
@@ -121,6 +154,20 @@ function handleKey(keyData) {
 		return false;
 	}
 	if (buffer === "") {
+		const tail = wordBeforeCaret();
+		const fixed = tail === "" ? null : rewriteBefore(tail, char, char.charCodeAt(0));
+		// A letter continues the word that is already there; punctuation only claims it when the engine
+		// spends the key on a tone, so a space after existing text is left well alone.
+		if ((fixed !== null) && (!notWord(char) || (fixed !== tail + char))) {
+			adopt(tail.length);
+			if (endsWord(char, fixed)) {
+				commit(fixed);
+			} else {
+				buffer = fixed;
+				render();
+			}
+			return true;
+		}
 		// The engine cannot read an empty editor, and a boundary key alone starts no word anyway.
 		if (notWord(char)) {
 			return false;
@@ -161,17 +208,27 @@ function registerIme() {
 	ime.onFocus.addListener(async (context) => {
 		contextID = context.contextID;
 		buffer = "";
+		surrounding = null;
 		await loadPrefs();
 	});
 
 	ime.onBlur.addListener(() => {
 		contextID = null;
 		buffer = "";
+		surrounding = null;
 	});
 
 	// The app threw the composition away; committing here would put back what it just dropped.
 	ime.onReset.addListener(() => {
 		buffer = "";
+		surrounding = null;
+	});
+
+	// `focus` is the caret; it differs from `anchor` only while a selection is open. Fires on focus, on
+	// caret moves and after every change, including the ones we make ourselves.
+	ime.onSurroundingTextChanged.addListener((engineID, info) => {
+		const collapsed = info.anchor === info.focus;
+		surrounding = collapsed ? { text: info.text, caret: info.focus - info.offset } : null;
 	});
 
 	ime.onKeyEvent.addListener((engineID, keyData) => {
