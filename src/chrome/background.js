@@ -176,3 +176,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 getPrefs().then(updateIcon);
+
+// Last, so the helpers above already exist when ime.js calls them. Firefox loads this file as an
+// event page, which has no importScripts, and chrome.input is ChromeOS-only.
+if ((typeof importScripts === "function") && chrome.input?.ime) {
+	importScripts("../scripts/avim-engine.js", "ime.js");
+}

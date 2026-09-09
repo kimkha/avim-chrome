@@ -28,9 +28,13 @@ node --test test/framework-editors.test.js   # nạp editor thật từ esm.sh
 
 # Firefox đi riêng qua geckodriver, phải build trước
 yarn firefox:install && yarn build && yarn test:firefox
+
+# ChromeOS IME cần ash-chrome (bản linux-chromeos của Chromium), cũng phải build trước
+yarn cros:install && yarn build && yarn test:chromeos
 ```
 
-Trỏ sang binary có sẵn bằng `AVIM_CHROME_PATH`, `AVIM_FIREFOX_PATH`, `AVIM_GECKODRIVER_PATH`.
+Trỏ sang binary có sẵn bằng `AVIM_CHROME_PATH`, `AVIM_FIREFOX_PATH`, `AVIM_GECKODRIVER_PATH`,
+`AVIM_CROS_PATH`.
 Lý do đằng sau cách test nằm trong comment đầu mỗi file `test/helpers/*.js`.
 
 ## Giấy phép

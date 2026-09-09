@@ -6,6 +6,8 @@ import htmlclean from 'htmlclean';
 import { minify } from 'terser';
 import yazl from 'yazl';
 
+import { manifestFor } from './build-manifest.mjs';
+
 const SRC = 'src';
 const BUILD = 'build';
 const DIST = 'dist';
@@ -100,18 +102,7 @@ async function buildHtml() {
 
 // Firefox MV3 runs background.scripts (it ignores service_worker) and needs the gecko id; the
 // Chrome Web Store and Edge Partner Center reject background.scripts under MV3, and Chromium
-// ignores browser_specific_settings. One source manifest, shaped per store here.
-function manifestFor(target, manifest) {
-	const shaped = structuredClone(manifest);
-	if (target === 'firefox') {
-		// Same file, loaded as a non-persistent event page rather than a service worker.
-		shaped.background = { scripts: [manifest.background.service_worker] };
-		return shaped;
-	}
-	delete shaped.browser_specific_settings;
-	return shaped;
-}
-
+// ignores browser_specific_settings. One source manifest, shaped per store in build-manifest.mjs.
 async function writeManifest(target) {
 	const manifest = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8'));
 	const shaped = manifestFor(target, manifest);

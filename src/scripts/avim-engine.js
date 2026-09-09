@@ -878,3 +878,101 @@ function promoteHornPair(before, char) {
 	}
 	return before.slice(0, at - 1) + (u === "u" ? "ư" : "Ư") + before.slice(at);
 }
+
+
+/* ---- Keystroke layer: the surface-independent half every AVIM front end drives ---- */
+
+/** Punctuation below code 45 that still starts or continues a word. */
+const TYPABLE_LOW_CODES = [32, 39, 40, 42, 43];
+
+function checkCode(code) {
+	if (onOff === 0) {
+		return true;
+	}
+	if ((code < 45) && !TYPABLE_LOW_CODES.includes(code)) {
+		return true;
+	}
+	return (code === 145) || (code === 255);
+}
+
+
+
+/* ---- User-defined shortcuts: whole words a word-boundary key expands ---- */
+
+/** Entries with a blank key are dropped: such a key would match after every keystroke. */
+function buildShortcutMap(list) {
+	const map = new Map();
+	for (const entry of list ?? []) {
+		if (entry && (typeof entry.key === "string") && (entry.key.length > 0)) {
+			map.set(entry.key, String(entry.value ?? ""));
+		}
+	}
+	return map;
+}
+
+function wordBefore(text) {
+	let at = text.length;
+	while ((at > 0) && !notWord(text.charAt(at - 1))) {
+		at--;
+	}
+	return text.slice(at);
+}
+
+/**
+ * The text before the caret with a shortcut applied, or null when this keystroke completes none.
+ * Matching mid-word would turn Telex "chuw" into "chuư" and leave the key itself unenterable.
+ */
+function shortcutRewrite(before, char) {
+	if (!notWord(char)) {
+		return null;
+	}
+	const word = wordBefore(before);
+	const result = shortcutMap.get(word);
+	return result === undefined ? null : before.slice(0, before.length - word.length) + result;
+}
+
+const CONTROL_KEYS = "\r\n\t";
+
+/**
+ * The same, plus who types the boundary key. A model-backed editor re-renders asynchronously, so a
+ * key left to the browser lands at the pre-rewrite caret: "vn x" came out "Việt Namx ". Enter and
+ * Tab do more than insert, so they stay the browser's.
+ */
+function shortcutEdit(before, char) {
+	const expanded = shortcutRewrite(before, char);
+	if (expanded === null) {
+		return null;
+	}
+	if (CONTROL_KEYS.includes(char)) {
+		return { text: expanded, typesKey: false };
+	}
+	return { text: expanded + char, typesKey: true };
+}
+
+/**
+ * The text before the caret once this key is applied, or null when the key is none of AVIM's.
+ * A caller that already typed the key reads the result as-is; one that has not types the tail.
+ */
+function rewriteBefore(before, key, code) {
+	// A comma and its like never reach the engine but still end a word: the gate stops the engine,
+	// not the shortcut.
+	if (checkCode(code)) {
+		const gated = shortcutEdit(before, key);
+		return gated === null ? null : gated.text + (gated.typesKey ? "" : key);
+	}
+
+	const editor = createTextEditor(before);
+	AVIMObj.sk = key;
+	start(editor, { which: code });
+	const changed = AVIMObj.changed;
+	AVIMObj.changed = false;
+	// VIQR spends punctuation on tone marks, so a shortcut only ever gets a key the engine passed on
+	const passed = editor.value === before;
+	const edit = passed ? shortcutEdit(before, key) : null;
+	if (edit) {
+		return edit.text + (edit.typesKey ? "" : key);
+	}
+	// changed only means AVIM meant to type the key; Docs already did: "chaof" drops it, "aaa" keeps.
+	const keyTail = changed ? "" : key;
+	return passed ? promoteHornPair(before, key) + keyTail : editor.value + keyTail;
+}

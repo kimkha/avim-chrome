@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
+import { manifestFor } from "../build-manifest.mjs";
+
 const SRC = path.join(import.meta.dirname, "..", "src");
 
 function read(relative) {
@@ -139,8 +141,54 @@ describe("The manifest grants what the popup actually calls", () => {
 		});
 	}
 
-	it("asks for nothing beyond storage and search", () => {
-		assert.deepEqual([...manifest.permissions].sort(), ["search", "storage"]);
+	it("asks for nothing beyond storage, search and input", () => {
+		assert.deepEqual([...manifest.permissions].sort(), ["input", "search", "storage"]);
+	});
+});
+
+describe("The ChromeOS input method is declared", () => {
+	const components = manifest.input_components;
+
+	it("declares exactly one engine, so the input method comes from prefs rather than the engineID", () => {
+		assert.equal(components.length, 1);
+	});
+
+	it("registers it as a Vietnamese IME that keeps the user's keyboard layout", () => {
+		const [ime] = components;
+		assert.equal(ime.type, "ime");
+		assert.equal(ime.id, "avim");
+		assert.equal(ime.language, "vi");
+		assert.deepEqual(ime.layouts, []);
+		assert.ok(ime.name.length > 0);
+	});
+
+	it("requests the input permission the API needs", () => {
+		assert.ok(manifest.permissions.includes("input"));
+	});
+});
+
+describe("The Firefox manifest drops what only ChromeOS understands", () => {
+	const firefox = manifestFor("firefox", manifest);
+	const chromium = manifestFor("chromium", manifest);
+
+	// chrome.input.ime is ChromeOS-only, so AMO's validator flags both keys as unknown.
+	it("has no input_components and no input permission", () => {
+		assert.equal(firefox.input_components, undefined);
+		assert.ok(!firefox.permissions.includes("input"));
+	});
+
+	it("keeps every other permission", () => {
+		assert.deepEqual([...firefox.permissions].sort(), ["search", "storage"]);
+	});
+
+	it("leaves the Chromium manifest carrying both", () => {
+		assert.equal(chromium.input_components.length, 1);
+		assert.ok(chromium.permissions.includes("input"));
+	});
+
+	it("does not mutate the manifest it was handed", () => {
+		assert.ok(manifest.permissions.includes("input"));
+		assert.equal(manifest.input_components.length, 1);
 	});
 });
 

@@ -11,7 +11,9 @@
     "test:watch": "node --test --watch test/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
     "firefox:install": "node test/helpers/install-firefox.mjs",
-    "test:firefox": "node --test test/firefox-smoke.test.js"
+    "cros:install": "node test/helpers/install-cros.mjs",
+    "test:firefox": "node --test test/firefox-smoke.test.js",
+    "test:chromeos": "node --test test/chromeos-ime.test.js"
   },
   "engines": {
     "node": ">=24.0.0"

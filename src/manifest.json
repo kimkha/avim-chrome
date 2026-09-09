@@ -29,7 +29,15 @@
     "world": "MAIN"
   }],
   "default_locale": "en",
-  "permissions": ["storage", "search"],
+  "permissions": ["storage", "search", "input"],
+  "input_components": [{
+    "name": "Vietnamese - AVIM",
+    "type": "ime",
+    "id": "avim",
+    "description": "Bộ gõ tiếng Việt AVIM",
+    "language": "vi",
+    "layouts": []
+  }],
   "background": {
     "service_worker": "chrome/background.js"
   },
