@@ -256,29 +256,37 @@ describe("Every message placeholder resolves in every locale", () => {
 	}
 });
 
-describe("popup.js labels line up with popup.html and the locale files", () => {
-	// loadText() builds ids as "txt" + key and message names as "extPopup" + key, so a key added to
-	// one side only fails silently at runtime: the label just stays as the hardcoded Vietnamese
-	// fallback, or throws on a missing element.
-	const popupSource = read(path.join("chrome", "popup.js"));
-	const declaration = popupSource.match(/const LABEL_KEYS = \[([^\]]+)\]/);
-	const popupHtml = read("popup.html");
+/** Every page that localises itself pairs an id with a message name; both sides must exist. */
+const LOCALISED_PAGES = [
+	{ page: "popup.html", script: "popup.js", prefix: "extPopup" },
+	{ page: "setup.html", script: "setup.js", prefix: "extSetup" },
+];
 
-	it("still builds its label list from a literal array", () => {
-		assert.ok(declaration, "popup.js no longer declares `const LABEL_KEYS = [...]`; update this test");
-	});
+for (const { page, script, prefix } of LOCALISED_PAGES) {
+	describe(`${script} labels line up with ${page} and the locale files`, () => {
+		// loadText() builds ids as "txt" + key and message names as the prefix + key, so a key added to
+		// one side only fails silently at runtime: the label just stays as the hardcoded Vietnamese
+		// fallback, or throws on a missing element.
+		const source = read(path.join("chrome", script));
+		const declaration = source.match(/const LABEL_KEYS = \[([^\]]+)\]/);
+		const html = read(page);
 
-	const keys = declaration[1].split(",").map((entry) => entry.trim().replace(/^"|"$/g, ""));
-
-	for (const key of keys) {
-		it(`txt${key} exists in popup.html`, () => {
-			assert.match(popupHtml, new RegExp(`id="txt${key}"`), `popup.html has no #txt${key}`);
+		it("still builds its label list from a literal array", () => {
+			assert.ok(declaration, `${script} no longer declares \`const LABEL_KEYS = [...]\`; update this test`);
 		});
 
-		for (const locale of locales) {
-			it(`extPopup${key} exists in ${locale}`, () => {
-				assert.ok(`extPopup${key}` in messages[locale], `${locale} has no extPopup${key}`);
+		const keys = declaration[1].split(",").map((entry) => entry.trim().replace(/^"|"$/g, ""));
+
+		for (const key of keys) {
+			it(`txt${key} exists in ${page}`, () => {
+				assert.match(html, new RegExp(`id="txt${key}"`), `${page} has no #txt${key}`);
 			});
+
+			for (const locale of locales) {
+				it(`${prefix}${key} exists in ${locale}`, () => {
+					assert.ok(`${prefix}${key}` in messages[locale], `${locale} has no ${prefix}${key}`);
+				});
+			}
 		}
-	}
-});
+	});
+}

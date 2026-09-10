@@ -17,6 +17,10 @@ const PATTERN_MODES = ['on', 'off', 'default'];
 
 const DEMO_TEXT_KEY = 'demoText';
 
+const SETUP_SEEN_KEY = 'imeSetupSeen';
+
+const SETUP_PAGE = 'setup.html';
+
 /** A blank key is a row the user emptied out, which is how a shortcut is deleted. */
 function cleanShortcuts(list) {
 	if (!Array.isArray(list)) {
@@ -176,6 +180,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 getPrefs().then(updateIcon);
+
+/**
+ * A ChromeOS input method sits idle until the user adds it in Settings → Inputs, so say so — once,
+ * and only there: on every other platform the content script already types without being asked.
+ */
+async function openSetupOnce() {
+	const { os } = await chrome.runtime.getPlatformInfo();
+	if (os !== 'cros') {
+		return;
+	}
+	const stored = await chrome.storage.local.get({ [SETUP_SEEN_KEY]: '0' });
+	if (stored[SETUP_SEEN_KEY] === '1') {
+		return;
+	}
+	// Marked seen only once the page is really open: measured on ChromeOS, an extension installed
+	// before any window exists gets "No current window" here, and the flag would bury the page.
+	await chrome.tabs.create({ url: chrome.runtime.getURL(SETUP_PAGE) });
+	await chrome.storage.local.set({ [SETUP_SEEN_KEY]: '1' });
+}
+
+// onInstalled fires for an update as well as a fresh install, which is how existing users hear about
+// IME mode; onStartup is the second chance for an install that had nowhere to put the page.
+chrome.runtime.onInstalled.addListener(() => {
+	openSetupOnce().catch(() => {});
+});
+
+chrome.runtime.onStartup.addListener(() => {
+	openSetupOnce().catch(() => {});
+});
 
 // Last, so the helpers above already exist when ime.js calls them. Firefox loads this file as an
 // event page, which has no importScripts, and chrome.input is ChromeOS-only.

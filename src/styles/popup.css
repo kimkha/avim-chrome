@@ -291,6 +291,10 @@ body {
 	border-color: var(--accent-button-hover);
 }
 
+.buttonRow[hidden] {
+	display: none;
+}
+
 .buttonRow {
 	display: flex;
 	flex: none;
@@ -452,4 +456,21 @@ body {
 	background: var(--danger-soft);
 	border-color: var(--danger);
 	color: var(--danger);
+}
+
+/* setup.html reuses this sheet, but it opens as a full tab rather than a 600px popup. */
+body.setupPage {
+	width: auto;
+	max-width: 620px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.setupSteps {
+	margin: 10px 0;
+	padding-left: 22px;
+}
+
+.setupSteps li {
+	margin-bottom: 6px;
 }

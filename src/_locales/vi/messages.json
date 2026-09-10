@@ -1,162 +1,189 @@
 {
-	"extName" : {
-		"message" : "AVIM - Bộ Gõ Tiếng Việt",
-		"description" : "Extension name"
-	},
-	"extDescription" : {
-		"message" : "Gõ tiếng Việt trong mọi khung nhập liệu trên web — Telex, VNI hay VIQR. Không cần bộ gõ hệ thống, không cần đổi bàn phím.",
-		"description" : "Extension description"
-	},
-	"extAction" : {
-		"message" : "Đổi kiểu gõ AVIM",
-		"description" : "Default title of browser action"
-	},
-	"extPopupTitle" : {
-		"message" : "Bảng điều khiển AVIM",
-		"description" : "Tiêu đề ở đầu popup"
-	},
-	"extPopupSel" : {
-		"message" : "Chọn một kiểu gõ:",
-		"description" : ""
-	},
-	"extPopupAuto" : {
-		"message" : "Kết hợp TELEX và VNI",
-		"description" : ""
-	},
-	"extPopupTelex" : {
-		"message" : "Kiểu TELEX",
-		"description" : ""
-	},
-	"extPopupVni" : {
-		"message" : "Kiểu VNI",
-		"description" : ""
-	},
-	"extPopupViqr" : {
-		"message" : "Kiểu VIQR",
-		"description" : ""
-	},
-	"extPopupViqrStar" : {
-		"message" : "Kiểu VIQR*",
-		"description" : ""
-	},
-	"extPopupOff" : {
-		"message" : "Tắt AVIM",
-		"description" : ""
-	},
-	"extPopupSpellCheck" : {
-		"message" : "Kiểm tra chính tả",
-		"description" : "Nhãn của ô bật/tắt kiểm tra chính tả tiếng Việt"
-	},
-	"extPopupTips" : {
-		"message" : "Mẹo nhỏ:",
-		"description" : ""
-	},
-	"extPopupTipsCtrl" : {
-		"message" : "Nhấn Ctrl 2 lần để bật/tắt nhanh, 3 lần để bật/tắt riêng trang này.",
-		"description" : ""
-	},
-	"extPopupDemo" : {
-		"message" : "Gõ nhanh",
-		"description" : ""
-	},
-	"extPopupDemoHint" : {
-		"message" : "Gõ nhanh tiếng Việt tại đây",
-		"description" : "Chữ mờ trong ô gõ nhanh"
-	},
-	"extPopupSearch" : {
-		"message" : "Tìm kiếm",
-		"description" : "Nút mở tab mới để tìm kiếm hoặc truy cập nội dung đã gõ"
-	},
-	"extPopupDemoCopy" : {
-		"message" : "Sao chép toàn bộ",
-		"description" : ""
-	},
-	"extPopupRemoveAccent" : {
-		"message" : "Đổi không dấu",
-		"description" : "Bỏ dấu tiếng Việt trong ô gõ nhanh"
-	},
-	"extPopupOpenShortcuts" : {
-		"message" : "Phím tắt",
-		"description" : "Nút mở màn hình phím tắt"
-	},
-	"extPopupBack" : {
-		"message" : "← Trở về",
-		"description" : "Nút rời màn hình phím tắt mà không lưu"
-	},
-	"extPopupShortcuts" : {
-		"message" : "Phím tắt",
-		"description" : "Tiêu đề màn hình phím tắt"
-	},
-	"extPopupShortcutsOn" : {
-		"message" : "Bật phím tắt",
-		"description" : "Nhãn của ô bật/tắt toàn bộ phím tắt"
-	},
-	"extPopupAddShortcut" : {
-		"message" : "Thêm phím tắt",
-		"description" : "Nút thêm một dòng phím tắt trống"
-	},
-	"extPopupSaveShortcuts" : {
-		"message" : "Lưu phím tắt",
-		"description" : "Nút lưu các dòng phím tắt rồi trở về màn hình chính"
-	},
-	"extPopupRemoveShortcut" : {
-		"message" : "Xoá phím tắt này",
-		"description" : "Chú thích của nút xoá một dòng phím tắt"
-	},
-	"extPopupShortcutKeyHint" : {
-		"message" : "phím cần gõ",
-		"description" : "Chữ mờ trong ô phím tắt"
-	},
-	"extPopupShortcutResultHint" : {
-		"message" : "đổi thành",
-		"description" : "Chữ mờ trong ô kết quả"
-	},
-	"extPopupOpenPatterns" : {
-		"message" : "Cài đặt trang",
-		"description" : "Nút mở màn hình cài đặt theo trang"
-	},
-	"extPopupPatterns" : {
-		"message" : "Cài đặt trang",
-		"description" : "Tiêu đề màn hình cài đặt theo trang"
-	},
-	"extPopupPatternsBack" : {
-		"message" : "← Trở về",
-		"description" : "Nút rời màn hình mẫu URL mà không lưu"
-	},
-	"extPopupPatternsNote" : {
-		"message" : "Mỗi trang một dòng. * khớp mọi ký tự, /…/ là biểu thức chính quy, và dòng cụ thể nhất sẽ thắng.",
-		"description" : "Giải thích cách viết mẫu trên màn hình mẫu URL"
-	},
-	"extPopupAddPattern" : {
-		"message" : "Thêm mẫu",
-		"description" : "Nút thêm một dòng mẫu URL trống"
-	},
-	"extPopupSavePatterns" : {
-		"message" : "Lưu mẫu",
-		"description" : "Nút lưu các dòng mẫu URL rồi trở về màn hình chính"
-	},
-	"extPopupRemovePattern" : {
-		"message" : "Xoá mẫu này",
-		"description" : "Chú thích của nút xoá một dòng mẫu URL"
-	},
-	"extPopupPatternHint" : {
-		"message" : "trang hoặc mẫu",
-		"description" : "Chữ mờ trong ô mẫu URL"
-	},
-	"extPopupPatternModeDefault" : {
-		"message" : "Mặc định",
-		"description" : "Chế độ giữ nguyên lựa chọn ở bảng chính"
-	},
-	"extPopupPatternModeOn" : {
-		"message" : "Bật",
-		"description" : "Chế độ buộc bật AVIM cho trang này"
-	},
-	"extPopupPatternModeOff" : {
-		"message" : "Tắt",
-		"description" : "Chế độ buộc tắt AVIM cho trang này"
-	},
-	"extPopupQuickPatternHint" : {
-		"message" : "Bấm để đổi trang này giữa Mặc định, Bật và Tắt",
-		"description" : "Chú thích của cài đặt nhanh cạnh tiêu đề"
-	}
+  "extName": {
+    "message": "AVIM - Bộ Gõ Tiếng Việt",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Gõ tiếng Việt trong mọi khung nhập liệu trên web — Telex, VNI hay VIQR. Không cần bộ gõ hệ thống, không cần đổi bàn phím.",
+    "description": "Extension description"
+  },
+  "extAction": {
+    "message": "Đổi kiểu gõ AVIM",
+    "description": "Default title of browser action"
+  },
+  "extPopupTitle": {
+    "message": "Bảng điều khiển AVIM",
+    "description": "Tiêu đề ở đầu popup"
+  },
+  "extPopupSel": {
+    "message": "Chọn một kiểu gõ:",
+    "description": ""
+  },
+  "extPopupAuto": {
+    "message": "Kết hợp TELEX và VNI",
+    "description": ""
+  },
+  "extPopupTelex": {
+    "message": "Kiểu TELEX",
+    "description": ""
+  },
+  "extPopupVni": {
+    "message": "Kiểu VNI",
+    "description": ""
+  },
+  "extPopupViqr": {
+    "message": "Kiểu VIQR",
+    "description": ""
+  },
+  "extPopupViqrStar": {
+    "message": "Kiểu VIQR*",
+    "description": ""
+  },
+  "extPopupOff": {
+    "message": "Tắt AVIM",
+    "description": ""
+  },
+  "extPopupSpellCheck": {
+    "message": "Kiểm tra chính tả",
+    "description": "Nhãn của ô bật/tắt kiểm tra chính tả tiếng Việt"
+  },
+  "extPopupTips": {
+    "message": "Mẹo nhỏ:",
+    "description": ""
+  },
+  "extPopupTipsCtrl": {
+    "message": "Nhấn Ctrl 2 lần để bật/tắt nhanh, 3 lần để bật/tắt riêng trang này.",
+    "description": ""
+  },
+  "extPopupDemo": {
+    "message": "Gõ nhanh",
+    "description": ""
+  },
+  "extPopupDemoHint": {
+    "message": "Gõ nhanh tiếng Việt tại đây",
+    "description": "Chữ mờ trong ô gõ nhanh"
+  },
+  "extPopupSearch": {
+    "message": "Tìm kiếm",
+    "description": "Nút mở tab mới để tìm kiếm hoặc truy cập nội dung đã gõ"
+  },
+  "extPopupDemoCopy": {
+    "message": "Sao chép toàn bộ",
+    "description": ""
+  },
+  "extPopupRemoveAccent": {
+    "message": "Đổi không dấu",
+    "description": "Bỏ dấu tiếng Việt trong ô gõ nhanh"
+  },
+  "extPopupOpenShortcuts": {
+    "message": "Phím tắt",
+    "description": "Nút mở màn hình phím tắt"
+  },
+  "extPopupBack": {
+    "message": "← Trở về",
+    "description": "Nút rời màn hình phím tắt mà không lưu"
+  },
+  "extPopupShortcuts": {
+    "message": "Phím tắt",
+    "description": "Tiêu đề màn hình phím tắt"
+  },
+  "extPopupShortcutsOn": {
+    "message": "Bật phím tắt",
+    "description": "Nhãn của ô bật/tắt toàn bộ phím tắt"
+  },
+  "extPopupAddShortcut": {
+    "message": "Thêm phím tắt",
+    "description": "Nút thêm một dòng phím tắt trống"
+  },
+  "extPopupSaveShortcuts": {
+    "message": "Lưu phím tắt",
+    "description": "Nút lưu các dòng phím tắt rồi trở về màn hình chính"
+  },
+  "extPopupRemoveShortcut": {
+    "message": "Xoá phím tắt này",
+    "description": "Chú thích của nút xoá một dòng phím tắt"
+  },
+  "extPopupShortcutKeyHint": {
+    "message": "phím cần gõ",
+    "description": "Chữ mờ trong ô phím tắt"
+  },
+  "extPopupShortcutResultHint": {
+    "message": "đổi thành",
+    "description": "Chữ mờ trong ô kết quả"
+  },
+  "extPopupOpenPatterns": {
+    "message": "Cài đặt trang",
+    "description": "Nút mở màn hình cài đặt theo trang"
+  },
+  "extPopupPatterns": {
+    "message": "Cài đặt trang",
+    "description": "Tiêu đề màn hình cài đặt theo trang"
+  },
+  "extPopupPatternsBack": {
+    "message": "← Trở về",
+    "description": "Nút rời màn hình mẫu URL mà không lưu"
+  },
+  "extPopupPatternsNote": {
+    "message": "Mỗi trang một dòng. * khớp mọi ký tự, /…/ là biểu thức chính quy, và dòng cụ thể nhất sẽ thắng.",
+    "description": "Giải thích cách viết mẫu trên màn hình mẫu URL"
+  },
+  "extPopupAddPattern": {
+    "message": "Thêm mẫu",
+    "description": "Nút thêm một dòng mẫu URL trống"
+  },
+  "extPopupSavePatterns": {
+    "message": "Lưu mẫu",
+    "description": "Nút lưu các dòng mẫu URL rồi trở về màn hình chính"
+  },
+  "extPopupRemovePattern": {
+    "message": "Xoá mẫu này",
+    "description": "Chú thích của nút xoá một dòng mẫu URL"
+  },
+  "extPopupPatternHint": {
+    "message": "trang hoặc mẫu",
+    "description": "Chữ mờ trong ô mẫu URL"
+  },
+  "extPopupPatternModeDefault": {
+    "message": "Mặc định",
+    "description": "Chế độ giữ nguyên lựa chọn ở bảng chính"
+  },
+  "extPopupPatternModeOn": {
+    "message": "Bật",
+    "description": "Chế độ buộc bật AVIM cho trang này"
+  },
+  "extPopupPatternModeOff": {
+    "message": "Tắt",
+    "description": "Chế độ buộc tắt AVIM cho trang này"
+  },
+  "extPopupQuickPatternHint": {
+    "message": "Bấm để đổi trang này giữa Mặc định, Bật và Tắt",
+    "description": "Chú thích của cài đặt nhanh cạnh tiêu đề"
+  },
+  "extSetupTitle": {
+    "message": "Bật bộ gõ AVIM trên ChromeOS"
+  },
+  "extSetupIntro": {
+    "message": "AVIM đã được cài. Trên ChromeOS, bạn cần thêm AVIM vào danh sách kiểu nhập liệu một lần:"
+  },
+  "extSetupStep1": {
+    "message": "Mở Cài đặt → Thiết bị → Bàn phím và nhập liệu → Kiểu nhập liệu."
+  },
+  "extSetupStep2": {
+    "message": "Chọn “Thêm kiểu nhập liệu”, tìm “Vietnamese - AVIM” rồi thêm."
+  },
+  "extSetupStep3": {
+    "message": "Nhấn Ctrl + Space để chuyển qua lại giữa AVIM và bàn phím tiếng Anh."
+  },
+  "extSetupOpen": {
+    "message": "Mở cài đặt bàn phím"
+  },
+  "extSetupNoteTitle": {
+    "message": "Lưu ý:"
+  },
+  "extSetupNote": {
+    "message": "Trong trình duyệt, AVIM gõ được ngay mà không cần bước này. Kiểu gõ chọn trong bảng điều khiển AVIM dùng chung cho cả hai."
+  },
+  "extPopupOpenSetup": {
+    "message": "Bộ gõ ChromeOS"
+  }
 }

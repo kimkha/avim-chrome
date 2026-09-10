@@ -23,6 +23,7 @@
 		"AddShortcut",
 		"SaveShortcuts",
 		"OpenPatterns",
+		"OpenSetup",
 		"Patterns",
 		"PatternsBack",
 		"PatternsNote",
@@ -403,8 +404,15 @@
 
 	const selectMethod = (method) => () => savePrefs({ method, onOff: 1 });
 
+	function showSetupOnChromeOs() {
+		chrome.runtime.getPlatformInfo(({ os }) => {
+			$g("setupRow").hidden = os !== "cros";
+		});
+	}
+
 	function init() {
 		loadText();
+		showSetupOnChromeOs();
 		showShortcutModal(false);
 		showPatternModal(false);
 		$g("quickPattern").title = chrome.i18n.getMessage("extPopupQuickPatternHint");
@@ -449,6 +457,9 @@
 		$g("addPattern").addEventListener("click", () => addPatternRow());
 		$g("savePatterns").addEventListener("click", savePatterns);
 		$g("quickPattern").addEventListener("click", cycleQuickPattern);
+		$g("openSetup").addEventListener("click", () => {
+			chrome.tabs.create({ url: chrome.runtime.getURL("setup.html") });
+		});
 	}
 
 	init();

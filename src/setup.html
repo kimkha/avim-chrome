@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>__MSG_extSetupTitle__</title>
+	<link rel="stylesheet" href="styles/popup.css">
+</head>
+<body class="setupPage">
+<header class="header">
+	<img class="headerIcon" src="icons/icon48.png" alt="" width="20" height="20">
+	<h1 class="headerTitle" id="txtTitle">Bật bộ gõ AVIM trên ChromeOS</h1>
+</header>
+<div id="setupScreen">
+	<p id="txtIntro">AVIM đã được cài. Trên ChromeOS, bạn cần thêm AVIM vào danh sách kiểu nhập liệu một lần:</p>
+	<ol class="setupSteps">
+		<li id="txtStep1">Mở Cài đặt → Thiết bị → Bàn phím và nhập liệu → Kiểu nhập liệu.</li>
+		<li id="txtStep2">Chọn “Thêm kiểu nhập liệu”, tìm “Vietnamese - AVIM” rồi thêm.</li>
+		<li id="txtStep3">Nhấn Ctrl + Space để chuyển qua lại giữa AVIM và bàn phím tiếng Anh.</li>
+	</ol>
+	<div class="buttonRow">
+		<button class="button buttonPrimary" id="openInputSettings" type="button"><span id="txtOpen">Mở cài đặt bàn phím</span></button>
+	</div>
+	<p class="tip"><b class="tipTitle" id="txtNoteTitle">Lưu ý:</b> <span id="txtNote">Trong trình duyệt, AVIM gõ được ngay mà không cần bước này. Kiểu gõ chọn trong bảng điều khiển AVIM dùng chung cho cả hai.</span></p>
+</div>
+	<script src="chrome/setup.js"></script>
+</body>
+</html>

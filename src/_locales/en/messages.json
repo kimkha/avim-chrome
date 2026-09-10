@@ -1,162 +1,189 @@
 {
-	"extName" : {
-		"message" : "AVIM - Vietnamese Input Method",
-		"description" : "Extension name"
-	},
-	"extDescription" : {
-		"message" : "Type Vietnamese in any text field on the web — Telex, VNI or VIQR. No system input method, no keyboard layout to change.",
-		"description" : "Extension description"
-	},
-	"extAction" : {
-		"message" : "Options for AVIM",
-		"description" : "Default title of browser action"
-	},
-	"extPopupTitle" : {
-		"message" : "AVIM control panel",
-		"description" : "Heading at the top of the popup"
-	},
-	"extPopupSel" : {
-		"message" : "Select an option:",
-		"description" : ""
-	},
-	"extPopupAuto" : {
-		"message" : "Both Telex and VNI",
-		"description" : ""
-	},
-	"extPopupTelex" : {
-		"message" : "Telex only",
-		"description" : ""
-	},
-	"extPopupVni" : {
-		"message" : "VNI only",
-		"description" : ""
-	},
-	"extPopupViqr" : {
-		"message" : "VIQR only",
-		"description" : ""
-	},
-	"extPopupViqrStar" : {
-		"message" : "VIQR* only",
-		"description" : ""
-	},
-	"extPopupOff" : {
-		"message" : "Turn off AVIM",
-		"description" : ""
-	},
-	"extPopupSpellCheck" : {
-		"message" : "Spell check",
-		"description" : "Label of the Vietnamese spell check toggle"
-	},
-	"extPopupTips" : {
-		"message" : "Small tip:",
-		"description" : ""
-	},
-	"extPopupTipsCtrl" : {
-		"message" : "Press Ctrl twice to turn AVIM on or off, or three times for this site only.",
-		"description" : ""
-	},
-	"extPopupDemo" : {
-		"message" : "Fast input",
-		"description" : ""
-	},
-	"extPopupDemoHint" : {
-		"message" : "Type Vietnamese here",
-		"description" : "Placeholder of the fast input box"
-	},
-	"extPopupSearch" : {
-		"message" : "Search",
-		"description" : "Button that opens a new tab to search for or visit what was typed"
-	},
-	"extPopupDemoCopy" : {
-		"message" : "Copy All",
-		"description" : ""
-	},
-	"extPopupRemoveAccent" : {
-		"message" : "Remove accents",
-		"description" : "Strip Vietnamese diacritics from the demo text"
-	},
-	"extPopupOpenShortcuts" : {
-		"message" : "Shortcut keys",
-		"description" : "Button that opens the shortcut key screen"
-	},
-	"extPopupBack" : {
-		"message" : "← Back",
-		"description" : "Button that leaves the shortcut key screen without saving"
-	},
-	"extPopupShortcuts" : {
-		"message" : "Shortcut keys",
-		"description" : "Heading of the shortcut key screen"
-	},
-	"extPopupShortcutsOn" : {
-		"message" : "Enable shortcut keys",
-		"description" : "Label of the toggle that turns all shortcut keys on or off"
-	},
-	"extPopupAddShortcut" : {
-		"message" : "Add a shortcut",
-		"description" : "Button that appends an empty shortcut row"
-	},
-	"extPopupSaveShortcuts" : {
-		"message" : "Save shortcuts",
-		"description" : "Button that stores the shortcut rows and returns to the main screen"
-	},
-	"extPopupRemoveShortcut" : {
-		"message" : "Delete this shortcut",
-		"description" : "Tooltip of the button that removes one shortcut row"
-	},
-	"extPopupShortcutKeyHint" : {
-		"message" : "keys to type",
-		"description" : "Placeholder of the shortcut input"
-	},
-	"extPopupShortcutResultHint" : {
-		"message" : "becomes",
-		"description" : "Placeholder of the replacement input"
-	},
-	"extPopupOpenPatterns" : {
-		"message" : "Site settings",
-		"description" : "Button that opens the per-site screen"
-	},
-	"extPopupPatterns" : {
-		"message" : "Site settings",
-		"description" : "Heading of the per-site screen"
-	},
-	"extPopupPatternsBack" : {
-		"message" : "← Back",
-		"description" : "Button that leaves the URL pattern screen without saving"
-	},
-	"extPopupPatternsNote" : {
-		"message" : "One row per site. * matches anything, /…/ is a regular expression, and the most specific row wins.",
-		"description" : "Explains the pattern syntax on the URL pattern screen"
-	},
-	"extPopupAddPattern" : {
-		"message" : "Add a pattern",
-		"description" : "Button that appends an empty URL pattern row"
-	},
-	"extPopupSavePatterns" : {
-		"message" : "Save patterns",
-		"description" : "Button that stores the URL pattern rows and returns to the main screen"
-	},
-	"extPopupRemovePattern" : {
-		"message" : "Delete this pattern",
-		"description" : "Tooltip of the button that removes one URL pattern row"
-	},
-	"extPopupPatternHint" : {
-		"message" : "site or pattern",
-		"description" : "Placeholder of the URL pattern input"
-	},
-	"extPopupPatternModeDefault" : {
-		"message" : "Default",
-		"description" : "Pattern mode that leaves the site on whatever the main panel selected"
-	},
-	"extPopupPatternModeOn" : {
-		"message" : "On",
-		"description" : "Pattern mode that forces AVIM on for the site"
-	},
-	"extPopupPatternModeOff" : {
-		"message" : "Off",
-		"description" : "Pattern mode that forces AVIM off for the site"
-	},
-	"extPopupQuickPatternHint" : {
-		"message" : "Click to switch this site between Default, On and Off",
-		"description" : "Tooltip of the quick setting next to the popup heading"
-	}
+  "extName": {
+    "message": "AVIM - Vietnamese Input Method",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Type Vietnamese in any text field on the web — Telex, VNI or VIQR. No system input method, no keyboard layout to change.",
+    "description": "Extension description"
+  },
+  "extAction": {
+    "message": "Options for AVIM",
+    "description": "Default title of browser action"
+  },
+  "extPopupTitle": {
+    "message": "AVIM control panel",
+    "description": "Heading at the top of the popup"
+  },
+  "extPopupSel": {
+    "message": "Select an option:",
+    "description": ""
+  },
+  "extPopupAuto": {
+    "message": "Both Telex and VNI",
+    "description": ""
+  },
+  "extPopupTelex": {
+    "message": "Telex only",
+    "description": ""
+  },
+  "extPopupVni": {
+    "message": "VNI only",
+    "description": ""
+  },
+  "extPopupViqr": {
+    "message": "VIQR only",
+    "description": ""
+  },
+  "extPopupViqrStar": {
+    "message": "VIQR* only",
+    "description": ""
+  },
+  "extPopupOff": {
+    "message": "Turn off AVIM",
+    "description": ""
+  },
+  "extPopupSpellCheck": {
+    "message": "Spell check",
+    "description": "Label of the Vietnamese spell check toggle"
+  },
+  "extPopupTips": {
+    "message": "Small tip:",
+    "description": ""
+  },
+  "extPopupTipsCtrl": {
+    "message": "Press Ctrl twice to turn AVIM on or off, or three times for this site only.",
+    "description": ""
+  },
+  "extPopupDemo": {
+    "message": "Fast input",
+    "description": ""
+  },
+  "extPopupDemoHint": {
+    "message": "Type Vietnamese here",
+    "description": "Placeholder of the fast input box"
+  },
+  "extPopupSearch": {
+    "message": "Search",
+    "description": "Button that opens a new tab to search for or visit what was typed"
+  },
+  "extPopupDemoCopy": {
+    "message": "Copy All",
+    "description": ""
+  },
+  "extPopupRemoveAccent": {
+    "message": "Remove accents",
+    "description": "Strip Vietnamese diacritics from the demo text"
+  },
+  "extPopupOpenShortcuts": {
+    "message": "Shortcut keys",
+    "description": "Button that opens the shortcut key screen"
+  },
+  "extPopupBack": {
+    "message": "← Back",
+    "description": "Button that leaves the shortcut key screen without saving"
+  },
+  "extPopupShortcuts": {
+    "message": "Shortcut keys",
+    "description": "Heading of the shortcut key screen"
+  },
+  "extPopupShortcutsOn": {
+    "message": "Enable shortcut keys",
+    "description": "Label of the toggle that turns all shortcut keys on or off"
+  },
+  "extPopupAddShortcut": {
+    "message": "Add a shortcut",
+    "description": "Button that appends an empty shortcut row"
+  },
+  "extPopupSaveShortcuts": {
+    "message": "Save shortcuts",
+    "description": "Button that stores the shortcut rows and returns to the main screen"
+  },
+  "extPopupRemoveShortcut": {
+    "message": "Delete this shortcut",
+    "description": "Tooltip of the button that removes one shortcut row"
+  },
+  "extPopupShortcutKeyHint": {
+    "message": "keys to type",
+    "description": "Placeholder of the shortcut input"
+  },
+  "extPopupShortcutResultHint": {
+    "message": "becomes",
+    "description": "Placeholder of the replacement input"
+  },
+  "extPopupOpenPatterns": {
+    "message": "Site settings",
+    "description": "Button that opens the per-site screen"
+  },
+  "extPopupPatterns": {
+    "message": "Site settings",
+    "description": "Heading of the per-site screen"
+  },
+  "extPopupPatternsBack": {
+    "message": "← Back",
+    "description": "Button that leaves the URL pattern screen without saving"
+  },
+  "extPopupPatternsNote": {
+    "message": "One row per site. * matches anything, /…/ is a regular expression, and the most specific row wins.",
+    "description": "Explains the pattern syntax on the URL pattern screen"
+  },
+  "extPopupAddPattern": {
+    "message": "Add a pattern",
+    "description": "Button that appends an empty URL pattern row"
+  },
+  "extPopupSavePatterns": {
+    "message": "Save patterns",
+    "description": "Button that stores the URL pattern rows and returns to the main screen"
+  },
+  "extPopupRemovePattern": {
+    "message": "Delete this pattern",
+    "description": "Tooltip of the button that removes one URL pattern row"
+  },
+  "extPopupPatternHint": {
+    "message": "site or pattern",
+    "description": "Placeholder of the URL pattern input"
+  },
+  "extPopupPatternModeDefault": {
+    "message": "Default",
+    "description": "Pattern mode that leaves the site on whatever the main panel selected"
+  },
+  "extPopupPatternModeOn": {
+    "message": "On",
+    "description": "Pattern mode that forces AVIM on for the site"
+  },
+  "extPopupPatternModeOff": {
+    "message": "Off",
+    "description": "Pattern mode that forces AVIM off for the site"
+  },
+  "extPopupQuickPatternHint": {
+    "message": "Click to switch this site between Default, On and Off",
+    "description": "Tooltip of the quick setting next to the popup heading"
+  },
+  "extSetupTitle": {
+    "message": "Turn on AVIM typing on ChromeOS"
+  },
+  "extSetupIntro": {
+    "message": "AVIM is installed. On ChromeOS you need to add it to your input methods once:"
+  },
+  "extSetupStep1": {
+    "message": "Open Settings → Device → Keyboard and text input → Input methods."
+  },
+  "extSetupStep2": {
+    "message": "Choose “Add input methods”, find “Vietnamese - AVIM” and add it."
+  },
+  "extSetupStep3": {
+    "message": "Press Ctrl + Space to switch between AVIM and your English keyboard."
+  },
+  "extSetupOpen": {
+    "message": "Open keyboard settings"
+  },
+  "extSetupNoteTitle": {
+    "message": "Note:"
+  },
+  "extSetupNote": {
+    "message": "In the browser AVIM already works without this step. The input method you pick in the AVIM panel is shared by both."
+  },
+  "extPopupOpenSetup": {
+    "message": "ChromeOS typing"
+  }
 }

@@ -87,6 +87,7 @@ function loadPopup({
 	tabPattern = DEFAULT_TAB_PATTERN,
 	noContentScript = false,
 	noActiveTab = false,
+	platform = "linux",
 } = {}) {
 	const prefs = { ...DEFAULT_PREFS, ...overrides };
 	const ACTIVE_TAB_ID = 7;
@@ -119,6 +120,13 @@ function loadPopup({
 		Promise,
 		chrome: {
 			runtime: {
+				/** ChromeOS-only rows stay hidden here: the popup harness is a desktop popup. */
+				getPlatformInfo(callback) {
+					callback({ os: platform });
+				},
+				getURL(page) {
+					return `chrome-extension://avim/${page}`;
+				},
 				onMessage: {
 					addListener(listener) {
 						pushListeners.push(listener);

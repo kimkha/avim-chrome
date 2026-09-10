@@ -74,6 +74,9 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 				async sendMessage(id, prefs) {
 					pushedToTabs.push({ id, prefs: plain(prefs) });
 				},
+				async create() {
+					return { id: 99 };
+				},
 			},
 			action: {
 				async setBadgeText() {},
@@ -81,6 +84,14 @@ function loadIme({ stored = {}, tabs = [1] } = {}) {
 				async setBadgeTextColor() {},
 			},
 			runtime: {
+				async getPlatformInfo() {
+					return { os: "cros" };
+				},
+				getURL(page) {
+					return `chrome-extension://avim/${page}`;
+				},
+				onInstalled: { addListener() {} },
+				onStartup: { addListener() {} },
 				sendMessage() {
 					return Promise.resolve();
 				},

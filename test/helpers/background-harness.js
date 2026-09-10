@@ -17,14 +17,26 @@ const backgroundSource = fs.readFileSync(BACKGROUND_JS, "utf8");
  * @param {number[]} options.tabs       ids of the open tabs
  * @param {number[]} options.mutedTabs  tabs that reject, as one with no content script does
  * @param {boolean} options.noPageOpen   make the page push reject, as it does with no popup open
+ * @param {string} options.platform      what runtime.getPlatformInfo reports: "cros" is ChromeOS
+ * @param {boolean} options.noWindow     make tabs.create reject, as it does before any window exists
  */
-function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen = false } = {}) {
+function loadBackground({
+	stored = {},
+	tabs = [1, 2],
+	mutedTabs = [],
+	noPageOpen = false,
+	platform = "linux",
+	noWindow = false,
+} = {}) {
 	const storage = { ...stored };
 	const pushedToTabs = [];
 	const pushedToPages = [];
+	const openedTabs = [];
 	const badge = {};
 	const tabBadges = new Map();
 	let onMessage = null;
+	let onInstalled = null;
+	let onStartup = null;
 
 	function badgeFor(tabId) {
 		if (tabId === undefined) {
@@ -55,6 +67,13 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen
 				async query() {
 					return tabs.map((id) => ({ id }));
 				},
+				async create({ url }) {
+					if (noWindow) {
+						throw new Error("No current window");
+					}
+					openedTabs.push(url);
+					return { id: 99 };
+				},
 				async sendMessage(id, prefs) {
 					if (mutedTabs.includes(id)) {
 						throw new Error(`Could not establish connection to tab ${id}`);
@@ -75,6 +94,22 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen
 				},
 			},
 			runtime: {
+				async getPlatformInfo() {
+					return { os: platform };
+				},
+				getURL(page) {
+					return `chrome-extension://avim/${page}`;
+				},
+				onInstalled: {
+					addListener(handler) {
+						onInstalled = handler;
+					},
+				},
+				onStartup: {
+					addListener(handler) {
+						onStartup = handler;
+					},
+				},
 				sendMessage(prefs) {
 					if (noPageOpen) {
 						return Promise.reject(new Error("Receiving end does not exist."));
@@ -107,7 +142,28 @@ function loadBackground({ stored = {}, tabs = [1, 2], mutedTabs = [], noPageOpen
 		});
 	}
 
-	return { send, storage, pushedToTabs, pushedToPages, badge, tabBadge: (id) => tabBadges.get(id) };
+	/** Chrome fires this for a fresh install and for an update alike. */
+	async function install(details = { reason: "install" }) {
+		onInstalled(details);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+	}
+
+	async function restart() {
+		onStartup();
+		await new Promise((resolve) => setTimeout(resolve, 0));
+	}
+
+	return {
+		send,
+		install,
+		restart,
+		storage,
+		pushedToTabs,
+		pushedToPages,
+		openedTabs,
+		badge,
+		tabBadge: (id) => tabBadges.get(id),
+	};
 }
 
 export { loadBackground };
